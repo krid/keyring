@@ -1,3 +1,9 @@
+2009-09-10  krid  <krid@typhon>
+
+	* app/assistants/app-assistant.js (setup, fileReadCallback): Get version
+	number by reading appinfo.json via an ajax call.
+
+
 0.0.2 - Fixed a couple bugs:
  - Generated passwords didn't get put into the model properly.
  - Changed values in focused fields lost on timeout-initiated scene pop. 
