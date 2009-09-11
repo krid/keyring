@@ -1,8 +1,11 @@
-2009-09-10  krid  <krid@typhon>
+2009-09-11  Dirk Bergstrom  <krid@otisbean.com>
+
+	* README.txt: A little something to help folks on GitHub understand.
+
+2009-09-10  Dirk Bergstrom  <krid@otisbean.com>
 
 	* app/assistants/app-assistant.js (setup, fileReadCallback): Get version
 	number by reading appinfo.json via an ajax call.
-
 
 0.0.2 - Fixed a couple bugs:
  - Generated passwords didn't get put into the model properly.
