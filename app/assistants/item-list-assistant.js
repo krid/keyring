@@ -18,82 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-function PasswordDialogAssistant(sceneAssistant, ring, callback) {
-	this.sceneAssistant = sceneAssistant;
-    this.ring = ring;
-    this.callbackOnSuccess = callback;
-}
-
-PasswordDialogAssistant.prototype.setup = function(widget) {
-        this.widget = widget;
-        
-        this.sceneAssistant.controller.get("password-title").update($L("Unlock"));
-            
-        this.sceneAssistant.controller.setupWidget(
-            "password",
-            {
-                  hintText: $L("Password"),
-                  autoFocus: true,
-                  changeOnKeyPress: true,
-                  limitResize: true,
-                  autoReplace: false,
-                  textCase: Mojo.Widget.steModeLowerCase,
-                  enterSubmits: true,
-                  requiresEnterKey: true
-            },
-            this.passwordModel = {value: ''});
-
-        this.sceneAssistant.controller.listen("password", Mojo.Event.propertyChange,
-                this.keyPressHandler.bind(this));
-        
-        this.unlockButtonModel = {label: $L("Unlock"), disabled: false};
-        this.sceneAssistant.controller.setupWidget("unlockButton", {type: Mojo.Widget.activityButton},
-            this.unlockButtonModel);
-        this.unlockButtonActive = false;
-        this.unlockButton = this.sceneAssistant.controller.get("unlockButton");
-        this.unlockHandler = this.unlock.bindAsEventListener(this);
-        this.sceneAssistant.controller.listen("unlockButton", Mojo.Event.tap,
-          this.unlockHandler);
-          
-        this.cancelButtonModel = {label: $L("Cancel"), disabled: false};
-        this.sceneAssistant.controller.setupWidget("cancelButton", {type: Mojo.Widget.defaultButton},
-          this.cancelButtonModel);
-        this.sceneAssistant.controller.listen("cancelButton", Mojo.Event.tap,
-          this.widget.mojo.close);
-};
-
-PasswordDialogAssistant.prototype.keyPressHandler = function(event) {
-	if (Mojo.Char.isEnterKey(event.originalEvent.keyCode)) {
-        this.unlock();
-    }
-};
-
-PasswordDialogAssistant.prototype.unlock = function() {
-	Mojo.Log.info("unlock");
-	if (this.ring.validatePassword(this.passwordModel.value)) {
-		Mojo.Log.info("Password accepted");
-		this.widget.mojo.close();
-		this.callbackOnSuccess();
-	} else {
-		Mojo.Log.info("Bad Password");
-		// TODO select random insult from the sudo list
-		// FIXME apply some decent styling to the error message
-		// FIXME set focus on password input
-		this.sceneAssistant.controller.get("errmsg").update($L("==> Invalid Password <=="));
-		this.sceneAssistant.controller.get("password").focus();
-	}
-};
-
-//cleanup  - remove listeners
-PasswordDialogAssistant.prototype.cleanup = function() {
-    this.sceneAssistant.controller.stopListening("unlockButton", Mojo.Event.tap,
-        this.unlockHandler);
-    this.sceneAssistant.controller.stopListening("cancelButton", Mojo.Event.tap,
-        this.widget.mojo.close);
-    this.sceneAssistant.controller.stopListening("password", Mojo.Event.propertyChange,
-            this.keyPressHandler.bind(this));
-};
-
 /*
  * The dialog used to set the initial password.
  */
@@ -216,7 +140,7 @@ ItemListAssistant.prototype.handleCommand = function(event) {
 		switch(event.command)
 		{
 			case 'new':
-				this.doIfPasswordValid(
+				Keyring.doIfPasswordValid(this.controller, this.ring,
 					this.controller.stageController.pushScene.
 					bind(this.controller.stageController, "item", '', this.ring)
 				);
@@ -250,23 +174,10 @@ ItemListAssistant.prototype.sortPopupHandler = function(command) {
 	this.controller.modelChanged(this.ring);
 };
 
-/*
- * If the user has entered a valid password within the timeout window, or they
- * enter it into the dialog, return true. */
-ItemListAssistant.prototype.doIfPasswordValid = function(callback) {
-	if (this.ring.passwordValid()) {
-		callback();
-	} else {
-	    this.controller.showDialog({
-	        template: "item-list/password-dialog",
-	        assistant: new PasswordDialogAssistant(this, this.ring, callback)
-	    });
-	}
-};
-
 ItemListAssistant.prototype.tapped = function(event) {
 	Mojo.Log.info("Tapped item '%s'", event.item.title);
-	this.doIfPasswordValid(this.pushItemScene.bind(this, event.item.title));
+	Keyring.doIfPasswordValid(this.controller, this.ring,
+			this.pushItemScene.bind(this, event.item.title));
 };
 
 ItemListAssistant.prototype.pushItemScene = function(title) {
@@ -289,7 +200,8 @@ ItemListAssistant.prototype.pushItemScene = function(title) {
 
 ItemListAssistant.prototype.deleted = function(event) {
 	Mojo.Log.info("Deleting item '%s'", event.item.title);
-	this.doIfPasswordValid(this.ring.deleteItem.bind(this.ring, event.item));
+	Keyring.doIfPasswordValid(this.controller, this.ring,
+			this.ring.deleteItem.bind(this.ring, event.item));
 };
 
 ItemListAssistant.prototype.filterItems = function(filterString, listWidget, offset, count) {

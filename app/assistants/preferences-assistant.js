@@ -60,12 +60,6 @@ PreferencesAssistant.prototype.setup = function() {
          this.ring.prefs.generatorPrefs);
     this.fieldsToListen.push("characters");
     
-    this.controller.setupWidget("clearDatabaseButton", {}, {
-    		label: "Clear Database",
-            buttonClass: 'negative',
-            disabled: false
-        });
-	
     this.ring.updateTimeout();
 };
 
@@ -81,27 +75,7 @@ PreferencesAssistant.prototype.fieldUpdated = function(event) {
 	this.ring.updateTimeout();
 };
 
-PreferencesAssistant.prototype.clearDatabase = function() {
-	var ring = this.ring;
-	this.controller.showAlertDialog({
-	    onChoose: function(value) {
-			Mojo.Log.info("value", value, value == "yes-factory");
-			if (value.search("yes") > -1) {
-				ring.clearDatabase(value == "yes-factory");
-				ring.itemsReSorted = true;
-			}
-		},
-	    title: $L("Clear Database"),
-	    message: $L("Are you sure you want to permanently delete all items?"),
-	    choices:[
-	         {label: $L('Yes'), value: "yes", type: 'negative'},  
-	         {label: $L('Yes & clear password + prefs'), value: "yes-factory", type: 'negative'},  
-	         {label: $L("No"), value: "no", type: "affirmative"}    
-	    ]
-    });
-};
-
-/* Don't leave a password visible when we minimize. */
+/* Don't leave an item visible when we minimize. */
 PreferencesAssistant.prototype.timeoutOrDeactivate = function() {
 	Mojo.Log.info("Prefs scene timeoutOrDeactivate");
 	this.ring.clearPassword();
@@ -114,9 +88,6 @@ PreferencesAssistant.prototype.activate = function(event) {
 		Mojo.Event.listen(this.controller.get(field),
 				Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
 	}, this);
-	
-    Mojo.Event.listen(this.controller.get("clearDatabaseButton"), Mojo.Event.tap,
-			this.clearDatabase.bind(this));
 
 	Mojo.Event.listen(this.controller.stageController.document,
 			Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
@@ -132,9 +103,6 @@ PreferencesAssistant.prototype.deactivate = function(event) {
 		Mojo.Event.stopListening(this.controller.get(field),
 				Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
 	}, this);
-	
-	Mojo.Event.stopListening(this.controller.get("clearDatabaseButton"), Mojo.Event.tap,
-			this.clearDatabase.bind(this));
 	
 	Mojo.Event.stopListening(this.controller.stageController.document,
 			Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));

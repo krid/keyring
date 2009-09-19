@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-Keyring = {};
+var Keyring = {};
 
 Keyring.version = "0.0.1";
 
@@ -31,6 +31,7 @@ Keyring.MenuModel = {
     items: [ 
         {label: $L("About Keyring..."), command: "do-aboutKeyring"},
         Mojo.Menu.editItem,
+        {label: $L("Actions..."), command: "do-keyRingActions"},    
         {label: $L("Preferences..."), command: "do-keyRingPrefs"},    
         {label: $L("Help..."), command: "do-keyRingHelp"}            
     ]
@@ -112,10 +113,19 @@ AppAssistant.prototype.handleCommand = function(event) {
 	        break;
 	         
 	        case "do-keyRingPrefs":
-	        	// FIXME need to check password here.
-	            stageController.pushScene("preferences", this.ring);
-	        break;
+	        	Keyring.doIfPasswordValid(currentScene, this.ring,
+					stageController.pushScene.
+					bind(stageController, "preferences", this.ring)
+				);
+        	break;
 	         
+	        case "do-keyRingActions":
+	        	Keyring.doIfPasswordValid(currentScene, this.ring,
+					stageController.pushScene.
+					bind(stageController, "actions", this.ring)
+				);
+        	break;
+	        	
 	        case "do-keyRingHelp":
 	        	this.ring.updateTimeout();
 	            stageController.pushScene("help", this.ring);
@@ -123,3 +133,100 @@ AppAssistant.prototype.handleCommand = function(event) {
 	    }
 	}
 };
+
+/*
+ * The "Enter your password" dialog, used throughout the application.
+ */
+PasswordDialogAssistant = Class.create ({
+	initialize: function(controller, ring, callback) {
+		this.controller = controller;
+	    this.ring = ring;
+	    this.callbackOnSuccess = callback;
+	},
+
+	setup: function(widget) {
+	    this.widget = widget;
+	    
+	    this.controller.get("password-title").update($L("Unlock"));
+	        
+	    this.controller.setupWidget(
+	        "password",
+	        {
+	              hintText: $L("Password"),
+	              autoFocus: true,
+	              changeOnKeyPress: true,
+	              limitResize: true,
+	              autoReplace: false,
+	              textCase: Mojo.Widget.steModeLowerCase,
+	              enterSubmits: true,
+	              requiresEnterKey: true
+	        },
+	        this.passwordModel = {value: ''});
+	
+	    this.controller.listen("password", Mojo.Event.propertyChange,
+	        this.keyPressHandler.bind(this));
+	    
+	    this.unlockButtonModel = {label: $L("Unlock"), disabled: false};
+	    this.controller.setupWidget("unlockButton", {type: Mojo.Widget.activityButton},
+	        this.unlockButtonModel);
+	    this.unlockButtonActive = false;
+	    this.unlockButton = this.controller.get("unlockButton");
+	    this.unlockHandler = this.unlock.bindAsEventListener(this);
+	    this.controller.listen("unlockButton", Mojo.Event.tap,
+	        this.unlockHandler);
+	      
+	    this.cancelButtonModel = {label: $L("Cancel"), disabled: false};
+	    this.controller.setupWidget("cancelButton", {type: Mojo.Widget.defaultButton},
+	        this.cancelButtonModel);
+	    this.controller.listen("cancelButton", Mojo.Event.tap,
+	    	this.widget.mojo.close);
+	},
+	
+	keyPressHandler: function(event) {
+		if (Mojo.Char.isEnterKey(event.originalEvent.keyCode)) {
+		    this.unlock();
+		}
+	},
+
+	unlock: function() {
+		Mojo.Log.info("unlock");
+		if (this.ring.validatePassword(this.passwordModel.value)) {
+			Mojo.Log.info("Password accepted");
+			this.widget.mojo.close();
+			this.callbackOnSuccess();
+		} else {
+			Mojo.Log.info("Bad Password");
+			// TODO select random insult from the sudo list
+			// FIXME apply some decent styling to the error message
+			// FIXME set focus on password input
+			this.controller.get("errmsg").update($L("==> Invalid Password <=="));
+			this.controller.get("password").focus();
+		}
+	},
+
+	//cleanup  - remove listeners
+	cleanup: function() {
+		this.controller.stopListening("unlockButton", Mojo.Event.tap,
+		    this.unlockHandler);
+		this.controller.stopListening("cancelButton", Mojo.Event.tap,
+		    this.widget.mojo.close);
+		this.controller.stopListening("password", Mojo.Event.propertyChange,
+	        this.keyPressHandler.bind(this));
+	}
+});
+
+/* If the user has entered a valid password within the timeout window, or they
+ * enter it into the dialog, return true. */
+Keyring.doIfPasswordValid = function(sceneController, ring, callback) {
+	if (ring.passwordValid()) {
+		callback();
+	} else {
+		sceneController.showDialog({
+			template: "password-dialog",
+			assistant: new PasswordDialogAssistant(sceneController, ring, callback)
+		});
+	}
+};
+
+
+

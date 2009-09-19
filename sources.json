@@ -1,26 +1,26 @@
 [
-    {"source": "app/assistants/app-assistant.js"},
-    
-    {"source": "app/models/ring.js"},
-    
-    {"source": "app/models/upgrader.js"},
-    
-    {"source": "javascripts/sha256.js"},
-    
+    {"source": "app\/assistants\/app-assistant.js"},
+    {"source": "app\/models\/ring.js"},
+    {"source": "app\/models\/upgrader.js"},
+    {"source": "javascripts\/sha256.js"},
     {
-        "source": "app/assistants/item-list-assistant.js",
+        "source": "app\/assistants\/item-list-assistant.js",
         "scenes": "item-list"
     },
     {
-        "source": "app/assistants/item-assistant.js",
+        "source": "app\/assistants\/item-assistant.js",
         "scenes": "item"
     },
     {
-        "source": "app/assistants/preferences-assistant.js",
+        "source": "app\/assistants\/preferences-assistant.js",
         "scenes": "preferences"
     },
     {
-        "source": "app/assistants/help-assistant.js",
+        "source": "app\/assistants\/help-assistant.js",
         "scenes": "help"
+    },
+    {
+        "source": "app\/assistants\/actions-assistant.js",
+        "scenes": "actions"
     }
 ]

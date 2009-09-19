@@ -256,6 +256,19 @@ var Ring = Class.create ({
 		}
 	},
 	
+	exportableData: function() {
+		if (! this.passwordValid()) {
+			Mojo.Log.warn("Attempt to export db without valid password.");
+			throw this.PasswordError;
+		}
+		var data = {
+			schema_version: this.SCHEMA_VERSION,
+			salt: this._salt,
+			db: this.encrypt(JSON.stringify(this.db))
+		};
+		return data;
+	},
+	
 	/*
 	 * Clear the database and the items list, save the empty db.  If
 	 * factoryReset is true, clear prefs, salt and checkData.
@@ -264,7 +277,7 @@ var Ring = Class.create ({
 		Mojo.Log.info("clearDatabase, factoryReset='%s'", factoryReset);
 		if (! this.passwordValid()) {
 			Mojo.Log.warn("Attempt to clear db without valid password.");
-			return;
+			return false;
 		}
 		this.db = {};
 		this.items = [];
@@ -286,6 +299,7 @@ var Ring = Class.create ({
 		} else {
 			this.saveData();
 		}
+		return true;
 	},
 	
 	/*
