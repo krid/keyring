@@ -98,7 +98,9 @@ ItemAssistant.prototype.setup = function() {
 		// Creating a new item
 		this.createNew = true;
 		this.item = {title:'', username:'', pass:'', url:'', notes:''};
+		// Hide the dates display
 		this.controller.get("dates-row").hide();
+		this.controller.get("url-row").addClassName('last');
 		this.controller.hideWidgetContainer("dates-row");
 	}
 
@@ -222,6 +224,7 @@ ItemAssistant.prototype.handleCommand = function(event) {
 				this.done();
 			break;
 			case 'cancel':
+				Mojo.Log.info("Cancelling new item creation.");
 				this.controller.stageController.popScene();
 				break;
 			case 'generate':

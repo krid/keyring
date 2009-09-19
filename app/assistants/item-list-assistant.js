@@ -329,11 +329,12 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 ItemListAssistant.prototype.aboutToActivate = function(callback) {
 	Mojo.Log.info("aboutToActivate");
 	if (! this.ring.depotDataLoaded) {
-		this.ring.loadDepotData(this.preActivationCallback.bind(this, callback));
+		this.ring.initDepotReader(this.preActivationCallback.bind(this, callback));
 	}
 };
 
 ItemListAssistant.prototype.preActivationCallback = function(callback) {
+	Mojo.Log.info("preActivationCallback");
 	this.controller.modelChanged(this.ring);
 	callback();
 }

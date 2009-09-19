@@ -1,1 +1,4 @@
 /* Keyring styles.  Nothing yet... */
+.multi-checkbox.checkbox {
+  float: none;
+}

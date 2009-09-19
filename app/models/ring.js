@@ -28,18 +28,18 @@ var Ring = Class.create ({
 	
 	itemsReSorted: false,
 	
-	// Callbacks used during initialization
-	_itemsLoadedCallback: function() {},
-	_cryptInfoLoadedCallback: function() {},
-	_prefsLoadedCallback: function() {},
+	// Callback used during initialization
+	_dataLoadedCallback: function() {},
 
 	_salt: '',
 	
-	_password: '',
+	_key: '',
 	
 	_passwordTime: '',
 	
 	_checkData: '',
+	
+	_upgradeCheckData: null,
 	
 	DEFAULT_PREFS: {
 		sortBy: 'TITLE',
@@ -60,35 +60,26 @@ var Ring = Class.create ({
 	items: [],
 	
 	db: {},
-	        
-	test_db: {
-		'foo': {title:'foo', username:'jblo', pass:'secret', url: '', notes:'wow!'},
-	    'quux': {title:'quux', username:'weeble', pass:'grond', url: '', notes:''},
-	    'wobblies': {title:'wobblies', username:'krid', pass:'out', url: 'www.zyx.com', notes:'booga booga\nbooga boo!'},
-	    'This is a really long and boring name that goes on and on': {title:'This is a really long and boring name that goes on and on', username:'grizzle', pass:'a;lskdfj', url: '', notes:''},
-	    'joshua': {title:'joshua', username:'krid', pass:'out', url: 'foo.net', notes:'booga booga\nbooga boo!'},
-	    'freddy': {title:'freddy', username:'krid', pass:'out', url: '', notes:'booga booga\nbooga boo!'},
-	    'jane': {title:'jane', username:'krid', pass:'out', url: '', notes:'booga booga\nbooga boo!'},
-	    'jamie': {title:'jamie', username:'krid', pass:'out', url: '', notes:'booga booga\nbooga boo!'},
-	    'howard': {title:'howard', username:'krid', pass:'out', url: '', notes:'booga booga\nbooga boo!'},
-	    'google': {title:'google', username:'krid', pass:'out', url: '', notes:'booga booga\nbooga boo!'},
-	    'foolish': {title:'foolish', username:'grizzle', pass:'a;lskdfj', url: '', notes:''},
-	    'bar': {title:'bar', username:'panopsquat', pass:'bigsecret', url: '', notes:''}
-	},
-	
+
 	DEPOT_OPTIONS: {
 		name: 'keyring',
 		version: 1,
 		replace: false
 	},
+
+	/* I'm aware that Depot/HTML5DB has a 'version' attribute, but the Depot
+	 * API doesn't appear to provide a sane way to use it.  As of webOS 1.1,
+	 * the docs claim that a version mismatch will result in an error code of
+	 * "2", however I don't get a code, much less anything with a 2 in it.
+	 * So, rather than guess at what Palm intends, I'm going to do my own
+	 * versioning.  This also allows me to read the version number, and fire
+	 * off the appropriate updater if it's too old.
+	 */
+	SCHEMA_VERSION: 2,
 	
-	CHECK_DATA_PLAINTEXT: 'elderberries',
+	DEPOT_DATA_KEY: "data",
 	
-	DEPOT_ITEMS_KEY: "items",
-	
-	DEPOT_CRYPT_KEY: "crypt-info",
-	
-	DEPOT_PREFS_KEY: "prefs",
+	DEPOT_VERSION_KEY: "version",
 	
 	ENCRYPTED_ATTRS: ['username', 'pass', 'url', 'notes'],
 	
@@ -96,12 +87,12 @@ var Ring = Class.create ({
 
 	initialize: function() {
 		Mojo.Log.info("Initializing ring");
-		this.sortBy = this._byTitle; // FIXME should be a pref
 		this.depot = new Mojo.Depot(this.DEPOT_OPTIONS,
 			null,
-			function() {
-				Mojo.Log.error("Failed to open database");
-				throw new Error("Failed to open database.");
+			function(error) {
+				var errmsg = "Failed to open database: " + error;
+				errors.push(errmsg);
+				Mojo.Log.error(errmsg);
 			}
 		);
 	},
@@ -116,20 +107,24 @@ var Ring = Class.create ({
 			Mojo.Log.warn("Changing pw not supported");
 			throw new Error("Changing the password is not currently supported.");
 		}
-		// FIXME set timeout
-		this._password = password;
-		this._checkData = this.encrypt(this.CHECK_DATA_PLAINTEXT);
-		this.firstRun = false;
-		this.saveCryptInfo();
+		this._key = b64_sha256(this._salt + password);;
+		this._checkData = this.encrypt(this._key);
+		this.saveData();
 		this.updateTimeout();
+		this.firstRun = false;
 		// FIXME re-encrypt the db
 	},
 	
 	validatePassword: function(password) {
 		Mojo.Log.info("Validating password");
-		if (this.decrypt(this._checkData, password) == this.CHECK_DATA_PLAINTEXT) {
+		var tmpKey = b64_sha256(this._salt + password);
+		Mojo.Log.info("_upgradeCheckData=%j", this._upgradeCheckData);
+		if (this._upgradeCheckData) {
+			this._upgradeCheckData(tmpKey);
+		}
+		if (this.decrypt(this._checkData, tmpKey) == tmpKey) {
 			Mojo.Log.info("Password validated");
-			this._password = password;
+			this._key = tmpKey;
 			this.updateTimeout();
 			return true;
 		} else {
@@ -140,14 +135,15 @@ var Ring = Class.create ({
 	},
 	
 	passwordValid: function() {
-		if (this._password) {
+		if (this._key) {
 			if ((new Date().getTime() - this._passwordTime) < this.prefs.timeout) {
 				// Timeout not exceeded, reset it
 				this.updateTimeout();
 				return true;
 			} else {
 				// Timeout exceeded, clear password
-				this._password = '';
+				this._key = '';
+				return false;
 			}
 		} else {
 			return false;
@@ -156,7 +152,7 @@ var Ring = Class.create ({
 	
 	clearPassword: function() {
 		Mojo.Log.info("clearPassword");
-		this._password = '';
+		this._key = '';
 		this._passwordTime = 0;
 	},
 	
@@ -164,76 +160,50 @@ var Ring = Class.create ({
 		this._passwordTime = new Date().getTime();
 	},
 	
-	loadDepotData: function(callback) {
-		/* Set up a synchronizer that will call the supplied callback when
-		 * all the loaders have finished. */
-		var ring = this;
-		var synchronizer = new Mojo.Function.Synchronize({
-            syncCallback: function() {
-				ring.depotDataLoaded = true;
-				callback();
-			},
-            timeout: 3});
-		this._itemsLoadedCallback = synchronizer.wrap(function() {});
-		this._cryptInfoLoadedCallback = synchronizer.wrap(function() {});
-		this._prefsLoadedCallback = synchronizer.wrap(function() {});
-
-		this.depot.get(this.DEPOT_ITEMS_KEY,
-			this.loadItems.bind(this),
+	initDepotReader: function(callback) {
+		this._dataLoadedCallback = callback;
+		this.depot.get(this.DEPOT_VERSION_KEY,
+			this._loadDepotData.bind(this),
 			function(error) {
-				this._itemsLoadedCallback();
-			    Mojo.Log.error("Could not fetch items: " + error);
-			    throw new Error("Failed to fetch items.");
+				// FIXME proper error handling
+			    Mojo.Log.error("Could not init Depot reader: " + error);
 	        }
 		);
-		this.depot.get(this.DEPOT_CRYPT_KEY,
-			this.loadCryptInfo.bind(this),
-			function(error) {
-				this._cryptInfoLoadedCallback();
-				Mojo.Log.error("Could not fetch crypt-info: " + error);
-				throw new Error("Failed to fetch crypto information.");
-			}
-		);
-		this.depot.get(this.DEPOT_PREFS_KEY,
-			this.loadPrefs.bind(this),
-			function(error) {
-				Mojo.Log.error("Could not fetch prefs: " + error);
-				this.errors.push("Failed to fetch preferences.");
-				this._prefsLoadedCallback();
-			}
-		);
 	},
 	
-	loadItems: function(obj) {
-		// Read hash of items from the depot
-		if (obj) {
-			this.db = obj;
-			Mojo.Log.info("Loaded item db");
+	_loadDepotData: function(versionObj) {
+		var depotVersion;
+		if (versionObj) {
+			depotVersion = versionObj.version;
+		} else {
+			// First releases didn't have a version key in Depot
+			depotVersion = 0;
 		}
-		this.buildItemList();
-		this._itemsLoadedCallback();
-	},
-
-	saveItems: function() {
-		Mojo.Log.info("Saving items db");
-		this.depot.add(this.DEPOT_ITEMS_KEY, this.db,
-			function() {
-				Mojo.Log.info("Items db saved");
-			},
-			function(error) {
-				var errmsg = "Failed to save items: " + error;
-				Mojo.Log.error(errmsg);
-				throw new Error(errmsg);
-			}
-		);
+		Mojo.Log.info("Current depotVersion", depotVersion);
+		if (depotVersion != this.SCHEMA_VERSION) {
+			new Upgrader(depotVersion, this).upgrade();
+		} else {
+			this.depot.get(this.DEPOT_DATA_KEY,
+				this._loadDataHandler.bind(this),
+				function(error) {
+					// FIXME proper error handling
+					Mojo.Log.error("Could not fetch data: " + error);
+				}
+			);
+		}
 	},
 	
-	loadCryptInfo: function(obj) {
-		// Read hash of crypto info from the depot
+	_loadDataHandler: function(obj) {
 		if (obj) {
-			Mojo.Log.info("Loaded crypt info");
-			this._salt = obj.salt;
-			this._checkData = obj.checkData;
+			this.db = obj.db;
+			this.prefs = obj.prefs;
+			this._salt = obj.crypt.salt;
+			this._checkData = obj.crypt.checkData;
+			this.depotDataLoaded = true;
+			Mojo.Log.info("Depot data loaded");
+		} else {
+			Mojo.Log.error("No data in Depot");
+			// FIXME error handling
 		}
 		if (this._salt) {
 			this.firstRun = false;
@@ -243,77 +213,79 @@ var Ring = Class.create ({
 			this._salt = this.generatePassword({characters: 12, all: true});
 			Mojo.Log.info("Generated new salt: ", this._salt);
 		}
-		this._cryptInfoLoadedCallback();
-	},
-
-	saveCryptInfo: function() {
-		Mojo.Log.info("Saving crypt info");
-		this.depot.add(this.DEPOT_CRYPT_KEY, {
-				salt: this._salt,
-				checkData: this._checkData
-			}, function() {
-				Mojo.Log.info("Crypt info saved");
-			}, function(error) {
-				var errmsg = "Failed to save crypto info: " + error;
-				Mojo.Log.error(errmsg);
-				throw new Error(errmsg);
-			}
-		);
-	},
-	
-	loadPrefs: function(obj) {
-		// Read hash of prefs info from the depot
-		if (obj) {
-			this.prefs = obj;
-			Mojo.Log.info("Loaded prefs object");
-		} else {
-			Mojo.Log.info("Using default prefs");
+		if (! this.prefs) {
+			// Copy default prefs
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 		}
-		this._prefsLoadedCallback();
+		this.buildItemList();
+		this._dataLoadedCallback();
 	},
-	
-	savePrefs: function() {
-		Mojo.Log.info("Saving prefs");
-		this.depot.add(this.DEPOT_PREFS_KEY, this.prefs,
+
+	saveData: function(upgrading) {
+		Mojo.Log.info("Saving data");
+		var data = {
+			db: this.db,
+			crypt: {
+				salt: this._salt,
+				checkData: this._checkData
+			},
+			prefs: this.prefs
+		};
+		
+		this.depot.add(this.DEPOT_DATA_KEY, data,
 			function() {
-				Mojo.Log.info("Prefs saved");
+				Mojo.Log.info("Data saved");
 			},
 			function(error) {
-				var errmsg = "Failed to save preferences: " + error;
+				var errmsg = "Failed to save data: " + error;
 				Mojo.Log.error(errmsg);
-				throw new Error(errmsg);
 			}
 		);
+		if (this.firstRun || upgrading) {
+			Mojo.Log.info("Writing schema version");
+			this.depot.add(this.DEPOT_VERSION_KEY,
+				{ 'version': this.SCHEMA_VERSION },
+				function() {
+					Mojo.Log.info("Version saved");
+				},
+				function(error) {
+					var errmsg = "Failed to save version: " + error;
+					Mojo.Log.error(errmsg);
+				}
+			);
+		}
 	},
 	
 	/*
 	 * Clear the database and the items list, save the empty db.  If
-	 * factoryReset is true, clear prefs and salt, otherwise make a new salt
-	 * and checkData.
+	 * factoryReset is true, clear prefs, salt and checkData.
 	 */
 	clearDatabase: function(factoryReset) {
 		Mojo.Log.info("clearDatabase, factoryReset='%s'", factoryReset);
-		if (! this.passwordValid) {
+		if (! this.passwordValid()) {
 			Mojo.Log.warn("Attempt to clear db without valid password.");
 			return;
 		}
 		this.db = {};
 		this.items = [];
-		this.saveItems();
 		if (factoryReset) {
-			this._password = '';
+			this._key = '';
 			this._passwordTime = 0;
 			this._salt = '';
 			this._checkData = '';
 			this.firstRun = true;
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
-			this.savePrefs();
+			// Clear everything that was ever in the depot.
+			this.depot.removeAll(function() {
+					Mojo.Log.info("Depot cleared");
+				},
+				function(error) {
+					Mojo.Log.error("Failed to clear depot: ", error);
+				}
+			);
 		} else {
-			this._salt = this.generatePassword({characters: 12, all: true});
-			this._checkData = this.encrypt(this.CHECK_DATA_PLAINTEXT);
+			this.saveData();
 		}
-		this.saveCryptInfo();
 	},
 	
 	/*
@@ -347,14 +319,11 @@ var Ring = Class.create ({
 		if (model.num || model.all) { funcs.push(this._rndNum); }
 		if (model.sym || model.all) { funcs.push(this._rndSym); }
 		var numFuncs = funcs.length;
-		Mojo.Log.error("numFuncs", numFuncs);
 		var pw = '';
 		for (var i = 0; i < model.characters; i++) {
 			// Add a character from a randomly picked generator
-			Mojo.Log.error("addchar");
 			pw += funcs[Math.floor(Math.random() * numFuncs)]();
 		}
-		Mojo.Log.error("generated", pw);
 		return pw;
 	},
 	
@@ -385,7 +354,7 @@ var Ring = Class.create ({
 			var decrypted_obj = JSON.parse(decrypted_json);
 		}
 		catch(e) {
-			var errmsg = "Unable to decrypt key; " + e.name + ": " + e.message;
+			var errmsg = "Unable to decrypt item; " + e.name + ": " + e.message;
 			Mojo.Log.error(errmsg);
 			throw new Error(errmsg);
 		}
@@ -400,7 +369,7 @@ var Ring = Class.create ({
 	updateItem: function(oldTitle, newData) {
 		Mojo.Log.info("updateItem");
 		if (! this.passwordValid) {
-			Mojo.Log.warn("Attempt to clear db without valid password.");
+			Mojo.Log.warn("Attempt to update item without valid password.");
 			throw this.PasswordError;
 		}
 		var newTitle = newData.title;
@@ -438,8 +407,9 @@ var Ring = Class.create ({
 			// Newly created item
 			item.created = item.changed = item.viewed = new Date().getTime();
 		}
+		
 		this.db[newTitle] = item;
-		this.saveItems();
+		this.saveData();
 		this.buildItemList();
 		this.updateTimeout();
 	},
@@ -447,7 +417,7 @@ var Ring = Class.create ({
 	noteItemView: function(title) {
 		Mojo.Log.info("noteItemView");
 		this.db[title].viewed = new Date().getTime();
-		this.saveItems();
+		this.saveData();
 		this.buildItemList();
 		this.updateTimeout();
 	},
@@ -455,14 +425,14 @@ var Ring = Class.create ({
 	deleteItem: function(item) {
 		Mojo.Log.info("deleteItem");
 		delete this.db[item.title];
-		this.saveItems();
+		this.saveData();
 		this.buildItemList();
 		this.updateTimeout();
 	},
 	
 	buildItemList: function() {
+		var sortBy = this.prefs.sortBy || 'TITLE';
 		Mojo.Log.info("buildItemList, sortby:", this.prefs.sortBy);
-		var sortBy = this.prefs.sortBy;
 		this.items = Object.values(this.db).sort(function(x, y) {
 	      var a = x[sortBy];
 	      var b = y[sortBy];
@@ -478,23 +448,20 @@ var Ring = Class.create ({
 	
     encrypt: function(data) {
 		Mojo.Log.info("encrypting");
-		if (! this._password) {
-			Mojo.Log.warn("No password in encrypt.");
+		if (! this._key) {
+			Mojo.Log.warn("Attempt to encrypt w/o valid key.");
 			throw this.PasswordError;
 		}
-		var key = b64_sha256(this._salt + this._password);
-        var encrypted = Mojo.Model.encrypt(key, data);
+        var encrypted = Mojo.Model.encrypt(this._key, data);
         Mojo.Log.info("Mojo.Model.encrypt done, encrypted='%s'", encrypted);
         return encrypted;
 	},
 
-    decrypt: function(data, tempPass) {
+    decrypt: function(data, tempKey) {
 		Mojo.Log.info("decrypt");
-		var pass = tempPass ? tempPass : this._password;
-		var key = b64_sha256(this._salt + pass);
+		var key = tempKey ? tempKey : this._key;
 		Mojo.Log.info("Calling Mojo.Model.decrypt. data='%s'", data);
-        var plaintext = Mojo.Model.decrypt(key, data);
-        return plaintext;
+        return Mojo.Model.decrypt(key, data);
 	},
 	
 	formatDate: function(millis) {

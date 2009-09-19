@@ -133,7 +133,7 @@ PreferencesAssistant.prototype.deactivate = function(event) {
 				Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
 	}, this);
 	
-	Mojo.Event.stopListening("clearDatabaseButton", Mojo.Event.tap,
+	Mojo.Event.stopListening(this.controller.get("clearDatabaseButton"), Mojo.Event.tap,
 			this.clearDatabase.bind(this));
 	
 	Mojo.Event.stopListening(this.controller.stageController.document,

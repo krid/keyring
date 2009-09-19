@@ -1,3 +1,39 @@
+2009-09-19  Dirk Bergstrom  <krid@otisbean.com>
+
+	* app/models/ring.js (depot methods): Store all depot data under a single
+	key, which simplifies loading and storing considerably.
+	(password & encryption methods): Cache key (sha256 of salt+pass) instead
+	of password.
+	(_checkData, newPassword, validatePassword): Use _key as checkData
+	plaintext, instead of static value.
+	(SCHEMA_VERSION, _loadDepotData, saveData): Handle data versioning
+	and upgrading.
+	(clearDatabase): Fix password check.  Revise factory reset logic.
+	(buildItemList): Default to TITLE as sortKey.
+	
+	* app/models/upgrader.js: New classes to handle upgrading depot when
+	the schema changes.
+	
+	* app/assistants/item-assistant.js (setup): Clean up hiding of dates row.
+
+	* app/assistants/item-list-assistant.js (aboutToActivate): Reflect
+	new name of ring init method.
+
+	* app/assistants/preferences-assistant.js (deactivate): Properly stop
+	listening to clear db button.
+
+	* app/views/preferences/preferences-scene.html: Render checkboxes on a
+	single row.
+	
+	* app/views/item/item-scene.html: Give an id to url-row, as part of
+	date-row hiding cleanup.
+	
+	* app/views/item/generate-password-dialog.html: Render checkboxes on a
+	single row.
+	
+	* stylesheets/keyring.css: Add class to allow multiple checkboxes on a
+	single row.
+	
 2009-09-11  Dirk Bergstrom  <krid@otisbean.com>
 
 	* README.txt: A little something to help folks on GitHub understand.

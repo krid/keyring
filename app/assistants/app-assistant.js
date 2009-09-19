@@ -42,15 +42,16 @@ function AppAssistant(controller) {
 
 AppAssistant.prototype.setup = function() {
 	this.ring = new Ring();
-	   // Read version number from appinfo.json file
-	   var file = Mojo.appPath + 'appinfo.json',
-	   fileAJAX = new Ajax.Request(file, {
-	     method: 'get',
-	     parameters: '',
-	     evalJSON: 'force',
-	     onSuccess: this.fileReadCallback.bind(this),
-	     onFailure: function() { Mojo.Log.error("Failed to read appinfo.json"); }
-	   });
+    // Read version number from appinfo.json file
+    var file = Mojo.appPath + 'appinfo.json';
+    Mojo.Log.info("Reading appinfo.json from", file);
+    fileAJAX = new Ajax.Request(file, {
+	    method: 'get',
+	    parameters: '',
+	    evalJSON: 'force',
+	    onSuccess: this.fileReadCallback.bind(this),
+	    onFailure: function() { Mojo.Log.error("Failed to read appinfo.json"); }
+    });
 };
 
 AppAssistant.prototype.fileReadCallback = function(transport) {

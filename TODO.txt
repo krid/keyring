@@ -1,18 +1,3 @@
-PRE-LAUNCH TASKS
-
-* git
-  - git on localhost
-  - github account
-  - git eclipse plugin?
-  
-* icon
-
-* page on otisbean.com
-
-* build script
-
-* forum posting
-
 
 SHORT TERM FEATURES
 
@@ -20,11 +5,15 @@ SHORT TERM FEATURES
 
 * finish help page
   - note to users about swipe to switch to prev/next app.
-  
+
+* build script
+
+* Add optional context-help (typedown)   
+
+* Enter to accept for master password
+
 
 LONG TERM FEATURES
-
-* Clean up look & feel
 
 * Multiple item types
   - notes-only (secure memo)
@@ -33,8 +22,6 @@ LONG TERM FEATURES
 * short circuit filtering if filter string hasn't changed or is empty
 
 * More robust timeout system
-
-* improve hiding of added/changed/viewed in new item scene
 
 * autocomplete for username
 
@@ -51,100 +38,3 @@ LONG TERM FEATURES
 * Add a last-modified date to the entire db.
 
 * Use password generator on its own
-
-
-
-    /* The following functions are ported from Ked Password Manager, by Andrey
-     * Lebedev: http://kedpm.sourceforge.net/
-     * They are Copyright (C) 2003  Andrey Lebedev <andrey@micro.lt>
-     * Licensed under the GPL v2 or later.
-     */
-    
-    // FIXME If we're using ASCII this is correct.  With UTF-8 (1-4 bytes
-    // per char), it may or may not be right, depending on the actual chars.
-    BLOWFISH_BLOCK_SIZE: 8,
-    
-    END_MARKER: '\x00',
-    
-    encrypt: function(data) {
-        Mojo.Log.info("encrypting");
-        var key = b64_sha256(this._salt + this._password);
-        var noised = this._addNoise(data);
-        var rotated = this._rotate(noised);
-        Mojo.Log.info("Calling Mojo.Model.encrypt");
-        var encrypted = Mojo.Model.encrypt(key, rotated);
-        Mojo.Log.info("Mojo.Model.encrypt done, encrypted='%s'", encrypted);
-        return encrypted;
-    },
-
-    decrypt: function(data, tempPass) {
-        Mojo.Log.info("decrypt");
-        var pass = tempPass ? tempPass : this._password;
-        var key = b64_sha256(this._salt + pass);
-        Mojo.Log.info("Calling Mojo.Model.decrypt. data='%s'", data);
-        var rotated = Mojo.Model.decrypt(key, data);
-        Mojo.Log.info("Mojo.Model.decrypt done. rotated='%s'", rotated);
-        var plaintext = this._unrotate(rotated);
-        Mojo.Log.info("unrotated='%s'", plaintext);
-        return plaintext;
-    },
-
-    _addNoise: function(data) {
-        return data;
-        /* If we have a short string, I add noise after the first null prior to
-         * encrypting. This prevents empty blocks from looking identical to
-         * each other in the encrypted file. */
-        Mojo.Log.info("_addNoise");
-        var tmpdata = data + this.END_MARKER;
-        var reslen = (tmpdata.length / this.BLOWFISH_BLOCK_SIZE + 1) *
-            this.BLOWFISH_BLOCK_SIZE;
-        while (tmpdata.length < reslen) {
-            var rchar = String.fromCharCode(Math.floor(Math.random() * 256));
-            tmpdata += rchar;
-        }
-        return tmpdata;
-    },
-
-    _rotate: function(data) {
-        return data;
-        /* After we use _addNoise (above) we ensure blocks don't look identical
-         * unless all 8 chars in the block are part of the password.  This routine
-         * makes us use all three blocks equally rather than fill the first, then
-         * the second, etc.   This makes it so none of the blocks in the password
-         * will remain constant from save to save, even if the password is from
-         * 7-20 characters long.  Note that passwords from 21-24 characters start
-         * to fill blocks, and so will be constant. */
-        Mojo.Log.info("_rotate");
-        var plaintext = "";
-        var tmp = [];
-        var num_blocks = Math.ceil(data.length/this.BLOWFISH_BLOCK_SIZE);
-        for (var b = 0; b < num_blocks; b++) {
-            for (var i = 0; i < this.BLOWFISH_BLOCK_SIZE; i++) {
-                tmp[b * this.BLOWFISH_BLOCK_SIZE + i] = data[i * num_blocks + b];
-            }
-        }
-        for (var c = 0; c < tmp.length; c++) {
-            plaintext = plaintext + tmp[c];
-        }
-        return String(plaintext);
-    },
-
-    _unrotate: function(data) {
-        return data;
-        Mojo.Log.info("_unrotate");
-        var plaintext = "";
-        var tmp = [];
-        var num_blocks = Math.ceil(data.length / this.BLOWFISH_BLOCK_SIZE);
-        for (var b = 0; b < num_blocks; b++) {
-            for (var i = 0; i < this.BLOWFISH_BLOCK_SIZE; i++) {
-                tmp[i * num_blocks + b] = data[b * this.BLOWFISH_BLOCK_SIZE + i];
-            }
-        }
-        for (var c = 0; c < tmp.length; c++) {
-            if (tmp[c] == this.END_MARKER) {
-                break;
-            }
-            plaintext = plaintext + tmp[c];
-        }
-        return String(plaintext);
-    }
