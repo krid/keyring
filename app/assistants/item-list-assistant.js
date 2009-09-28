@@ -29,10 +29,8 @@ function NewPasswordDialogAssistant(sceneAssistant, ring) {
 NewPasswordDialogAssistant.prototype.setup = function(widget) {
 	this.widget = widget;
 	
-	this.sceneAssistant.controller.get("password-title").update($L("Create Master Password"));
-
 	var firstOpts = {
-		hintText: $L("Password"),
+		hintText: $L("Master password"),
 		autoFocus: true,
 		autoReplace: true,
 		textCase: Mojo.Widget.steModeLowerCase,
@@ -45,13 +43,12 @@ NewPasswordDialogAssistant.prototype.setup = function(widget) {
 			autoFocus: false,
 			autoReplace: true,
 			textCase: Mojo.Widget.steModeLowerCase,
-			enterSubmits: true,
-			changeOnKeyPress: true
+			enterSubmits: true
 	};
 	this.sceneAssistant.controller.setupWidget("password2", secondOpts,
 			this.password2Model = {value: ''});
     this.sceneAssistant.controller.listen("password2", Mojo.Event.propertyChange,
-            this.keyPressHandler.bind(this));
+            this.propChangeHandler.bind(this));
 	
 	this.okButtonModel = {label: $L("Ok"), disabled: false};
 	this.sceneAssistant.controller.setupWidget("okButton", {},
@@ -62,8 +59,8 @@ NewPasswordDialogAssistant.prototype.setup = function(widget) {
 			this.okHandler);
 };
 
-NewPasswordDialogAssistant.prototype.keyPressHandler = function(event) {
-	if (Mojo.Char.isEnterKey(event.originalEvent.keyCode)) {
+NewPasswordDialogAssistant.prototype.propChangeHandler = function(event) {
+	if (event.originalEvent.type == 'blur') {
         this.ok();
     }
 };
@@ -88,23 +85,11 @@ NewPasswordDialogAssistant.prototype.cleanup = function() {
 };
 
 
-
+/* The scene assistant itself */
 function ItemListAssistant(ring) {
-	/* this is the creator function for your scene assistant object. It will be passed all the
-	   additional parameters (after the scene name) that were passed to pushScene. The reference
-	   to the scene controller (this.controller) has not be established yet, so any initialization
-	   that needs the scene controller should be done in the setup function below. */
 	this.ring = ring;
 }
 
-/*
- * This will wait until the ring object has finished the asynchronous Depot
- * reads and fully initialized itself, and *then* do the setup.
- * 
- * FIXME This is probably not the best solution.  An interstitial screen might be good.
- * However, the initialization takes < 0.2 sec on the emulator, so I don't
- * think it much matters in practice.
- */
 ItemListAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
 	this.filterString = '';
@@ -169,7 +154,7 @@ ItemListAssistant.prototype.sortPopupHandler = function(command) {
 	}
 	Mojo.Log.info("sortPopupHandler, command='%s'", command);
 	this.ring.prefs.sortBy = command;
-	this.ring.savePrefs();
+	this.ring.saveData();
 	this.ring.buildItemList();
 	this.controller.modelChanged(this.ring);
 };
@@ -182,7 +167,7 @@ ItemListAssistant.prototype.tapped = function(event) {
 
 ItemListAssistant.prototype.pushItemScene = function(title) {
 	// Get the decrypted version of the item
-	var item
+	var item;
 	try {
 		item = this.ring.getItem(title);
 	}
@@ -249,7 +234,7 @@ ItemListAssistant.prototype.preActivationCallback = function(callback) {
 	Mojo.Log.info("preActivationCallback");
 	this.controller.modelChanged(this.ring);
 	callback();
-}
+};
 
 ItemListAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
@@ -279,7 +264,6 @@ ItemListAssistant.prototype.activate = function(event) {
 	this.cancelIdleTimeout = this.controller.setUserIdleTimeout(this.controller.sceneElement,
 			this.ring.clearPassword.bind(this.ring), this.ring.prefs.timeout);
 };
-
 
 ItemListAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before

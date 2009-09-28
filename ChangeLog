@@ -1,3 +1,39 @@
+2009-09-27  Dirk Bergstrom  <krid@otisbean.com>
+
+	* app/assistants/actions-assistant.js: New scene for import / export and
+	clear database.
+	
+	* app/assistants/item-list-assistant.js (NewPasswordDialogAssistant):
+	I18n for hints.  Enter now submits in second input.
+	(sortPopupHandler): Call correct save method.
+	(*): Various small syntax fixes.
+	(PasswordDialogAssistant, doIfPasswordValid): Move to app-assistant.
+	
+	* app/assistants/app-assistant.js (PasswordDialogAssistant): Move here
+	from item-list-assistant so it can be used globally.  Unlock button
+	no longer an activity button.
+	(Keyring.MenuModel): Add "Database Actions" menu item.
+	(setup): Use Mojo.appInfo.version instead of fancy ajax call.
+	(handleCommand): Check password before opening prefs and actions scenes.
+	
+	* app/assistants/preferences-assistant.js: Call correct save method.
+	Move clear database functionality to actions-assistant.
+	
+	* app/models/ring.js: Add methods & prefs for import/export.
+	(_dataObject): Helper method used by saveData and export.
+	(clearDatabase): Regenerate salt during factory reset.
+	
+	* app/models/upgrader.js: Handle import/export prefs.  Switch order of
+	classes to make jslint happy.
+	
+	* app/views/help/help-scene.html: Rearrange, add index, add section about
+	import/export.
+	
+	* app/views/item-list/new-password-dialog.html: Add welcome message and
+	instructions.
+	
+	* package.sh: Simple script to generate .ipk file.
+
 2009-09-19  Dirk Bergstrom  <krid@otisbean.com>
 
 	* app/models/ring.js (depot methods): Store all depot data under a single

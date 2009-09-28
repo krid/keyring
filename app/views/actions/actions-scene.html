@@ -1,12 +1,66 @@
-<div id="main" class="palm-hasheader">
-    <div class="palm-header center" id="main-hdr">
-      Keyring Actions
-    </div>
+<div class="palm-page-header">
+ <div class="palm-page-header-wrapper">
+  <div class="title left" id="main-hdr">
+      Keyring Database Actions
+  </div>
+ </div>
 </div>
 
-<div x-mojo-element="Button" id="databaseToClipboardButton"></div>
+<div class="palm-group">
+ <div class="palm-group-title">Export Data</div>
+ <div class="palm-list">
+  <div class="palm-row first">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div class="label">Destination</div>
+    <div id="destination" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+  <div class="palm-row last">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div x-mojo-element="Button" id="exportButton"></div>
+   </div>
+  </div>
+ </div>
+</div>
 
-<div class="palm-divider"></div>
+<div class="palm-group">
+ <div class="palm-group-title">Import/Restore Data</div>
+ <div class="palm-list">
+  <div class="palm-row first">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div class="label">Source</div>
+    <div id="source" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+  <div class="palm-row">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div class="label">Resolution</div>
+    <div id="resolution" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+  <div class="palm-row">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div class="label">Import Preferences</div>
+    <div id="prefs" x-mojo-element="ToggleButton" class="left"></div>
+   </div>
+  </div>
+  <div class="palm-row last">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div x-mojo-element="Button" id="importButton"></div>
+   </div>
+  </div>
+ </div>
+</div>
 
-<div x-mojo-element="Button" id="clearDatabaseButton"></div>
+<div class="palm-group">
+ <div class="palm-group-title">Clear Database</div>
+ <div class="palm-list">
+  <div class="palm-row single">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div x-mojo-element="Button" id="clearDatabaseButton"></div>
+   </div>
+  </div>
+ </div>
+</div>
+
 

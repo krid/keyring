@@ -40,6 +40,14 @@ var Ring = Class.create ({
 	_checkData: '',
 	
 	_upgradeCheckData: null,
+
+	// Constants for import conflict handling
+	resolutions: {
+		keep: "Keep existing",
+		import_: "Use import",
+		newer: "Use newer",
+		update: "Update only"
+	},
 	
 	DEFAULT_PREFS: {
 		sortBy: 'TITLE',
@@ -50,9 +58,27 @@ var Ring = Class.create ({
 			cap: true,
 			num: true,
 			sym: false
+		},
+		import_: {
+			/* Import from a file on /media/internal by default.  Also supports
+			 * import from 'clipboard' & 'url'. */
+			source: 'url',
+			// Only overwrite existing items with newer data
+			/* XXX??? I'd like to refer to "this.resolutions.newer", but there
+			 * is no "this" when we get here. */ 
+			resolution: 'newer',
+			// Don't import preferences
+			prefs: false,
+			// Default filename & URL for import
+			filename: '',
+			url: ''
+		},
+		export_: {
+			destination: 'clipboard',
+			url: ''
 		}
 	},
-
+	
 	prefs: {},
 	
 	errors: [],
@@ -107,7 +133,7 @@ var Ring = Class.create ({
 			Mojo.Log.warn("Changing pw not supported");
 			throw new Error("Changing the password is not currently supported.");
 		}
-		this._key = b64_sha256(this._salt + password);;
+		this._key = b64_sha256(this._salt + password);
 		this._checkData = this.encrypt(this._key);
 		this.saveData();
 		this.updateTimeout();
@@ -221,9 +247,8 @@ var Ring = Class.create ({
 		this._dataLoadedCallback();
 	},
 
-	saveData: function(upgrading) {
-		Mojo.Log.info("Saving data");
-		var data = {
+	_dataObject: function() {
+		return {
 			db: this.db,
 			crypt: {
 				salt: this._salt,
@@ -231,8 +256,11 @@ var Ring = Class.create ({
 			},
 			prefs: this.prefs
 		};
-		
-		this.depot.add(this.DEPOT_DATA_KEY, data,
+	},
+	
+	saveData: function(upgrading) {
+		Mojo.Log.info("Saving data");
+		this.depot.add(this.DEPOT_DATA_KEY, this._dataObject(),
 			function() {
 				Mojo.Log.info("Data saved");
 			},
@@ -246,10 +274,10 @@ var Ring = Class.create ({
 			this.depot.add(this.DEPOT_VERSION_KEY,
 				{ 'version': this.SCHEMA_VERSION },
 				function() {
-					Mojo.Log.info("Version saved");
+					Mojo.Log.info("Schema version saved");
 				},
 				function(error) {
-					var errmsg = "Failed to save version: " + error;
+					var errmsg = "Failed to save schema version: " + error;
 					Mojo.Log.error(errmsg);
 				}
 			);
@@ -264,14 +292,97 @@ var Ring = Class.create ({
 		var data = {
 			schema_version: this.SCHEMA_VERSION,
 			salt: this._salt,
-			db: this.encrypt(JSON.stringify(this.db))
+			db: this.encrypt(JSON.stringify(this._dataObject()))
 		};
-		return data;
+		return JSON.stringify(data);
+	},
+	
+	/*
+	 * Import data.
+	 * 
+	 * On success, calls callback with args of true and the number of items
+	 * imported.  On error, passes false and an error message.
+	 */
+	importData: function(jsonData, behavior, usePrefs, password, callback) {
+		var data, e, errmsg, obj, decryptedJson, tmpKey, reEncrypt, emptyDb;
+		Mojo.Log.info("Importing behavior=%s, usePrefs=%s", behavior, usePrefs);
+		try {
+			data = JSON.parse(jsonData);
+		}
+		catch(e) {
+			errmsg = "Unable to parse data; " + e.name + ": " + e.message;
+			Mojo.Log.info(errmsg);
+			callback(false, errmsg);
+		}
+		if (data.schema_version != this.SCHEMA_VERSION) {
+			// TODO handle version mismatch
+			errmsg = "Incompatible version in import data";
+			Mojo.Log.info(errmsg);
+			callback(false, errmsg);
+		}
+		if (password || data.salt != this._salt) {
+			// imported data encrypted with a different password or salt
+			tmpKey = b64_sha256(data.salt + password);
+			reEncrypt = true;
+		} else {
+			tmpKey = this._key;
+			reEncrypt = false;
+		}
+		decryptedJson = this.decrypt(data.db, tmpKey);
+		try {
+			obj = JSON.parse(decryptedJson);
+		}
+		catch(e) {
+			errmsg = "Unable to parse decrypted data; " + e.name + ": " +
+				e.message;
+			Mojo.Log.info(errmsg);
+			callback(false, errmsg);
+		}
+		if (usePrefs) {
+			this.prefs = obj.prefs;
+		}
+		emptyDb = (Object.keys(this.db).length === 0);
+		// Now, let's see what we do with the imported items
+		var added = 0, updated = 0;
+		Object.values(obj.db).each(function(item) {
+			var used = false;
+			var title = item.title;
+			Mojo.Log.info("processing", title);
+			var existing = this.db[title];
+			if (existing) {
+				if (behavior === this.resolutions.import_) {
+					this.db[title] = item;
+					updated++;
+					used = true;
+				} else if ((behavior === this.resolutions.update ||
+						    behavior === this.resolutions.newer) &&
+						    existing.changed < item.changed) {
+					this.db[title] = item;
+					updated++;
+					used = true;
+				}
+			} else if (emptyDb || behavior === this.resolutions.import_ ||
+					   behavior === this.resolutions.keep) {
+				this.db[title] = item;
+				added++;
+				used = true;
+			}
+			Mojo.Log.info("used", used);
+			if (used && reEncrypt) {
+				// Need to decrypt using import's key, and re-encrypt with ours
+				var tmpData = this.decrypt(item.encrypted_data, tmpKey);
+				item.encrypted_data = this.encrypt(tmpData);
+			}
+		}, this);
+		this.buildItemList();
+		this.saveData();
+		this.itemsReSorted = true;
+		callback(true, updated, added);
 	},
 	
 	/*
 	 * Clear the database and the items list, save the empty db.  If
-	 * factoryReset is true, clear prefs, salt and checkData.
+	 * factoryReset is true, clear prefs and checkData & generate a new salt.
 	 */
 	clearDatabase: function(factoryReset) {
 		Mojo.Log.info("clearDatabase, factoryReset='%s'", factoryReset);
@@ -284,8 +395,8 @@ var Ring = Class.create ({
 		if (factoryReset) {
 			this._key = '';
 			this._passwordTime = 0;
-			this._salt = '';
 			this._checkData = '';
+			this._salt = this.generatePassword({characters: 12, all: true});
 			this.firstRun = true;
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 			// Clear everything that was ever in the depot.
@@ -360,12 +471,13 @@ var Ring = Class.create ({
 	
 	getItem: function(title) {
 		Mojo.Log.info("getItem");
+		var decrypted_obj;
 		// Get a copy of the item, since we'll be adding in unencrypted data
 		var item = Object.clone(this.db[title]);
 		var encrypted_data = item.encrypted_data;
 		try {
 			var decrypted_json = this.decrypt(encrypted_data);
-			var decrypted_obj = JSON.parse(decrypted_json);
+			decrypted_obj = JSON.parse(decrypted_json);
 		}
 		catch(e) {
 			var errmsg = "Unable to decrypt item; " + e.name + ": " + e.message;
@@ -484,10 +596,10 @@ var Ring = Class.create ({
 			return '';
 		}
 		var date = new Date(millis);
-		date.getHours()
+		date.getHours();
 		return date.getFullYear() + '-' + this._zeropad(date.getMonth() + 1) + 
 			'-' + this._zeropad(date.getDate()) + ' ' +
-			this._zeropad(date.getHours()) + ':' + this._zeropad(date.getMinutes())
+			this._zeropad(date.getHours()) + ':' + this._zeropad(date.getMinutes());
 	},
 	
 	_zeropad: function(val) {

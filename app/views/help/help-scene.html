@@ -1,7 +1,9 @@
-<div id="main" class="palm-hasheader">
-    <div class="palm-header center" id="main-hdr">
+<div class="palm-page-header">
+ <div class="palm-page-header-wrapper">
+  <div class="title left" id="main-hdr">
       Keyring Help
-    </div>
+  </div>
+ </div>
 </div>
 
 <div class="palm-text-wrapper">
@@ -9,12 +11,24 @@
 <div class="palm-info-text">
 <h3>Keyring - Easy password management on your phone</h3>
 
-<h4>About Keyring</h4>
 Keyring for webOS stores your account information securely, so you don't have
 to rely on your memory, or on little scraps of paper.  Sensitive data are
 encrypted using the Blowfish algorithm, and protected by a master password.
 </div>
 
+<div class="palm-info-text">
+<small>
+<a href="#adding">Adding Items</a> | 
+<a href="#generator">Password Generator</a> | 
+<a href="#list">Item List</a> | 
+<a href="#import">Import/Export</a> | 
+<a href="#coming">Coming Soon</a> |
+<a href="#license">License</a>
+<!-- <a href="#"></a> | --> 
+</small>
+</div>
+
+<a id="adding"></a>
 <div class="palm-info-text">
 <h4>Adding Items</h4>
 Once you have set a master password (you should choose a secure one, at least
@@ -23,6 +37,7 @@ URL and notes fields are stored encrypted, while title and the created, changed
 and last-viewed dates are unencrypted. 
 </div>
 
+<a id="generator"></a>
 <div class="palm-info-text">
 <h4>Password Generator</h4>
 You can choose your own passwords, or use the built in password generator.  This
@@ -30,14 +45,36 @@ allows you to pick the number and types of characters.  The defaults can be
 set in the Preferences scene. 
 </div>
 
+<a id="list"></a>
 <div class="palm-info-text">
-<h4>Key List</h4>
+<h4>Item List</h4>
 The list of keys can be sorted by title, or by any of the date fields (most
 recent on top).  The list supports typedown filtering, so it's easy to find
 a particular key.
 </div>
 
+<a id="import"></a>
+<div class="palm-info-text">
+<h4>Import / Export</h4>
+You may export your Keyring database, import new items, or clear the entire
+database via the "Database Actions" menu.  Data may be exported to the clipboard,
+or to a URL (a POST request will be sent, with a single "data" parameter
+containing the standard export format).  Data may be imported from the clipboard,
+a file on the media partition, or a URL (which should return output in the format
+that export emits).
+<br/>
+When importing, you may specify the "resolution", which dictates how imported
+data will be integrated with existing data:
+<ul>
+<li><b>Keep existing</b> - Imported data will not overwrite existing data.</li>
+<li><b>Use import</b> - Imported data overwrites existing data.</li>
+<li><b>Use newer</b> - Use whichever data is newer.</li>
+<li><b>Update only</b> - Only import newer versions of existing data (skips
+imported items that are not already in the list).</li>
+</ul> 
+</div>
 
+<a id="coming"></a>
 <div class="palm-info-text">
 <h4>Upcoming Features</h4>
 <ul>
@@ -57,7 +94,7 @@ a particular key.
 
 <li> A way to open the URL in the browser.</li>
 
-<li> A way to access Keyring data on your computer (will include backup).</li>
+<li> A way to access Keyring data on your computer.</li>
 
 <li> A last-modified date to the entire db.</li>
 
@@ -66,6 +103,7 @@ a particular key.
 </div>
 
 
+<a id="license"></a>
 <div class="palm-info-text">
 <h4>License</h4>
 

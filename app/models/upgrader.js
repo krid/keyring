@@ -22,22 +22,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Upgrader = Class.create ({
-	
-	worker: null,
-	
-	initialize: function(version, ring) {
-		Mojo.Log.info("Initializing upgrader for version", version);
-		if (version == 0) {
-			this.worker = new _V0(ring);
-		}
-	},
-
-	upgrade: function() {
-		this.worker.upgrade();
-	}
-});
-
 var _V0 = Class.create ({
 
 	DEPOT_ITEMS_KEY: "items",
@@ -91,6 +75,10 @@ var _V0 = Class.create ({
 				},
 				prefs: this.prefs
 			};
+			// Add in new "import" & "export" prefs
+			dataObj.prefs.import_ = this.ring.DEFAULT_PREFS.import_;
+			dataObj.prefs.export_ = this.ring.DEFAULT_PREFS.export_;
+			
 			this.ring._loadDataHandler(dataObj);
 			this.ring.saveData(true);
 			
@@ -209,5 +197,21 @@ var _V0 = Class.create ({
 			Mojo.Log.info("V0 upgrader found no prefs object");
 		}
 		this._prefsLoadedCallback();
+	}
+});
+
+var Upgrader = Class.create ({
+	
+	worker: null,
+	
+	initialize: function(version, ring) {
+		Mojo.Log.info("Initializing upgrader for version", version);
+		if (version === 0) {
+			this.worker = new _V0(ring);
+		}
+	},
+
+	upgrade: function() {
+		this.worker.upgrade();
 	}
 });

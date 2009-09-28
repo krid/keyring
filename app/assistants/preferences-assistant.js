@@ -45,6 +45,7 @@ PreferencesAssistant.prototype.setup = function() {
         this.ring.prefs);
 	this.fieldsToListen.push("sortBy");
 
+	// Character types for password generator
     Object.keys(this.ring.prefs.generatorPrefs).each(function(attr) {
     	if (attr == "characters") { return; }
         this.controller.setupWidget(attr+"Field",
@@ -52,6 +53,7 @@ PreferencesAssistant.prototype.setup = function() {
         this.fieldsToListen.push(attr+"Field");
     }, this);
 
+    // RadioButton for number of characters in password generator
     this.controller.setupWidget("characters",
     	{modelProperty: "characters",
    	     choices: [{label: 6, value: 6}, {label: 8, value: 8}, 
@@ -66,7 +68,7 @@ PreferencesAssistant.prototype.setup = function() {
 PreferencesAssistant.prototype.fieldUpdated = function(event) {
 	if (event.value != event.oldValue) {
 		Mojo.Log.info("field '%s' changed", event.property);
-		this.ring.savePrefs();
+		this.ring.saveData();
 		if (event.property == "sortBy") {
 			this.ring.buildItemList();
 			this.ring.itemsReSorted = true;

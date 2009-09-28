@@ -10,8 +10,6 @@ SHORT TERM FEATURES
 
 * Add optional context-help (typedown)   
 
-* Enter to accept for master password
-
 
 LONG TERM FEATURES
 
@@ -30,8 +28,6 @@ LONG TERM FEATURES
 * copy to clipboard for username or password
 
 * go to URL (or make it clickable)
-
-* Need backup / sync solution.  Dump JSON to media partition...
 
 * Need to have a way to access data via the console (lost phone)
 

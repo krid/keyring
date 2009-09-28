@@ -31,7 +31,7 @@ Keyring.MenuModel = {
     items: [ 
         {label: $L("About Keyring..."), command: "do-aboutKeyring"},
         Mojo.Menu.editItem,
-        {label: $L("Actions..."), command: "do-keyRingActions"},    
+        {label: $L("Database Actions..."), command: "do-keyRingActions"},    
         {label: $L("Preferences..."), command: "do-keyRingPrefs"},    
         {label: $L("Help..."), command: "do-keyRingHelp"}            
     ]
@@ -43,21 +43,7 @@ function AppAssistant(controller) {
 
 AppAssistant.prototype.setup = function() {
 	this.ring = new Ring();
-    // Read version number from appinfo.json file
-    var file = Mojo.appPath + 'appinfo.json';
-    Mojo.Log.info("Reading appinfo.json from", file);
-    fileAJAX = new Ajax.Request(file, {
-	    method: 'get',
-	    parameters: '',
-	    evalJSON: 'force',
-	    onSuccess: this.fileReadCallback.bind(this),
-	    onFailure: function() { Mojo.Log.error("Failed to read appinfo.json"); }
-    });
-};
-
-AppAssistant.prototype.fileReadCallback = function(transport) {
-	var Resp = transport.responseJSON;
-	Keyring.version = Resp.version;
+	Keyring.version = Mojo.appInfo.version;
 };
 
 AppAssistant.prototype.windowDeactivated = function() {
@@ -167,10 +153,8 @@ PasswordDialogAssistant = Class.create ({
 	        this.keyPressHandler.bind(this));
 	    
 	    this.unlockButtonModel = {label: $L("Unlock"), disabled: false};
-	    this.controller.setupWidget("unlockButton", {type: Mojo.Widget.activityButton},
+	    this.controller.setupWidget("unlockButton", {type: Mojo.Widget.defaultButton},
 	        this.unlockButtonModel);
-	    this.unlockButtonActive = false;
-	    this.unlockButton = this.controller.get("unlockButton");
 	    this.unlockHandler = this.unlock.bindAsEventListener(this);
 	    this.controller.listen("unlockButton", Mojo.Event.tap,
 	        this.unlockHandler);
