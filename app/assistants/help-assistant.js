@@ -18,21 +18,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-function HelpAssistant() {
-}
+function HelpAssistant(ring) {
+	this.ring = ring;
+};
 
 HelpAssistant.prototype.setup = function() {
-}
+	if (this.ring.errors.length > 0) {
+		/* There are errors, display them unobtrusively, so that we can
+		 * ask users to go look for them. */
+		this.controller.get("errors").update("ERRORS:\n\n" +
+			this.ring.errors.join("\n")).show();
+		this.controller.get("errors-link").show();
+	}
+};
+
+/* Don't leave an item visible when we minimize. */
+HelpAssistant.prototype.timeoutOrDeactivate = function() {
+	Mojo.Log.info("Help scene timeoutOrDeactivate");
+	this.ring.clearPassword();
+	this.controller.stageController.popScenesTo("item-list");
+};
 
 HelpAssistant.prototype.activate = function(event) {
 	this.cancelIdleTimeout = this.controller.setUserIdleTimeout(this.controller.sceneElement,
-			this.ring.clearPassword.bind(this.ring), this.ring.prefs.timeout);
-}
+			this.timeoutOrDeactivate.bind(this), this.ring.prefs.timeout);
+};
 
 
 HelpAssistant.prototype.deactivate = function(event) {
 	this.cancelIdleTimeout();
-}
+};
 
 HelpAssistant.prototype.cleanup = function(event) {
-}
+};

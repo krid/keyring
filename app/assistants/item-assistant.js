@@ -213,7 +213,7 @@ ItemAssistant.prototype.timeoutOrDeactivate = function() {
 	}
 	this.timedOut = true;
 	this.ring.clearPassword();
-	this.controller.stageController.popScene();
+	this.controller.stageController.popScenesTo("item-list");
 };
 
 ItemAssistant.prototype.handleCommand = function(event) {

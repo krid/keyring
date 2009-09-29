@@ -52,7 +52,7 @@ ActionsAssistant.prototype.setup = function() {
 	// Build choices list for conflict resolution
 	var choices = [];
 	Object.keys(this.ring.resolutions).each(function(key) {
-		choices.push({label: this[key], value: key});
+		choices.push({label: this[key].label, value: this[key].code});
 	}, this.ring.resolutions);
 	choices.sort();
 	this.controller.setupWidget("resolution",
@@ -120,10 +120,14 @@ ActionsAssistant.prototype.export_ = function() {
 
 ActionsAssistant.prototype.exportToUrl = function(url) {
     Mojo.Log.info("POSTing export file to", url);
+    // Strip whitespace
+    url = url.replace(/^\s*(.+?)\s*$/, '$1');
+	if(url.substring(0,4) != 'http') {
+		url = 'http://' + url;
+	}
     this.ring.prefs.export_.url = url;
     this.ring.saveData();
 	var encrypted = this.ring.exportableData();
-	Mojo.Log.info("\n\n", encrypted, "\n\n");
     var tmp = new Ajax.Request(url, {
 	    method: 'post',
 	    parameters: new Hash({data: encrypted}),
@@ -199,13 +203,15 @@ ActionsAssistant.prototype.importFileOrUrl = function(path, password) {
 		fullPath = '/media/internal' + filename;
 		this.ring.prefs.import_.filename = path;
 	}
+	// Save the prefs
+	this.ring.saveData();
     Mojo.Log.info("Reading import data from", fullPath);
     var tmp = new Ajax.Request(fullPath, {
 	    method: 'get',
 	    parameters: '',
 	    evalJSON: false,
 	    evalJS: false,
-	    onSuccess: function(transport, password) {
+	    onSuccess: function(transport) {
 			var importData = transport.responseText;
 			this.ring.importData(importData,
 				this.ring.prefs.import_.resolution,
@@ -239,7 +245,7 @@ ActionsAssistant.prototype.clearDatabase = function() {
 		if (value.search("yes") > -1) {
 			this.ring.clearDatabase(value == "yes-factory");
 			this.ring.itemsReSorted = true;
-			this.controller.stageController.popScene();
+			this.controller.stageController.popScenesTo("item-list");
 		}
 	}.bind(this),
 	title: $L("Clear Database"),
@@ -256,7 +262,7 @@ ActionsAssistant.prototype.clearDatabase = function() {
 ActionsAssistant.prototype.timeoutOrDeactivate = function() {
 	Mojo.Log.info("Actions scene timeoutOrDeactivate");
 	this.ring.clearPassword();
-	this.controller.stageController.popScene();
+	this.controller.stageController.popScenesTo("item-list");
 };
 
 ActionsAssistant.prototype.activate = function(event) {

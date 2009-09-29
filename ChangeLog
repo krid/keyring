@@ -1,3 +1,38 @@
+2009-09-28  Dirk Bergstrom  <krid@otisbean.com>
+
+Fix a bug in V0 upgrader.  Add user-visible display of ring.errors.
+
+	* app/assistants/help-assistant.js (setup): Display any ring.errors at the
+	bottom of the scene, so we can get users to tell us what's wrong.
+	(timeoutOrDeactivate): Pop to items-list scene explicitly, to avoid
+	exposing a key.
+	
+	* app/assistants/preferences-assistant.js (timeoutOrDeactivate): Pop to
+	items-list scene explicitly, to avoid exposing a key.
+	
+	* app/assistants/actions-assistant.js (timeoutOrDeactivate): Pop to
+	items-list scene explicitly, to avoid exposing a key.
+	(clearDatabase): Pop to items-list explicitly.
+	(exportToUrl): Clean up URL prior to using it.
+	(setup): Adjust to new ring.resolutions format.
+	(importFileOrUrl): Save URL/file prefs before importing.  Fix password
+	argument passing bug.
+	
+	* app/assistants/item-assistant.js (timeoutOrDeactivate): Pop to
+	items-list scene explicitly, to avoid exposing a key.
+	
+	* app/models/ring.js (errors): Always push error string into errors array,
+	so that they can be displayed to the user.
+	(importData, resolutions): Fix a bug in resolutions definition and
+	handling.
+	
+	* app/models/upgrader.js (processData): Wrap in try/catch block so
+	we can properly report errors.
+	(loadPrefs, processData): Fix null dereference bug in prefs handling.
+	(loadDepotData, deleteOldData): Better error reporting.
+
+	* app/views/help/help-scene.html: Added optional errors display.
+
 2009-09-27  Dirk Bergstrom  <krid@otisbean.com>
 
 	* app/assistants/actions-assistant.js: New scene for import / export and

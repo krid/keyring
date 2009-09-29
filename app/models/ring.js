@@ -43,10 +43,10 @@ var Ring = Class.create ({
 
 	// Constants for import conflict handling
 	resolutions: {
-		keep: "Keep existing",
-		import_: "Use import",
-		newer: "Use newer",
-		update: "Update only"
+		keep: {code: "keep", label: "Keep existing"},
+		import_: {code: "import", label: "Use import"},
+		newer: {code: "newer", label: "Use newer"},
+		update: {code: "update", label: "Update only"}
 	},
 	
 	DEFAULT_PREFS: {
@@ -117,7 +117,7 @@ var Ring = Class.create ({
 			null,
 			function(error) {
 				var errmsg = "Failed to open database: " + error;
-				errors.push(errmsg);
+				this.errors.push(errmsg);
 				Mojo.Log.error(errmsg);
 			}
 		);
@@ -191,8 +191,9 @@ var Ring = Class.create ({
 		this.depot.get(this.DEPOT_VERSION_KEY,
 			this._loadDepotData.bind(this),
 			function(error) {
-				// FIXME proper error handling
-			    Mojo.Log.error("Could not init Depot reader: " + error);
+				var errmsg = "Could not init Depot reader: " + error;
+				this.errors.push(errmsg);
+			    Mojo.Log.error(errmsg);
 	        }
 		);
 	},
@@ -212,8 +213,9 @@ var Ring = Class.create ({
 			this.depot.get(this.DEPOT_DATA_KEY,
 				this._loadDataHandler.bind(this),
 				function(error) {
-					// FIXME proper error handling
-					Mojo.Log.error("Could not fetch data: " + error);
+					var errmsg = "Could not fetch data: " + error;
+					this.errors.push(errmsg);
+				    Mojo.Log.error(errmsg);
 				}
 			);
 		}
@@ -228,8 +230,9 @@ var Ring = Class.create ({
 			this.depotDataLoaded = true;
 			Mojo.Log.info("Depot data loaded");
 		} else {
-			Mojo.Log.error("No data in Depot");
-			// FIXME error handling
+			var errmsg = "No data in Depot";
+			this.errors.push(errmsg);
+		    Mojo.Log.error(errmsg);
 		}
 		if (this._salt) {
 			this.firstRun = false;
@@ -266,6 +269,7 @@ var Ring = Class.create ({
 			},
 			function(error) {
 				var errmsg = "Failed to save data: " + error;
+				this.errors.push(errmsg);
 				Mojo.Log.error(errmsg);
 			}
 		);
@@ -278,6 +282,7 @@ var Ring = Class.create ({
 				},
 				function(error) {
 					var errmsg = "Failed to save schema version: " + error;
+					this.errors.push(errmsg);
 					Mojo.Log.error(errmsg);
 				}
 			);
@@ -304,7 +309,7 @@ var Ring = Class.create ({
 	 * imported.  On error, passes false and an error message.
 	 */
 	importData: function(jsonData, behavior, usePrefs, password, callback) {
-		var data, e, errmsg, obj, decryptedJson, tmpKey, reEncrypt, emptyDb;
+		var data, errmsg, obj, decryptedJson, tmpKey, reEncrypt, emptyDb;
 		Mojo.Log.info("Importing behavior=%s, usePrefs=%s", behavior, usePrefs);
 		try {
 			data = JSON.parse(jsonData);
@@ -350,19 +355,20 @@ var Ring = Class.create ({
 			Mojo.Log.info("processing", title);
 			var existing = this.db[title];
 			if (existing) {
-				if (behavior === this.resolutions.import_) {
+				if (behavior === this.resolutions.import_.code) {
 					this.db[title] = item;
 					updated++;
 					used = true;
-				} else if ((behavior === this.resolutions.update ||
-						    behavior === this.resolutions.newer) &&
+				} else if ((behavior === this.resolutions.update.code ||
+						    behavior === this.resolutions.newer.code) &&
 						    existing.changed < item.changed) {
 					this.db[title] = item;
 					updated++;
 					used = true;
 				}
-			} else if (emptyDb || behavior === this.resolutions.import_ ||
-					   behavior === this.resolutions.keep) {
+			} else if (emptyDb || behavior === this.resolutions.import_.code ||
+					   behavior === this.resolutions.keep.code ||
+					   behavior === this.resolutions.newer.code) {
 				this.db[title] = item;
 				added++;
 				used = true;
@@ -404,7 +410,9 @@ var Ring = Class.create ({
 					Mojo.Log.info("Depot cleared");
 				},
 				function(error) {
-					Mojo.Log.error("Failed to clear depot: ", error);
+					var errmsg = "Failed to clear depot: " + error;
+					this.errors.push(errmsg);
+					Mojo.Log.error(errmsg);
 				}
 			);
 		} else {
@@ -482,6 +490,7 @@ var Ring = Class.create ({
 		catch(e) {
 			var errmsg = "Unable to decrypt item; " + e.name + ": " + e.message;
 			Mojo.Log.error(errmsg);
+			this.errors.push(errmsg);
 			throw new Error(errmsg);
 		}
 		for (var i = 0; i < this.ENCRYPTED_ATTRS.length; i++) {

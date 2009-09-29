@@ -35,8 +35,6 @@ var _V0 = Class.create ({
 	_cryptInfoLoadedCallback: function() {},
 	_prefsLoadedCallback: function() {},
 
-	errors: [],
-
 	db: null,
 	prefs: null,
 	_salt: '',
@@ -66,34 +64,44 @@ var _V0 = Class.create ({
 	processData: function(timedOut) {
 		Mojo.Log.info("V0 upgrader processing data; timedOut='%s'", timedOut);
 		if (this.db || this._checkData || this.prefs) {
-			// Found actual version 1/2 data
-			var dataObj = {
-				db: this.db,
-				crypt: {
-					salt: this._salt,
-					checkData: this._checkData
-				},
-				prefs: this.prefs
-			};
-			// Add in new "import" & "export" prefs
-			dataObj.prefs.import_ = this.ring.DEFAULT_PREFS.import_;
-			dataObj.prefs.export_ = this.ring.DEFAULT_PREFS.export_;
-			
-			this.ring._loadDataHandler(dataObj);
-			this.ring.saveData(true);
-			
-			// Add a helper function to handle the old checkData format
-			this.ring._upgradeCheckData = function(tmpKey) {
-				Mojo.Log.info("Upgrading checkData");
-				if (this.decrypt(this._checkData, tmpKey) == 'elderberries') {
-					this._key = tmpKey;
-					this._checkData = this.encrypt(tmpKey);
+			Mojo.Log.info("Found actual version 1/2 data");
+			try {
+				if (this.prefs) {
+					// Add in new "import" & "export" prefs
+					this.prefs.import_ = Object.clone(this.ring.DEFAULT_PREFS.import_);
+					this.prefs.export_ = Object.clone(this.ring.DEFAULT_PREFS.export_);
+				} else {
+					this.prefs = Object.clone(this.ring.DEFAULT_PREFS);
 				}
-			}.bind(this.ring);
-
-			// Finally, toss out the old data
-			this.deleteOldData();
-			
+				var dataObj = {
+					db: this.db,
+					crypt: {
+						salt: this._salt,
+						checkData: this._checkData
+					},
+					prefs: this.prefs
+				};
+				this.ring._loadDataHandler(dataObj);
+				this.ring.saveData(true);
+				
+				// Add a helper function to handle the old checkData format
+				this.ring._upgradeCheckData = function(tmpKey) {
+					Mojo.Log.info("Upgrading checkData");
+					if (this.decrypt(this._checkData, tmpKey) == 'elderberries') {
+						this._key = tmpKey;
+						this._checkData = this.encrypt(tmpKey);
+					}
+				}.bind(this.ring);
+	
+				// Finally, toss out the old data
+				this.deleteOldData();
+			}
+			catch(e) {
+				var errmsg = "Severe Upgrader error converting version 1/2 data: " +
+					e.name + ": " + e.message;
+				this.ring.errors.push(errmsg);
+				Mojo.Log.error(errmsg);
+			}
 		} else {
 			Mojo.Log.info("Upgrader found no version 1/2 data, this is the first run");
 			this.ring._salt = this.ring.generatePassword({characters: 12, all: true});
@@ -117,7 +125,10 @@ var _V0 = Class.create ({
 							Mojo.Log.info("VO upgrader discarded old depot key '%s'", key);
 						},
 						function(error) {
-							Mojo.Log.error("V0 upgrader failed to discard key '%s': %s", key, error);
+							var errmsg = "V0 upgrader failed to overwrite key '" +
+								key + "': " + error;
+							this.ring.errors.push(errmsg);
+							Mojo.Log.error(errmsg);
 						}
 					);
 				}
@@ -128,7 +139,10 @@ var _V0 = Class.create ({
 							Mojo.Log.info("VO upgrader overwrote old depot key '%s'", key);
 						},
 						function(error) {
-							Mojo.Log.error("V0 upgrader failed to overwrite key '%s': %s", key, error);
+							var errmsg = "V0 upgrader failed to overwrite key '" +
+								key + "': " + error;
+							this.ring.errors.push(errmsg);
+							Mojo.Log.error(errmsg);
 						}
 					);
 				}
@@ -149,20 +163,26 @@ var _V0 = Class.create ({
 			this.loadItems.bind(this),
 			function(error) {
 				this._itemsLoadedCallback();
-			    Mojo.Log.error("V0 upgrader Could not fetch items: " + error);
+				var errmsg = "V0 upgrader Could not fetch items: " + error;
+				this.ring.errors.push(errmsg);
+				Mojo.Log.error(errmsg);
 	        }
 		);
 		this.depot.get(this.DEPOT_CRYPT_KEY,
 			this.loadCryptInfo.bind(this),
 			function(error) {
 				this._cryptInfoLoadedCallback();
-				Mojo.Log.error("V0 upgrader Could not fetch crypt-info: " + error);
+				var errmsg = "V0 upgrader Could not fetch crypt-info: " + error;
+				this.ring.errors.push(errmsg);
+				Mojo.Log.error(errmsg);
 			}
 		);
 		this.depot.get(this.DEPOT_PREFS_KEY,
 			this.loadPrefs.bind(this),
 			function(error) {
-				Mojo.Log.error("V0 upgrader Could not fetch prefs: " + error);
+				var errmsg = "V0 upgrader Could not fetch prefs: " + error;
+				this.ring.errors.push(errmsg);
+				Mojo.Log.error(errmsg);
 				this._prefsLoadedCallback();
 			}
 		);
@@ -193,7 +213,6 @@ var _V0 = Class.create ({
 			this.prefs = obj;
 			Mojo.Log.info("V0 upgrader Loaded prefs object");
 		} else {
-			this.prefs = null;
 			Mojo.Log.info("V0 upgrader found no prefs object");
 		}
 		this._prefsLoadedCallback();

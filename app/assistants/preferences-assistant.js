@@ -81,7 +81,7 @@ PreferencesAssistant.prototype.fieldUpdated = function(event) {
 PreferencesAssistant.prototype.timeoutOrDeactivate = function() {
 	Mojo.Log.info("Prefs scene timeoutOrDeactivate");
 	this.ring.clearPassword();
-	this.controller.stageController.popScene();
+	this.controller.stageController.popScenesTo("item-list");
 };
 
 PreferencesAssistant.prototype.activate = function(event) {
