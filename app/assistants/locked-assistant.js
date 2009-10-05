@@ -55,7 +55,7 @@ LockedAssistant.prototype.doYourThing = function() {
 		// User has not yet set a master password
 		this.loadingMessage.update($L("Set initial password"));
 	    this.controller.showDialog({
-	        template: "loading/new-password-dialog",
+	        template: "locked/new-password-dialog",
 	        preventCancel:true,
 	        assistant: new NewPasswordDialogAssistant(this, this.ring,
         		pushToItemList)

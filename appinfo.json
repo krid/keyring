@@ -1,6 +1,6 @@
 {
 	"id": "com.otisbean.keyring",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"vendor": "Otisbean",
 	"type": "web",
 	"main": "index.html",

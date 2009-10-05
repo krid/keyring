@@ -1,3 +1,7 @@
+2009-10-05  Dirk Bergstrom  <krid@otisbean.com>
+
+	* app/assistants/locked-assistant.js: Fix bad path to new-password dialog.
+
 2009-10-04  Dirk Bergstrom  <krid@otisbean.com>
 
 Add initializing/locked scene to fix race condition, and to allow for more
