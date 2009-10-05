@@ -1,6 +1,72 @@
+2009-10-04  Dirk Bergstrom  <krid@otisbean.com>
+
+Add initializing/locked scene to fix race condition, and to allow for more
+lockout options.  Add option to require password at launch. 
+
+	* app/assistants/app-assistant.js (windowDeactivated): Choose action
+	based on ring.prefs; use Keyring methods for lockout.
+	(pushOpeningScene): Push "locked" scene instead of item list.  This avoids
+	a race-condition that would often lead to showing the "new password"
+	dialog on launch.
+	(PasswordDialogAssistant): Add option to prevent canceling of dialog.
+	Better formatting for error display.  Focus password input on error.
+	(Keyring.doIfPasswordValid): Handle preventCancel arg.
+	(Keyring.lockout,activateLockout,deactivateLockout): Factored out code
+	from the scenes and collected it here for simplicity.  Supports
+	different behaviors per preferences.
+
+	* app/assistants/actions-assistant.js (setup): Properly handle labels on
+	ListSelectors.
+	(exportToUrl): Proper error handling.
+	(importFileOrUrl): Fix a really dumb bug.  Proper error handling.
+	(clearDatabase): Pop to appropriate scene.
+    (activate, deactivate, timeoutOrDeactivate): Use new Keyring-based
+	global system for lockout/timeout.
+	(ImportExportDialogAssistant): Make OK button an activity button, and
+	don't allow double-submit.
+	
+	* app/assistants/item-assistant.js (timeoutOrDeactivate): Use new Keyring
+	based global system for lockout/timeout.
+	
+	* app/assistants/item-list-assistant.js (activate, deactivate,
+	timeoutOrDeactivate): Use new Keyring-based global system for
+	lockout/timeout.
+	
+	* app/assistants/help-assistant.js (activate, deactivate,
+	timeoutOrDeactivate): Use new Keyring-based global system for
+	lockout/timeout.
+	
+	* app/assistants/locked-assistant.js: New scene used at launch and
+	(optionally) as an app-locked screen.  Home to the "create master
+	password" dialog.  
+	
+	* app/assistants/preferences-assistant.js (setup): Add plumbing for new
+	lockout prefs.  Properly handle labels on ListSelectors.
+	(activate, deactivate, timeoutOrDeactivate): Use new Keyring-based
+	global system for lockout/timeout.
+	
+	* app/models/ring.js (DEFAULT_PREFS): New prefs for lockout behavior.
+	(onDeactivateOptions): What to do when minimized.
+	(initDepotReader): Return early if data already loaded.
+	(_loadDepotData): Note loading of data earlier in the cycle.
+	(_loadDataHandler): Fill in any missing prefs.
+	
+	* app/views/help/help-scene.html: Added Change Log section.
+	
+	* app/views/locked/locked-scene.html: New initializing/locked scene.
+	
+	* app/views/locked/new-password-dialog.html: Hook for better error
+	formatting.  Moved to new "locked" scene.
+	
+	* app/views/password-dialog.html: Hook for better error formatting.
+	
+	* app/views/preferences/preferences-scene.html: Added new prefs for lockout.
+	Reorganized prefs into "paranoia" section.  Cleanup up L&F.
+
 2009-09-28  Dirk Bergstrom  <krid@otisbean.com>
 
-Fix a bug in V0 upgrader.  Add user-visible display of ring.errors.
+Fix a bug in V0 upgrader.  Add user-visible display of ring.errors.  Fix some
+import bugs.
 
 	* app/assistants/help-assistant.js (setup): Display any ring.errors at the
 	bottom of the scene, so we can get users to tell us what's wrong.

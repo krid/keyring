@@ -41,7 +41,7 @@ var Ring = Class.create ({
 	
 	_upgradeCheckData: null,
 
-	// Constants for import conflict handling
+	// import conflict handling options
 	resolutions: {
 		keep: {code: "keep", label: "Keep existing"},
 		import_: {code: "import", label: "Use import"},
@@ -49,9 +49,22 @@ var Ring = Class.create ({
 		update: {code: "update", label: "Update only"}
 	},
 	
+	onDeactivateOptions: {
+		lock: {code: "lock", label: "Lock"},
+		lockSoon: {code: "lockSoon", label: "Lock in 10 sec"},
+		noLock: {code: "noLock", label: "Don't lock"},
+	},
+	
+	/* If prefs.onDeactivate == 'lockSoon', wait this many seconds after
+	 * app deactivation to lock */
+	lockSoonDelay: 10,
+	
 	DEFAULT_PREFS: {
 		sortBy: 'TITLE',
 		timeout: 30 * 1000, // in milliseconds
+		requireInitialPassword: false,
+		lockoutTo: 'locked',
+		onDeactivate: 'lock',
 		generatorPrefs: {
 			characters: 8,
 			lowcase: true,
@@ -187,6 +200,10 @@ var Ring = Class.create ({
 	},
 	
 	initDepotReader: function(callback) {
+		if (this.depotDataLoaded) {
+			// TODO is this always what we want to do?
+			return;
+		}
 		this._dataLoadedCallback = callback;
 		this.depot.get(this.DEPOT_VERSION_KEY,
 			this._loadDepotData.bind(this),
@@ -202,6 +219,8 @@ var Ring = Class.create ({
 		var depotVersion;
 		if (versionObj) {
 			depotVersion = versionObj.version;
+			// Avoid race condition on app startup
+			this.firstRun = false;
 		} else {
 			// First releases didn't have a version key in Depot
 			depotVersion = 0;
@@ -245,6 +264,9 @@ var Ring = Class.create ({
 		if (! this.prefs) {
 			// Copy default prefs
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
+		} else {
+			// Fill in any missing prefs with defaults
+			this.prefs = $H(Object.clone(this.DEFAULT_PREFS)).merge(this.prefs).toObject();
 		}
 		this.buildItemList();
 		this._dataLoadedCallback();

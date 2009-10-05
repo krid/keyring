@@ -28,6 +28,8 @@ ActionsAssistant.prototype.setup = function() {
 	// Export
 	this.controller.setupWidget("destination",
 		{modelProperty: "destination",
+		 label: "Destination",
+		 labelPlacement: Mojo.Widget.labelPlacementLeft,
     	 choices: [{label: $L("Clipboard"), value: "clipboard"},
     	           {label: $L("URL"), value: "url"}
 	               ]},
@@ -44,6 +46,8 @@ ActionsAssistant.prototype.setup = function() {
     // Data source
 	this.controller.setupWidget("source",
 		{modelProperty: "source",
+		 label: "Source",
+		 labelPlacement: Mojo.Widget.labelPlacementLeft,
     	 choices: [{label: $L("Clipboard"), value: "clipboard"},
     	           {label: $L("File"), value: "file"},
     	           {label: $L("URL"), value: "url"}
@@ -56,8 +60,11 @@ ActionsAssistant.prototype.setup = function() {
 	}, this.ring.resolutions);
 	choices.sort();
 	this.controller.setupWidget("resolution",
-			{modelProperty: "resolution", choices: choices},
-            this.ring.prefs.import_);
+		{modelProperty: "resolution",
+		 label: "Resolution",
+		 labelPlacement: Mojo.Widget.labelPlacementLeft,
+		 choices: choices},
+        this.ring.prefs.import_);
 	// Preferences handling
 	this.controller.setupWidget("prefs", {modelProperty: "prefs"},
 		this.ring.prefs.import_);
@@ -134,14 +141,20 @@ ActionsAssistant.prototype.exportToUrl = function(url) {
 	    evalJSON: false,
 	    evalJS: false,
 	    onSuccess: function(transport) {
-    		this.ring.prefs.export_.url= url;
-    		this.controller.showAlertDialog({
-    			onChoose: function(value) {},
-    			title: $L("Database Exported"),
-    			message: $L("An encrypted copy of the Keyring database was POSTed to " +
-					url + "."),
-    			choices:[{label:$L("OK"), value:""}]
-    		});
+    		if (transport.status < 200 || transport.status > 299 ||
+    			! transport.responseText.match(/^\s*ok\s*$/i)) {
+    			Mojo.Controller.errorDialog($L("Error exporting to ") + url,
+					this.controller.window);
+    		} else {
+	    		this.ring.prefs.export_.url= url;
+	    		this.controller.showAlertDialog({
+	    			onChoose: function(value) {},
+	    			title: $L("Database Exported"),
+	    			message: $L("An encrypted copy of the Keyring database was POSTed to ") +
+						url,
+	    			choices:[{label:$L("OK"), value:""}]
+	    		});
+    		}
     	}.bind(this),
 	    onFailure: function(transport) {
 			Mojo.Controller.errorDialog(e.name + " error exporting: " +
@@ -200,7 +213,7 @@ ActionsAssistant.prototype.importFileOrUrl = function(path, password) {
 		this.ring.prefs.import_.url = fullPath;
 	} else if (! path.charAt(0) != '/') {
 		path = '/' + path;
-		fullPath = '/media/internal' + filename;
+		fullPath = '/media/internal' + path;
 		this.ring.prefs.import_.filename = path;
 	}
 	// Save the prefs
@@ -212,12 +225,17 @@ ActionsAssistant.prototype.importFileOrUrl = function(path, password) {
 	    evalJSON: false,
 	    evalJS: false,
 	    onSuccess: function(transport) {
-			var importData = transport.responseText;
-			this.ring.importData(importData,
-				this.ring.prefs.import_.resolution,
-				this.ring.prefs.import_.prefs,
-				password,
-				this.importResults.bind(this));
+    		if (transport.status < 200 || transport.status > 299) {
+    			this.importResults(false, 'Error reading data from "' +
+					path + '"');
+    		} else {
+				var importData = transport.responseText;
+				this.ring.importData(importData,
+					this.ring.prefs.import_.resolution,
+					this.ring.prefs.import_.prefs,
+					password,
+					this.importResults.bind(this));
+    		}
     	}.bind(this),
 	    onFailure: function(transport) {
     		this.importResults(false, 'Unable to read data from "' +
@@ -245,7 +263,8 @@ ActionsAssistant.prototype.clearDatabase = function() {
 		if (value.search("yes") > -1) {
 			this.ring.clearDatabase(value == "yes-factory");
 			this.ring.itemsReSorted = true;
-			this.controller.stageController.popScenesTo("item-list");
+			var popTo = (value == "yes-factory") ? "locked" : "item-list";
+			this.controller.stageController.popScenesTo(popTo);
 		}
 	}.bind(this),
 	title: $L("Clear Database"),
@@ -258,13 +277,6 @@ ActionsAssistant.prototype.clearDatabase = function() {
 	});
 };
 
-/* Don't leave an item visible when we minimize. */
-ActionsAssistant.prototype.timeoutOrDeactivate = function() {
-	Mojo.Log.info("Actions scene timeoutOrDeactivate");
-	this.ring.clearPassword();
-	this.controller.stageController.popScenesTo("item-list");
-};
-
 ActionsAssistant.prototype.activate = function(event) {
     Mojo.Event.listen(this.controller.get("clearDatabaseButton"), Mojo.Event.tap,
 		this.clearDbAction);
@@ -273,12 +285,7 @@ ActionsAssistant.prototype.activate = function(event) {
     Mojo.Event.listen(this.controller.get("importButton"), Mojo.Event.tap,
 		this.importAction);
     
-	Mojo.Event.listen(this.controller.stageController.document,
-		Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
-	
-	// Pop the scene if the user is idle too long
-	this.cancelIdleTimeout = this.controller.setUserIdleTimeout(this.controller.sceneElement,
-		this.timeoutOrDeactivate.bind(this), this.ring.prefs.timeout); 
+	Keyring.activateLockout(this);
 };
 
 
@@ -290,9 +297,7 @@ ActionsAssistant.prototype.deactivate = function(event) {
 	Mojo.Event.stopListening(this.controller.get("importButton"), Mojo.Event.tap,
 		this.importAction);
 	
-	Mojo.Event.stopListening(this.controller.stageController.document,
-		Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
-	this.cancelIdleTimeout();
+	Keyring.deactivateLockout(this);
 };
 
 ActionsAssistant.prototype.cleanup = function(event) {
@@ -348,7 +353,7 @@ ImportExportDialogAssistant = Class.create ({
 			this.controller.hideWidgetContainer("password-group");
 	    }
 	    
-	    this.controller.setupWidget("okButton", {type: Mojo.Widget.defaultButton},
+	    this.controller.setupWidget("okButton", {type: Mojo.Widget.activityButton},
 	        {label: $L("Ok"), disabled: false});
 	    this.okHandler = this.ok.bindAsEventListener(this);
 	    this.controller.listen("okButton", Mojo.Event.tap, this.okHandler);
@@ -367,6 +372,8 @@ ImportExportDialogAssistant = Class.create ({
 
 	ok: function() {
 		Mojo.Log.info("ok");
+		this.controller.stopListening("okButton", Mojo.Event.tap,
+		    this.okHandler);
 		this.callbackOnSuccess(this.dataModel.value, this.passwordModel.value);
 	},
 

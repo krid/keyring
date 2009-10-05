@@ -32,21 +32,13 @@ HelpAssistant.prototype.setup = function() {
 	}
 };
 
-/* Don't leave an item visible when we minimize. */
-HelpAssistant.prototype.timeoutOrDeactivate = function() {
-	Mojo.Log.info("Help scene timeoutOrDeactivate");
-	this.ring.clearPassword();
-	this.controller.stageController.popScenesTo("item-list");
-};
-
 HelpAssistant.prototype.activate = function(event) {
-	this.cancelIdleTimeout = this.controller.setUserIdleTimeout(this.controller.sceneElement,
-			this.timeoutOrDeactivate.bind(this), this.ring.prefs.timeout);
+	Keyring.activateLockout(this);
 };
 
 
 HelpAssistant.prototype.deactivate = function(event) {
-	this.cancelIdleTimeout();
+	Keyring.deactivateLockout(this);
 };
 
 HelpAssistant.prototype.cleanup = function(event) {

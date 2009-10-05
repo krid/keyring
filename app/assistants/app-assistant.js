@@ -47,8 +47,17 @@ AppAssistant.prototype.setup = function() {
 };
 
 AppAssistant.prototype.windowDeactivated = function() {
-	// TODO consider making this optional via prefs.
-	this.ring.clearPassword();
+	Mojo.Log.info("windowDeactivated in scene", this.stageController.topScene().sceneName);
+	switch (this.ring.prefs.onDeactivate) {
+		case 'lock':
+			Keyring.lockout(this, this.ring);
+			break;
+		case 'lockSoon':
+			Keyring.lockout.delay(this.ring.lockSoonDelay, this, this.ring);
+			break;
+		default:
+			// Do nothing
+	}
 };
 
 AppAssistant.prototype.handleLaunch = function() {
@@ -61,22 +70,24 @@ AppAssistant.prototype.handleLaunch = function() {
 AppAssistant.prototype.openChildWindow = function() {
 	this.stageController = this.appController.getStageController('lightWeight');
 	if (this.stageController){
-		// app window is open, give it focus
+		/* app window is open, give it focus.  We presume that ring data has
+		 * already been loaded. */
 		Mojo.Log.info("give open window focus");
 		this.stageController.activate();
 	} else{
-		// otherwise create the app window
 		Mojo.Log.info("create app window");
-		this.appController.createStageWithCallback({name: 'lightWeight', lightweight: true},
-				this.pushOpeningScene.bind(this));		
+		this.appController.createStageWithCallback(
+			{name: 'lightWeight', lightweight: true},
+			this.pushOpeningScene.bind(this));
 	}
 
 };
 
 AppAssistant.prototype.pushOpeningScene = function(stageController) {
+	this.stageController = stageController;
 	Mojo.Event.listen(stageController.document,
 			Mojo.Event.stageDeactivate, this.windowDeactivated.bind(this));
-	stageController.pushScene('item-list', this.ring);
+	stageController.pushScene('locked', this.ring);
 };
 
 //-----------------------------------------
@@ -124,16 +135,17 @@ AppAssistant.prototype.handleCommand = function(event) {
  * The "Enter your password" dialog, used throughout the application.
  */
 PasswordDialogAssistant = Class.create ({
-	initialize: function(controller, ring, callback) {
+	initialize: function(controller, ring, callback, noCancel) {
 		this.controller = controller;
 	    this.ring = ring;
 	    this.callbackOnSuccess = callback;
+	    this.noCancel = noCancel ? true : false;
 	},
 
 	setup: function(widget) {
 	    this.widget = widget;
 	    
-	    this.controller.get("password-title").update($L("Unlock"));
+	    this.controller.get("password-title").update($L("Enter Password to Unlock"));
 	        
 	    this.controller.setupWidget(
 	        "password",
@@ -158,12 +170,14 @@ PasswordDialogAssistant = Class.create ({
 	    this.unlockHandler = this.unlock.bindAsEventListener(this);
 	    this.controller.listen("unlockButton", Mojo.Event.tap,
 	        this.unlockHandler);
-	      
-	    this.cancelButtonModel = {label: $L("Cancel"), disabled: false};
-	    this.controller.setupWidget("cancelButton", {type: Mojo.Widget.defaultButton},
-	        this.cancelButtonModel);
-	    this.controller.listen("cancelButton", Mojo.Event.tap,
-	    	this.widget.mojo.close);
+	    
+	    if (! this.noCancel) {
+		    this.cancelButtonModel = {label: $L("Cancel"), disabled: false};
+		    this.controller.setupWidget("cancelButton", {type: Mojo.Widget.defaultButton},
+		        this.cancelButtonModel);
+		    this.controller.listen("cancelButton", Mojo.Event.tap,
+		    	this.widget.mojo.close);
+	    }
 	},
 	
 	keyPressHandler: function(event) {
@@ -182,9 +196,8 @@ PasswordDialogAssistant = Class.create ({
 			Mojo.Log.info("Bad Password");
 			// TODO select random insult from the sudo list
 			// FIXME apply some decent styling to the error message
-			// FIXME set focus on password input
-			this.controller.get("errmsg").update($L("==> Invalid Password <=="));
-			this.controller.get("password").focus();
+			this.controller.get("errmsg").update($L("Invalid Password"));
+			this.controller.get("password").mojo.focus();
 		}
 	},
 
@@ -192,8 +205,10 @@ PasswordDialogAssistant = Class.create ({
 	cleanup: function() {
 		this.controller.stopListening("unlockButton", Mojo.Event.tap,
 		    this.unlockHandler);
-		this.controller.stopListening("cancelButton", Mojo.Event.tap,
-		    this.widget.mojo.close);
+		if (! this.noCancel) {
+			this.controller.stopListening("cancelButton", Mojo.Event.tap,
+				this.widget.mojo.close);
+		}
 		this.controller.stopListening("password", Mojo.Event.propertyChange,
 	        this.keyPressHandler.bind(this));
 	}
@@ -201,16 +216,43 @@ PasswordDialogAssistant = Class.create ({
 
 /* If the user has entered a valid password within the timeout window, or they
  * enter it into the dialog, return true. */
-Keyring.doIfPasswordValid = function(sceneController, ring, callback) {
+Keyring.doIfPasswordValid = function(sceneController, ring, callback, preventCancel) {
 	if (ring.passwordValid()) {
 		callback();
 	} else {
 		sceneController.showDialog({
 			template: "password-dialog",
-			assistant: new PasswordDialogAssistant(sceneController, ring, callback)
+			preventCancel: preventCancel ? true : false,
+			assistant: new PasswordDialogAssistant(sceneController, ring,
+				callback, preventCancel)
 		});
 	}
 };
 
+/* Called by scenes on timeout or app deactivation/minimization. */
+Keyring.lockout = function(controller, ring) {
+	var sceneName = controller.stageController.topScene().sceneName;
+	Mojo.Log.info("Timeout or Deactivate in scene", sceneName);
+	ring.clearPassword();
+	// Don't pop scene if we're already on the lockoutTo page.
+	if (sceneName != ring.prefs.lockoutTo) {
+		controller.stageController.popScenesTo(ring.prefs.lockoutTo);
+	}
+};
+
+Keyring.activateLockout = function(sceneAssistant) {
+	Mojo.Log.info("activateLockout for scene",
+		sceneAssistant.controller.stageController.topScene().sceneName);
+	// Clear password after idle timeout
+	sceneAssistant.cancelIdleTimeout = sceneAssistant.controller.setUserIdleTimeout(
+		sceneAssistant.controller.sceneElement,
+		Keyring.lockout.bind(Keyring, sceneAssistant.controller, sceneAssistant.ring),
+		sceneAssistant.ring.prefs.timeout);
+};
 
 
+Keyring.deactivateLockout = function(sceneAssistant) {
+	Mojo.Log.info("deactivateLockout for scene",
+		sceneAssistant.controller.stageController.topScene().sceneName);
+	sceneAssistant.cancelIdleTimeout();
+};

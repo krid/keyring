@@ -23,6 +23,7 @@ encrypted using the Blowfish algorithm, and protected by a master password.
 <a href="#list">Item List</a> | 
 <a href="#import">Import/Export</a> | 
 <a href="#coming">Coming Soon</a> |
+<a href="#changelog">Change Log</a> |
 <a href="#license">License</a>
 <!-- <a href="#"></a> | --> 
 </small>
@@ -103,6 +104,40 @@ imported items that are not already in the list).</li>
 <li> A last-modified date to the entire db.</li>
 
 <li> Ability to use the password generator on its own.</li>
+</ul>
+</div>
+
+
+<a id="changelog"></a>
+<div class="palm-info-text">
+<h4>Change Log</h4>
+<ul>
+<li> Version 0.0.5 - 2009-10-04<br>
+ - Added an "initializing" scene to fix bug where the "create master password"
+ dialog would show up at launch (race condition with depot loading).<br /> 
+ - Option to ask for a password at launch.<br /> 
+ - Added more options for lockout behavior.<br /> 
+ - Tidied up import &amp; export code.<br /> 
+ - Added "Change Log" section to Help scene.<br /> 
+ - <br /> 
+ - <br /> 
+</li>
+
+<li> Version 0.0.4 - 2009-09-29<br>
+ - Fixed a bug in the db upgrader<br>
+ - Fixed a few import/export bugs<br>
+ - Added error display to the help scene for user debugging<br>
+ - Fixed an edge case bug where an item might not be hidden after a timeout.</li>
+ 
+<li> Version 0.0.3 - 2009-09-27<br>
+ - Added import/export<br>
+ - Fixed numerous bugs<br>
+ - Look and feel cleanup<br>
+ - Changed internal db format, and added db upgrade logic</li>
+ 
+<li> Version 0.0.2 - 2009-09-08<br>
+ - Generated passwords didn't get put into the db properly (doh!).<br>
+ - Changed values in focused fields were lost on timeout-initiated scene pop.</li>
 </ul>
 </div>
 
@@ -768,5 +803,4 @@ copy of the Program in return for a fee.</p>
 <a id="errors-anchor"></a>
 <pre id="errors"></pre>
 
-<div class="my-scene-fade-bottom" x-mojo-scroll-fade="bottom"></div>
-
+<div class="scroll-fade-bottom" x-mojo-scroll-fade="bottom"></div>

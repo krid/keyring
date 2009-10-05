@@ -18,74 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * The dialog used to set the initial password.
- */
-function NewPasswordDialogAssistant(sceneAssistant, ring) {
-	this.sceneAssistant = sceneAssistant;
-	this.ring = ring;
-}
-
-NewPasswordDialogAssistant.prototype.setup = function(widget) {
-	this.widget = widget;
-	
-	var firstOpts = {
-		hintText: $L("Master password"),
-		autoFocus: true,
-		autoReplace: true,
-		textCase: Mojo.Widget.steModeLowerCase,
-		enterSubmits: false
-	};
-	this.sceneAssistant.controller.setupWidget("password", firstOpts,
-		this.passwordModel = {value: ''});
-	var secondOpts = {
-			hintText: $L("Repeat Password"),
-			autoFocus: false,
-			autoReplace: true,
-			textCase: Mojo.Widget.steModeLowerCase,
-			enterSubmits: true
-	};
-	this.sceneAssistant.controller.setupWidget("password2", secondOpts,
-			this.password2Model = {value: ''});
-    this.sceneAssistant.controller.listen("password2", Mojo.Event.propertyChange,
-            this.propChangeHandler.bind(this));
-	
-	this.okButtonModel = {label: $L("Ok"), disabled: false};
-	this.sceneAssistant.controller.setupWidget("okButton", {},
-			this.okButtonModel);
-	this.okButton = this.sceneAssistant.controller.get("okButton");
-	this.okHandler = this.ok.bindAsEventListener(this);
-	this.sceneAssistant.controller.listen("okButton", Mojo.Event.tap,
-			this.okHandler);
-};
-
-NewPasswordDialogAssistant.prototype.propChangeHandler = function(event) {
-	if (event.originalEvent.type == 'blur') {
-        this.ok();
-    }
-};
-NewPasswordDialogAssistant.prototype.ok = function() {
-	Mojo.Log.info("got new passwords");
-	if (this.passwordModel.value === this.password2Model.value) {
-		Mojo.Log.info("matching");
-		this.ring.newPassword(this.passwordModel.value);
-		this.widget.mojo.close();
-	} else {
-		Mojo.Log.info("no match");
-		this.sceneAssistant.controller.get("errmsg").update($L("==> Passwords do not match <=="));
-	}
-};
-
-//cleanup  - remove listeners
-NewPasswordDialogAssistant.prototype.cleanup = function() {
-	this.sceneAssistant.controller.stopListening("okButton", Mojo.Event.tap,
-			this.okHandler);
-    this.sceneAssistant.controller.stopListening("password2", Mojo.Event.propertyChange,
-            this.keyPressHandler.bind(this));
-};
-
-
-/* The scene assistant itself */
 function ItemListAssistant(ring) {
 	this.ring = ring;
 }
@@ -93,10 +25,7 @@ function ItemListAssistant(ring) {
 ItemListAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
 	this.filterString = '';
-	
-	/* use Mojo.View.render to render view templates and add them to the scene, if needed. */
-	//render the items in a list using a partial template.
-
+-
 	/* setup widgets here */
 	Mojo.Log.info("rendering item-list");
 	this.controller.setupWidget(Mojo.Menu.appMenu,
@@ -219,35 +148,8 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	this.filterString = filterString;
 };
 
-/*
- * FIXME I'd rather start the data load in app-assistant.setup(), but I can't
- * figure out how to get hold of the right callback there.  Doing it here
- * means we start the load about 0.1 seconds later. */
-ItemListAssistant.prototype.aboutToActivate = function(callback) {
-	Mojo.Log.info("aboutToActivate");
-	if (! this.ring.depotDataLoaded) {
-		this.ring.initDepotReader(this.preActivationCallback.bind(this, callback));
-	}
-};
-
-ItemListAssistant.prototype.preActivationCallback = function(callback) {
-	Mojo.Log.info("preActivationCallback");
-	this.controller.modelChanged(this.ring);
-	callback();
-};
-
 ItemListAssistant.prototype.activate = function(event) {
-	/* put in event handlers here that should only be in effect when this scene is active. For
-	   example, key handlers that are observing the document */
 	Mojo.Log.info("activate");
-	if (this.ring.firstRun) {
-		// User has not yet set a master password
-	    this.controller.showDialog({
-	        template: "item-list/new-password-dialog",
-	        assistant: new NewPasswordDialogAssistant(this, this.ring),
-	        preventCancel:true
-	    });
-	}
 	if (this.ring.itemsReSorted) {
 		// Need to redisplay the item list
 		// FIXME When we do this, if there was a filter set, it is retained,
@@ -260,22 +162,16 @@ ItemListAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('ring-items'),
 			Mojo.Event.listDelete, this.deleted);
 
-	// Clear password after idle timeout
-	this.cancelIdleTimeout = this.controller.setUserIdleTimeout(this.controller.sceneElement,
-			this.ring.clearPassword.bind(this.ring), this.ring.prefs.timeout);
+	Keyring.activateLockout(this);
 };
 
 ItemListAssistant.prototype.deactivate = function(event) {
-	/* remove any event handlers you added in activate and do any other cleanup that should happen before
-	   this scene is popped or another scene is pushed on top */
 	Mojo.Event.stopListening(this.controller.get('ring-items'),
 			Mojo.Event.listTap, this.tapped);
 	Mojo.Event.stopListening(this.controller.get('ring-items'),
 			Mojo.Event.listDelete, this.deleted);
-	this.cancelIdleTimeout();
+	Keyring.deactivateLockout(this);
 };
 
 ItemListAssistant.prototype.cleanup = function(event) {
-	/* this function should do any cleanup needed before the scene is destroyed as
-	   a result of being popped off the scene stack */
 };

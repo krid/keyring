@@ -2,3 +2,19 @@
 .multi-checkbox.checkbox {
   float: none;
 }
+
+.scroll-fade-bottom {
+	height: 24px;
+	width: 100%;
+	background: url(../images/scroll-fade-bottom.png) repeat-x;
+	position: fixed;
+	bottom: 0px;
+	left: 0px;
+	z-index: 999;   
+	-webkit-palm-mouse-target: ignore;
+}
+
+.keyring-error {
+    text-align: center;
+    color: red;
+}

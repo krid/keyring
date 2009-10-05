@@ -24,9 +24,19 @@ function PreferencesAssistant(ring) {
 }
 
 PreferencesAssistant.prototype.setup = function() {
-	Mojo.Log.info("setup");
+	Mojo.Log.info("setup prefs scene");
+	
+	this.controller.setupWidget("requireInitialPassword",
+		{modelProperty: "requireInitialPassword",
+		 falseLabel: "no",
+		 trueLabel: "yes"},
+		this.ring.prefs);
+	this.fieldsToListen.push("requireInitialPassword");
+	
 	this.controller.setupWidget("timeout",
 		{modelProperty: "timeout",
+		 label: "Timeout",
+		 labelPlacement: Mojo.Widget.labelPlacementLeft,
     	 choices: [{label: "5 seconds", value: 5000},
     	           {label: "15 seconds", value: 15000},
 	               {label: "30 seconds", value: 30000}, 
@@ -36,8 +46,32 @@ PreferencesAssistant.prototype.setup = function() {
         this.ring.prefs);
 	this.fieldsToListen.push("timeout");
 
+	this.controller.setupWidget("lockoutTo",
+		{modelProperty: "lockoutTo",
+		 label: "Lockout to",
+		 labelPlacement: Mojo.Widget.labelPlacementLeft,
+    	 choices: [{label: "Lock scene", value: "locked"},
+    	           {label: "Item list", value: "item-list"}]},
+        this.ring.prefs);
+	this.fieldsToListen.push("lockoutTo");
+
+	var choices = [];
+	Object.keys(this.ring.onDeactivateOptions).each(function(key) {
+		choices.push({label: this[key].label, value: this[key].code});
+	}, this.ring.onDeactivateOptions);
+	choices.sort();
+	this.controller.setupWidget("onDeactivate",
+		{modelProperty: "onDeactivate",
+		 label: "On Deactivate",
+		 labelPlacement: Mojo.Widget.labelPlacementLeft,
+		 choices: choices},
+        this.ring.prefs);
+	this.fieldsToListen.push("onDeactivate");
+
 	this.controller.setupWidget("sortBy",
 		{modelProperty: "sortBy",
+		 label: "Sort By",
+		 labelPlacement: Mojo.Widget.labelPlacementLeft,
 		 choices: [{label: "Title", value: "TITLE"},
 		          {label: "Last Viewed", value: "viewed"},
 		          {label: "Last Changed", value: "changed"},
@@ -77,26 +111,13 @@ PreferencesAssistant.prototype.fieldUpdated = function(event) {
 	this.ring.updateTimeout();
 };
 
-/* Don't leave an item visible when we minimize. */
-PreferencesAssistant.prototype.timeoutOrDeactivate = function() {
-	Mojo.Log.info("Prefs scene timeoutOrDeactivate");
-	this.ring.clearPassword();
-	this.controller.stageController.popScenesTo("item-list");
-};
-
 PreferencesAssistant.prototype.activate = function(event) {
 	Mojo.Log.info("activate");
 	this.fieldsToListen.each(function(field) {
 		Mojo.Event.listen(this.controller.get(field),
 				Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
 	}, this);
-
-	Mojo.Event.listen(this.controller.stageController.document,
-			Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
-	
-	// Pop the scene if the user is idle too long
-	this.cancelIdleTimeout = this.controller.setUserIdleTimeout(this.controller.sceneElement,
-			this.timeoutOrDeactivate.bind(this), this.ring.prefs.timeout); 
+	Keyring.activateLockout(this);
 };
 
 PreferencesAssistant.prototype.deactivate = function(event) {
@@ -106,9 +127,7 @@ PreferencesAssistant.prototype.deactivate = function(event) {
 				Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
 	}, this);
 	
-	Mojo.Event.stopListening(this.controller.stageController.document,
-			Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
-	this.cancelIdleTimeout();
+	Keyring.deactivateLockout(this);
 };
 
 PreferencesAssistant.prototype.cleanup = function(event) {

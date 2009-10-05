@@ -22,5 +22,9 @@
     {
         "source": "app\/assistants\/actions-assistant.js",
         "scenes": "actions"
+    },
+    {
+        "source": "app\/assistants\/locked-assistant.js",
+        "scenes": "locked"
     }
 ]

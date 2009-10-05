@@ -6,18 +6,39 @@
  </div>
 </div>
 <div class="palm-group">
- <div class="palm-group-title">Timeout</div>
+ <div class="palm-group-title">Paranoia Level</div>
  <div class="palm-list">
-  <div class="palm-row single">
+
+  <div class="palm-row first">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div class="label left">Locked at Launch</div>
+    <div id="requireInitialPassword" x-mojo-element="ToggleButton" class="right"></div>
+   </div>
+  </div>
+
+  <div class="palm-row">
    <div class="palm-row-wrapper">
     <div id="timeout" x-mojo-element="ListSelector"></div>
    </div>
   </div>
+
+  <div class="palm-row">
+   <div class="palm-row-wrapper">
+    <div id="lockoutTo" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+
+  <div class="palm-row last">
+   <div class="palm-row-wrapper">
+    <div id="onDeactivate" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+
  </div>
 </div>
 
 <div class="palm-group">
- <div class="palm-group-title">Sort Keys By</div>
+ <div class="palm-group-title">Key List</div>
  <div class="palm-list">
   <div class="palm-row single">
    <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
@@ -31,11 +52,11 @@
  <div class="palm-group-title">Password Generator Defaults</div>
   <div class="palm-list">
   <div class="palm-row first">
-   <div class="label">Characters</div>
-   <div x-mojo-element="RadioButton" id="characters"></div>
+   <div class="label left">Characters</div>
+   <div x-mojo-element="RadioButton" id="characters" class="right"></div>
   </div>
   <div class="palm-row last multi-checkbox">
-   <div class="label">Types</div>
+   <div class="label left">Types</div>
   <table><tr>
   <td>
    <div id="lowcaseField" x-mojo-element="CheckBox"></div>
@@ -57,3 +78,5 @@
   </div>
  </div>
 </div>
+
+<div class="scroll-fade-bottom" x-mojo-scroll-fade="bottom"></div>

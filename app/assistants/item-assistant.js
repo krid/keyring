@@ -190,7 +190,7 @@ ItemAssistant.prototype.setGeneratedPassword = function(password) {
 };
 
 /* Don't leave a password visible when we minimize. */
-ItemAssistant.prototype.timeoutOrDeactivate = function() {
+ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 	Mojo.Log.info("Item scene timeoutOrDeactivate");
 	if (! this.createNew) {
 		// Need to update values for any fields that have unsubmitted changes
@@ -212,8 +212,10 @@ ItemAssistant.prototype.timeoutOrDeactivate = function() {
 		}
 	}
 	this.timedOut = true;
-	this.ring.clearPassword();
-	this.controller.stageController.popScenesTo("item-list");
+	if (! (event && event.type == "mojo-stage-deactivate")) {
+		// app-assistant does this on deactivate
+		Keyring.lockout(this.controller, this.ring);
+	}
 };
 
 ItemAssistant.prototype.handleCommand = function(event) {
@@ -270,6 +272,7 @@ ItemAssistant.prototype.deactivate = function(event) {
 					Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
 		}, this);
 	}
+	Mojo.Log.info("stopListening to timeout and deactivate");
 	Mojo.Event.stopListening(this.controller.stageController.document,
 			Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
 	this.cancelIdleTimeout();
