@@ -1,4 +1,9 @@
-2009-12-13  Dirk Bergstrom  <krid@otisbean.com>
+2009-12-20  Dirk Bergstrom  <krid@otisbean.com>
+
+    * app/models/ring.js (getItem): Remove encrypted stuff from item before
+    passing it on.  Fixes incredibly stupid bug.
+
+2009-12-19  Dirk Bergstrom  <krid@otisbean.com>
 
     * app/assistants/actions-assistant.js: Add button, dialog class and
     associated methods to support "change password".

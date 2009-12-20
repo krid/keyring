@@ -733,6 +733,8 @@ var Ring = Class.create ({
 		// Get a copy of the item, since we'll be adding in unencrypted data
 		var item = Object.clone(this.db[title]);
 		var encrypted_data = item.encrypted_data;
+		// Remove encrypted stuff, or it will confuse things later
+		delete(item.encrypted_data);
 		try {
 			var decrypted_json = this.decrypt(encrypted_data);
 			decrypted_obj = JSON.parse(decrypted_json);
