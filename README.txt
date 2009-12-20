@@ -5,6 +5,8 @@ Keyring for webOS stores your account information securely, so you don't
 have to rely on your memory, or on little scraps of paper. Sensitive data
 are encrypted using the Blowfish algorithm, and protected by a master password.
 
+More information can be found at http://quux.otisbean.com/keyring/.
+
 Available (for now) at the PreCentral Homebrew App Gallery:
 
 http://www.precentral.net/homebrew-apps/keyring

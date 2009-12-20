@@ -83,7 +83,9 @@ function ItemAssistant(item, ring) {
 	this.originalTitle = item ? item.title : '';
 	this.createNew = false;
 	this.ring = ring;
-	this.fields = ["title", "username", "pass", "url", "notes"];
+    this.menuModel= {items: []};
+	this.fields = this.ring.PLAINTEXT_ATTRS.concat(this.ring.ENCRYPTED_ATTRS);
+	this.hideableFields = ["username", "pass", "url", "category"];
 }
 
 ItemAssistant.prototype.setup = function() {
@@ -97,14 +99,15 @@ ItemAssistant.prototype.setup = function() {
 	} else {
 		// Creating a new item
 		this.createNew = true;
-		this.item = {title:'', username:'', pass:'', url:'', notes:''};
+		this.item = this.ring.emptyItem();
 		// Hide the dates display
 		this.controller.get("dates-row").hide();
-		this.controller.get("url-row").addClassName('last');
+		this.controller.get("category-row").addClassName('last');
 		this.controller.hideWidgetContainer("dates-row");
 	}
 
 	this.controller.setupWidget(Mojo.Menu.appMenu, Keyring.MenuAttr, Keyring.MenuModel);
+	
 	var baseTextFieldAttrs = {
 			autoFocus: false,
 			holdToEnable: true, 
@@ -114,28 +117,59 @@ ItemAssistant.prototype.setup = function() {
 			autoReplace: false, // SmartTextEngine
 			requiresEnterKey: false
 		};
-	for ( var i = 0; i < this.fields.length; i++) {
+	this.fields.each(function(field) {
+		if (field == "category") { return; }
 		var fieldAttrs = Object.clone(baseTextFieldAttrs);
-		fieldAttrs.hintText = this.fields[i];
-		fieldAttrs.textFieldName = this.fields[i];
-		fieldAttrs.modelProperty = this.fields[i];
-		if (this.fields[i] == "notes") {
+		fieldAttrs.hintText = field;
+		fieldAttrs.textFieldName = field;
+		fieldAttrs.modelProperty = field;
+		if (field == "notes") {
 			fieldAttrs.multiline = true;
 			fieldAttrs.focusMode = Mojo.Widget.focusInsertMode;
 		}
-		this.controller.setupWidget(this.fields[i]+'Field', fieldAttrs, this.item);
+		this.controller.setupWidget(field+'Field', fieldAttrs, this.item);
+	}, this);
+	
+	this.controller.setupWidget("categoryField",
+		{modelProperty: "category",
+		 label: "Category",
+		 labelPlacement: Mojo.Widget.labelPlacementRight,
+		 /* FIXME If categories are edited/added directly from the item page,
+		  * they may not show up when swiping back.  If so, the choices
+		  * will somehow have to be moved to the model.  See the docs for
+		  * ListSelector. */
+    	 choices: this.ring.categoriesForMojo(-1)},
+        this.item);
+	
+	var somethingHidden = false;
+	if (! this.createNew && this.ring.prefs.hideEmpty) {
+		this.hideableFields.each(function(field) {
+			if (! this.item[field]) {
+				Mojo.Log.info("hiding" + field);
+				this.controller.get(field+"-row").hide();
+				this.controller.hideWidgetContainer(field+"-row");
+				somethingHidden = true;
+			}
+		}, this);
 	}
 	
-	var menuItems = [{label:"done", command:'done'},
-       		       	 {label:"generate", command:'generate'}];
 	if (this.createNew) {
 		// Creation of new items requires explicit save
-		menuItems[0].label = "save";
+		this.menuModel.items.push({label: $L("save"), command: 'done'});
 		// Add a cancel button, in case the user doesn't want to create an item
-		menuItems.splice(1, 0, {label:"cancel", command:"cancel"});
+		this.menuModel.items.push({label: $L("cancel"), command:"cancel"});
+	} else {
+		this.menuModel.items.push({label: $L("done"), command: 'done'});
 	}
-	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, 
-       		{items:	menuItems});
+	if (somethingHidden) {
+		var labelSE = this.item.pass ? $L("show empty") : $L("show empty fields");
+		this.menuModel.items.push({label: labelSE, command:'showHidden'});
+	}
+	if (this.createNew || this.item.pass || (! this.ring.prefs.hideEmpty)) {
+		var labelGP = somethingHidden ? $L("gen. passwd") : $L("generate password");
+		this.menuModel.items.push({label: labelGP, command: 'generate'});
+	}
+	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, this.menuModel);
 	
 	if (! this.createNew) {
 		// Register that the item has been viewed.
@@ -168,7 +202,7 @@ ItemAssistant.prototype.done = function() {
 	Mojo.Log.info("done/save");
 	this.ring.updateTimeout();
 	if (! this.item.title) {
-		Mojo.Controller.errorDialog("Title is required", this.controller.window);
+		Mojo.Controller.errorDialog($L("Title is required"), this.controller.window);
 		return;
 	}
 	if (this.createNew) {
@@ -193,9 +227,14 @@ ItemAssistant.prototype.setGeneratedPassword = function(password) {
 ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 	Mojo.Log.info("Item scene timeoutOrDeactivate");
 	if (! this.createNew) {
-		// Need to update values for any fields that have unsubmitted changes
+		/* If a field's value has been changed, but it it still focused (and thus
+		 * hasn't generated a change event), we need to save the value. */
 		var dirty = false;
 		this.fields.each(function(field) {
+			/* Skip 'category', since 1) it's a list selector, and thus doesn't
+			 * have a simple mojo.getValue() accessor & 2) list selectors
+			 * can't hae unsubmitted changes anyways. */
+			if (field === 'category') return;
 			var value = this.controller.get(field+'Field').mojo.getValue();
 			if (this.item[field] != value) {
 				if (field == 'title' && ! value) {
@@ -224,10 +263,22 @@ ItemAssistant.prototype.handleCommand = function(event) {
 		{
 			case 'done':
 				this.done();
-			break;
+				break;
 			case 'cancel':
 				Mojo.Log.info("Cancelling new item creation.");
 				this.controller.stageController.popScene();
+				break;
+			case 'showHidden':
+				this.hideableFields.each(function(field) {
+					this.controller.get(field+"-row").show();
+					this.controller.showWidgetContainer(field+"-row");
+				}, this);
+				// Change the "show" buttton to "generate"
+				this.menuModel.items = [
+                    {label: $L('done'), command: 'done'},
+                    {label: $L('generate password'), command: 'generate'}
+                ];
+				this.controller.modelChanged(this.menuModel);
 				break;
 			case 'generate':
 			    this.controller.showDialog({
@@ -272,7 +323,6 @@ ItemAssistant.prototype.deactivate = function(event) {
 					Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
 		}, this);
 	}
-	Mojo.Log.info("stopListening to timeout and deactivate");
 	Mojo.Event.stopListening(this.controller.stageController.document,
 			Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
 	this.cancelIdleTimeout();

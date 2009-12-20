@@ -1,3 +1,85 @@
+2009-12-13  Dirk Bergstrom  <krid@otisbean.com>
+
+    * app/assistants/actions-assistant.js: Add button, dialog class and
+    associated methods to support "change password".
+    
+    * app/assistants/app-assistant.js: Add "Edit Categories..." to app menu.
+    
+    * app/assistants/categories-assistant.js: Handle adding, deleting and
+    editing categories.
+    
+    * app/assistants/item-assistant.js (init): Use lists of fields from ring to
+    build this.fields.
+    (setup): Use ring.emptyItem() when creating.  Add plumbing for
+    "show empty fields", including command menu munging.  Add category support.
+    Clean up field setup code.
+    (timeoutOrDeactivate): Skip category.
+    (handleCommand): Support "show empty fields".
+    
+    * app/assistants/item-list-assistant.js (init): Move global definitions here.
+    (setup): Add category to command menu.  Declare fixedHeightItems in list.
+    Save a reference to the list widget.  Set a status line.
+    (handleCommand): Check password before changing sort order.  Support
+    category menu.
+    (sortPopupHandler, setSortingStatus): Keep track of sort order in the
+    status line.
+    (setCategory): Handle category menu actions.
+    (filterItems): Make case-insensitive.
+    (activate): Filter by category if necessary.
+    
+    * app/assistants/preferences-assistant.js (setup): Setup "hideEmpty" widget.
+    
+    * app/models/ring.js: Added JavaDoc-ish comments to every method.
+    (onDeactivateOptions): Remove trailing comma.
+    (DEFAULT_PREFS): Add category and hideEmpty.
+    (categories, DEFAULT_CATEGORIES): Initial list of categories.
+    (SCHEMA_VERSION): Bump due to addition of categories.
+    (*_ATTRS, *_DEFAULTS): Better way of storing item attrs and their default
+    values.
+    (newPassword): Handle password change.
+    (initDepotReader, _startDepotLoad, _loadRingData, _loadDataHandler,
+    _postLoadTasks): Revamped the loading system to allow Upgrader to
+    "interfere" as necessary.
+    (_loadDataHandler): Handle categories.
+    (_dataObject): Add categories.
+    (importData): Handles earlier schema versions, refuses to import later ones.
+    Better error on bad password.  Clean up prefs merging.  Handle categories
+    and category mapping.  Use _upgradeItem() to copy data into db.
+    (_upgradeItem): New method to massage imported items to fit current
+    schema and categories.
+    (clearDatabase): Clear categories on factory-reset.
+    (editCategory, deleteCategory): Add, edit & delete categories.
+    (updateItem): Some functionality moved to _buildItem.
+    (_buildItem): Given an object, return an item formatted for the current
+    schema, with the appropriate encrypted data.
+    (categoriesForMojo): Returns category list formatted for use in Mojo UI
+    code.
+    (emptyItem): Returns a blank item for use in the create item scene.
+    (formatDate): Add option to control rendering of time.
+    
+    * app/models/upgrader.js: Added 2=>3 upgrader.
+    
+    * app/views/actions/change-password-dialog.html: Now used for "change
+    password" as well as "first use".
+    
+    * app/views/categories/*.html: Add & edit categories.
+    
+    * app/views/help/help-scene.html: Add info on categories, hideEmpty and
+    the java gnukeyring converter.
+    
+    * app/views/item-list/item-list-scene.html: Add status line at the top.
+    
+    * app/views/item/item-scene.html: Remove header.  Add category plumbing.
+    Compact date display down to one line.
+    
+    * app/views/preferences/preferences-scene.html: Add pref for "Hide empty
+    fields".
+    
+    * stylesheets/keyring.css: Classes for compact dates row, status line, and
+    notes area.
+    
+    * testing.txt: Updated with a real test script, such as it is.
+
 2009-10-05  Dirk Bergstrom  <krid@otisbean.com>
 
 	* app/assistants/locked-assistant.js: Fix bad path to new-password dialog.

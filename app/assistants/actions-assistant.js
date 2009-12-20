@@ -76,12 +76,20 @@ ActionsAssistant.prototype.setup = function() {
     		Keyring.doIfPasswordValid, this.controller,
     		this.ring, this.import_.bind(this));
     
+    // Change Password
+    this.controller.setupWidget("changePasswordButton", {}, {
+		label: $L("Change"),
+        buttonClass: 'default',
+        disabled: false
+    });
+    this.changePassword = this.changePassword.bindAsEventListener(this);
+
     // Clear db
     this.controller.setupWidget("clearDatabaseButton", {}, {
-    		label: $L("Clear"),
-            buttonClass: 'default',
-            disabled: false
-        });
+    	label: $L("Clear"),
+    	buttonClass: 'default',
+    	disabled: false
+    });
     this.clearDbAction = Keyring.doIfPasswordValid.bind(
     		Keyring.doIfPasswordValid, this.controller,
     		this.ring, this.clearDatabase.bind(this));
@@ -257,6 +265,14 @@ ActionsAssistant.prototype.importResults = function(success, arg1, arg2) {
 	}
 };
 
+ActionsAssistant.prototype.changePassword = function() {
+	this.controller.showDialog({
+		template: "actions/change-password-dialog",
+		assistant: new ChangePasswordDialogAssistant(
+			this.controller, this.ring)
+	});
+};
+
 ActionsAssistant.prototype.clearDatabase = function() {
 	this.controller.showAlertDialog({
 		onChoose: function(value) {
@@ -278,8 +294,10 @@ ActionsAssistant.prototype.clearDatabase = function() {
 };
 
 ActionsAssistant.prototype.activate = function(event) {
-    Mojo.Event.listen(this.controller.get("clearDatabaseButton"), Mojo.Event.tap,
-		this.clearDbAction);
+	Mojo.Event.listen(this.controller.get("clearDatabaseButton"), Mojo.Event.tap,
+			this.clearDbAction);
+    Mojo.Event.listen(this.controller.get("changePasswordButton"), Mojo.Event.tap,
+		this.changePassword);
     Mojo.Event.listen(this.controller.get("exportButton"), Mojo.Event.tap,
 		this.exportAction);
     Mojo.Event.listen(this.controller.get("importButton"), Mojo.Event.tap,
@@ -292,6 +310,8 @@ ActionsAssistant.prototype.activate = function(event) {
 ActionsAssistant.prototype.deactivate = function(event) {
 	Mojo.Event.stopListening(this.controller.get("clearDatabaseButton"), Mojo.Event.tap,
 		this.clearDbAction);
+    Mojo.Event.stopListening(this.controller.get("changePasswordButton"), Mojo.Event.tap,
+		this.changePassword);
 	Mojo.Event.stopListening(this.controller.get("exportButton"), Mojo.Event.tap,
 		this.exportAction);
 	Mojo.Event.stopListening(this.controller.get("importButton"), Mojo.Event.tap,
@@ -343,7 +363,7 @@ ImportExportDialogAssistant = Class.create ({
 		    this.controller.setupWidget(
 		        "password",
 		        {
-		          hintText: $L("Password (if different from current)"),
+		          hintText: $L("Password for imported data"),
 		          autoFocus: false
 		        },
 		        this.passwordModel
@@ -390,3 +410,88 @@ ImportExportDialogAssistant = Class.create ({
 		}
 	}
 });
+
+
+function ChangePasswordDialogAssistant(controller, ring) {
+	this.controller = controller;
+	this.ring = ring;
+	this.model = {oldPassword: '', newPassword: '', newPassword2: ''};
+}
+
+ChangePasswordDialogAssistant.prototype.setup = function(widget) {
+	this.widget = widget;
+	
+	var oldOpts = {
+		hintText: $L("Old password"),
+		autoFocus: true,
+		autoReplace: true,
+		textCase: Mojo.Widget.steModeLowerCase,
+		enterSubmits: false,
+		modelProperty: "oldPassword"
+	};
+	this.controller.setupWidget("oldPassword", oldOpts, this.model);
+
+	var firstOpts = {
+			hintText: $L("New password"),
+			autoFocus: false,
+			autoReplace: true,
+			textCase: Mojo.Widget.steModeLowerCase,
+			enterSubmits: false,
+			modelProperty: "newPassword"
+	};
+	this.controller.setupWidget("newPassword", firstOpts, this.model);
+	var secondOpts = {
+			hintText: $L("Repeat Password"),
+			autoFocus: false,
+			autoReplace: true,
+			textCase: Mojo.Widget.steModeLowerCase,
+			enterSubmits: true,
+			modelProperty: "newPassword2"
+	};
+	this.controller.setupWidget("newPassword2", secondOpts, this.model);
+    this.controller.listen("newPassword2", Mojo.Event.propertyChange,
+            this.propChangeHandler.bind(this));
+	
+	this.okButtonModel = {label: $L("Ok"), disabled: false};
+	this.controller.setupWidget("okButton", {}, this.okButtonModel);
+	this.okButton = this.controller.get("okButton");
+	this.okHandler = this.ok.bindAsEventListener(this);
+	this.controller.listen("okButton", Mojo.Event.tap,
+			this.okHandler);
+	this.cancelButtonModel = {label: $L("Cancel"), disabled: false};
+	this.controller.setupWidget("cancelButton", {}, this.cancelButtonModel);
+	this.cancelButton = this.controller.get("cancelButton");
+	this.cancelHandler = this.widget.mojo.close.bindAsEventListener(this.widget.mojo);
+	this.controller.listen("cancelButton", Mojo.Event.tap,
+			this.cancelHandler);
+	//this.controller.get("oldPassword").mojo.focus();
+};
+
+ChangePasswordDialogAssistant.prototype.propChangeHandler = function(event) {
+	if (event.originalEvent.type == 'blur') {
+        this.ok();
+    }
+};
+
+ChangePasswordDialogAssistant.prototype.ok = function() {
+	Mojo.Log.info("got new passwords");
+	if (this.model.newPassword === this.model.newPassword2) {
+		Mojo.Log.info("matching");
+		this.ring.newPassword(this.model.oldPassword, this.model.newPassword);
+		this.widget.mojo.close();
+	} else {
+		Mojo.Log.info("no match");
+		this.controller.get("errmsg").update($L("Passwords do not match"));
+		this.controller.get("newPassword").mojo.focus();
+	}
+};
+
+//cleanup  - remove listeners
+ChangePasswordDialogAssistant.prototype.cleanup = function() {
+	this.controller.stopListening("okButton", Mojo.Event.tap,
+			this.okHandler);
+	this.controller.stopListening("cancelButton", Mojo.Event.tap,
+			this.cancelHandler);
+    this.controller.stopListening("newPassword2", Mojo.Event.propertyChange,
+            this.propChangeHandler.bind(this));
+};

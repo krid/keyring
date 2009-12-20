@@ -1,29 +1,22 @@
 
-SHORT TERM FEATURES
+BUGS
 
-* notes field needs to be rendered as multiline
+
+SHORT TERM FEATURES
 
 * finish help page
   - note to users about swipe to switch to prev/next app.
-
-* build script
 
 * Add optional context-help (typedown)   
 
 
 LONG TERM FEATURES
 
-* Multiple item types
-  - notes-only (secure memo)
-  - credit card (name, number, security code on the back number, expiration)
-
 * short circuit filtering if filter string hasn't changed or is empty
 
 * More robust timeout system
 
 * autocomplete for username
-
-* categories?
 
 * copy to clipboard for username or password
 

@@ -21,11 +21,13 @@ encrypted using the Blowfish algorithm, and protected by a master password.
 <a href="#adding">Adding Items</a> | 
 <a href="#generator">Password Generator</a> | 
 <a href="#list">Item List</a> | 
+<a href="#categories">Categories</a> | 
+<a href="#viewedit">View / Edit</a> | 
 <a href="#import">Import/Export</a> | 
+<a href="#convert">Converting from PalmOS</a> | 
 <a href="#coming">Coming Soon</a> |
 <a href="#changelog">Change Log</a> |
 <a href="#license">License</a>
-<!-- <a href="#"></a> | --> 
 </small>
 <div style="display: none;" id="errors-link">
 <a href="#errors-anchor">Show Errors</a></div>
@@ -36,7 +38,7 @@ encrypted using the Blowfish algorithm, and protected by a master password.
 <h4>Adding Items</h4>
 Once you have set a master password (you should choose a secure one, at least
 10 random characters), you can add new keys to the database.  The username, password,
-URL and notes fields are stored encrypted, while title and the created, changed
+URL and notes fields are stored encrypted, while title and category and the created, changed
 and last-viewed dates are unencrypted. 
 </div>
 
@@ -52,14 +54,32 @@ set in the Preferences scene.
 <div class="palm-info-text">
 <h4>Item List</h4>
 The list of keys can be sorted by title, or by any of the date fields (most
-recent on top).  The list supports typedown filtering, so it's easy to find
-a particular key.
+recent on top); it can also be filtered by category.  The list supports typedown
+filtering, so it's easy to find a particular key.
+</div>
+
+<a id="categories"></a>
+<div class="palm-info-text">
+<h4>Categories</h4>
+Categories may be managed via the "Edit Categories" item in the application menu,
+or via the "Edit" option in the category popup on the item list page.  Category
+names can be changed by tapping and editing.  Delete a category by swiping it
+from the list.
+</div>
+
+<a id="viewedit"></a>
+<div class="palm-info-text">
+<h4>View / Edit</h4>
+When viewing an item, empty fields are hidden by default; tap "show empty fields"
+to expose them (this behavior can be turned off in the preferences).  Tap any
+field to edit the contents.  The three dates displayed above the notes area are
+the created date, last modified date and the last viewed date.
 </div>
 
 <a id="import"></a>
 <div class="palm-info-text">
 <h4>Import / Export</h4>
-You may export your Keyring database, import new items, or clear the entire
+You may export your Keyring database, import new items, change the password, or clear the entire
 database via the "Database Actions" menu.  Data may be exported to the clipboard,
 or to a URL (a POST request will be sent, with a single "data" parameter
 containing the standard export format).  Data may be imported from the clipboard,
@@ -77,31 +97,35 @@ imported items that are not already in the list).</li>
 </ul> 
 </div>
 
+<a id="convert"></a>
+<div class="palm-info-text">
+<h4>Converting from Keyring for PalmOS</h4>
+Building on code from the good folks who brought you
+<a href="http://gnukeyring.sourceforge.net/conduits.html">Keyring for PalmOS</a>,
+there is now a Java utility that reads the legacy .pdb files and writes Keyring for
+webOS import/export format.  See details on the
+<a href="http://otisbean.com/keyring/#converter">Keyring project page</a>.
+This will later be expanded to accept CSV data to support import from other
+systems.
+</div>
+
 <a id="coming"></a>
 <div class="palm-info-text">
-<h4>Upcoming Features</h4>
+<h4>Contemplated Future Features</h4>
 <ul>
-<li> Better look & feel, maybe even some icons.<br />
- (If you have graphics skills you want to share, please contact
- <a href="mailto:keyring@otisbean.com">the developer</a>)</li>
+<li> Separate View and Edit scenes, allowing better information density,
+tap-to-launch for the URL and easy copy-to-clipboard for name or password.</li>
 
-<li> Multiple key/item types:
- <ul>
-  <li> Secure memos</li>
-  <li> Credit card (name, number, security code on the back, expiration date)</li>
- </ul></li>
+<li> A periodic export-to-url system, possibly backed by an optional Google
+AppEngine service.</li>
 
-<li> Optional autocomplete for usernames</li>
+<li> A Java utility to convert from CSV to Keyring.</li>
 
-<li> Periodic export-to-url system</li>
+<li> A better way to access Keyring data on your computer, via a Java utility.</li>
 
-<li> Easy copy to clipboard for username or password.</li>
+<li> A last-modified date for the entire db.</li>
 
-<li> A way to open the URL in the browser.</li>
-
-<li> A way to access Keyring data on your computer.</li>
-
-<li> A last-modified date to the entire db.</li>
+<li> Optional autocomplete for usernames.</li>
 
 <li> Ability to use the password generator on its own.</li>
 </ul>
@@ -112,31 +136,47 @@ imported items that are not already in the list).</li>
 <div class="palm-info-text">
 <h4>Change Log</h4>
 <ul>
-<li> Version 0.0.5 - 2009-10-04<br>
+<li>Version 0.1.0 - 2009-12-20<br />
+ - Added item categories, filtering by category and category management.<br />
+ - Display of created/changed/viewed dates now on one line.<br />
+ - Added prefs option (default true) to hide empty fields in item view.  This
+ makes it practical to use Keyring as a secure memo system.<br />
+ - Typedown filtering is now case-insensitive.<br />
+ - Built a <a href="http://otisbean.com/keyring/#converter">Java utility</a>
+ to convert from PalmOS Keyring to Keyring for webOS.<br />
+ - Status line at the top of the item list shows sorting and category.<br />
+ - Added change password function.<br />
+ - Verifies password before changing sort order.<br />
+ - Importer is more robust, and will handle older data formats.<br />
+ - A testing script (not yet automated, alas).<br />
+</li>
+
+<li> Version 0.0.6 - 2009-10-05<br />
+ - Fix dumb bug in display of master password dialog.</li>
+ 
+<li> Version 0.0.5 - 2009-10-04<br />
  - Added an "initializing" scene to fix bug where the "create master password"
  dialog would show up at launch (race condition with depot loading).<br /> 
  - Option to ask for a password at launch.<br /> 
  - Added more options for lockout behavior.<br /> 
  - Tidied up import &amp; export code.<br /> 
  - Added "Change Log" section to Help scene.<br /> 
- - <br /> 
- - <br /> 
 </li>
 
-<li> Version 0.0.4 - 2009-09-29<br>
- - Fixed a bug in the db upgrader<br>
- - Fixed a few import/export bugs<br>
- - Added error display to the help scene for user debugging<br>
+<li> Version 0.0.4 - 2009-09-29<br />
+ - Fixed a bug in the db upgrader<br />
+ - Fixed a few import/export bugs<br />
+ - Added error display to the help scene for user debugging<br />
  - Fixed an edge case bug where an item might not be hidden after a timeout.</li>
  
-<li> Version 0.0.3 - 2009-09-27<br>
- - Added import/export<br>
- - Fixed numerous bugs<br>
- - Look and feel cleanup<br>
+<li> Version 0.0.3 - 2009-09-27<br />
+ - Added import/export<br />
+ - Fixed numerous bugs<br />
+ - Look and feel cleanup<br />
  - Changed internal db format, and added db upgrade logic</li>
  
-<li> Version 0.0.2 - 2009-09-08<br>
- - Generated passwords didn't get put into the db properly (doh!).<br>
+<li> Version 0.0.2 - 2009-09-08<br />
+ - Generated passwords didn't get put into the db properly (doh!).<br />
  - Changed values in focused fields were lost on timeout-initiated scene pop.</li>
 </ul>
 </div>

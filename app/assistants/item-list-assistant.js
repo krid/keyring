@@ -20,21 +20,31 @@
 
 function ItemListAssistant(ring) {
 	this.ring = ring;
+	this.category = -1;
+	this.filterString = '';
+	this.itemList = null;
+	this.sortByChoices = [
+        {label: "Title", command: "TITLE"},
+        {label: "Last Viewed", command: "viewed"},
+        {label: "Last Changed", command: "changed"},
+        {label: "Created Date", command: "created"}
+    ];
 }
 
 ItemListAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
-	this.filterString = '';
--
-	/* setup widgets here */
+
 	Mojo.Log.info("rendering item-list");
 	this.controller.setupWidget(Mojo.Menu.appMenu,
 			Keyring.MenuAttr, Keyring.MenuModel);
 	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, 
 			{items:	[{label:"new", command:'new'},
-			       	{label:"sort by...", command:'sort'}]});
+			       	 {label:'category', command:'category'},
+			       	 {label:"sort by...", command:'sort'}]});
+	
 	var listAttributes = {
 		itemTemplate: 'item-list/item',
+		fixedHeightItems: true,
 		swipeToDelete: true,
 		reorderable: false,
 		filterFunction: this.filterItems.bind(this),
@@ -42,7 +52,11 @@ ItemListAssistant.prototype.setup = function() {
 		disabledProperty: 'disabled'
 	};
 	this.controller.setupWidget('ring-items', listAttributes, this.ring);
+	this.itemList = this.controller.get('ring-items');
 
+	// Set the status messages
+	this.controller.get("category").update(this.ring.categories[this.category]);
+	
 	/* add event handlers to listen to events from widgets */
 	Mojo.Log.info("binding tap and delete events");
 	this.tapped = this.tapped.bindAsEventListener(this);
@@ -58,21 +72,30 @@ ItemListAssistant.prototype.handleCommand = function(event) {
 					this.controller.stageController.pushScene.
 					bind(this.controller.stageController, "item", '', this.ring)
 				);
-			break;
+				break;
 			case 'sort':
-				this.controller.popupSubmenu({
-					onChoose: this.sortPopupHandler,
-					placeNear: event.target,
-					items: [{label: "Title", command: "TITLE"},
-					  {label: "Last Viewed", command: "viewed"},
-					  {label: "Last Changed", command: "changed"},
-					  {label: "Created Date", command: "created"}],
-					toggleCmd: this.ring.prefs.sortBy
-				});
-			break;
+				Keyring.doIfPasswordValid(this.controller, this.ring,
+					this.controller.popupSubmenu.bind(this.controller, {
+						onChoose: this.sortPopupHandler,
+						placeNear: event.target,
+						items: this.sortByChoices,
+						toggleCmd: this.ring.prefs.sortBy
+					}));
+				break;
+			case 'category':
+				var cats = this.ring.categoriesForMojo();
+				cats.push({label: 'Edit Categories', command: '++edit++'});
+				Keyring.doIfPasswordValid(this.controller, this.ring,
+					this.controller.popupSubmenu.bind(this.controller, {
+						onChoose: this.setCategory,
+						placeNear: event.target,
+						items: cats,
+				        toggleCmd: this.ring.prefs.category
+					}));
+				break;
 			default:
 				//Mojo.Controller.errorDialog("Got command " + event.command);
-			break;
+				break;
 		}
 	}
 };
@@ -86,6 +109,15 @@ ItemListAssistant.prototype.sortPopupHandler = function(command) {
 	this.ring.saveData();
 	this.ring.buildItemList();
 	this.controller.modelChanged(this.ring);
+	this.setSortingStatus();
+};
+
+ItemListAssistant.prototype.setSortingStatus = function() {
+	this.sortByChoices.each(function(sb){
+		if (this.ring.prefs.sortBy == sb.command) {
+			this.controller.get("sortby").update(sb.label)
+		}
+	}, this);
 };
 
 ItemListAssistant.prototype.tapped = function(event) {
@@ -118,17 +150,56 @@ ItemListAssistant.prototype.deleted = function(event) {
 			this.ring.deleteItem.bind(this.ring, event.item));
 };
 
+ItemListAssistant.prototype.setCategory = function(category) {
+	if (category == '++edit++') {
+		Keyring.doIfPasswordValid(this.controller, this.ring,
+			this.controller.stageController.pushScene.
+			bind(this.controller.stageController, "categories", this.ring));
+		return;
+	}
+	if (category == undefined || category == this.category) return;
+	Mojo.Log.info("Setting category to '%s'", category);
+	var subset = [];
+	this.category = category;
+	if (category == -1 && this.filterString == '') {
+		subset = this.ring.items;
+	} else {
+		this.ring.items.each(function(item) {
+			if ((category == -1 || item.category == category)
+					&& item.TITLE.include(this.filterString)) {
+				subset.push(item);
+			}
+		}, this);
+	}
+	
+	this.itemList.mojo.noticeUpdatedItems(0, subset);
+	this.itemList.mojo.setLength(subset.length);
+	this.itemList.mojo.setCount(subset.length);
+
+	this.ring.prefs.category = category;
+	this.ring.saveData();
+	
+	// Note the category in the header
+	this.controller.get("category").update(this.ring.categories[category]);
+	
+	// Scroll back to the top, in case the list has shrunk
+	this.itemList.mojo.revealItem(0, false);
+};
+
 ItemListAssistant.prototype.filterItems = function(filterString, listWidget, offset, count) {
-	/* Filter visible entries based on entered text. */
-	Mojo.Log.info("Filtering on '" + filterString + "'.");
+	/* Filter visible entries based on case-insensitive match with entered text. */
+	var filterUpper = filterString.toUpperCase();
+	Mojo.Log.info("Filtering on '" + filterUpper + "'.");
 	var subset = [];
 	var totalSubsetSize = 0;
 	
 	var i = 0;
 	while (i < this.ring.items.length) {
-        if (this.ring.items[i].title.include(filterString)) {
+		var item = this.ring.items[i];
+        if (item.TITLE.include(filterUpper) &&
+        		(this.category == -1 || item.category == this.category)) {
 			if (subset.length < count && totalSubsetSize >= offset) {
-				subset.push(this.ring.items[i]);
+				subset.push(item);
 			}
 			totalSubsetSize++;
 		}
@@ -140,12 +211,12 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	listWidget.mojo.noticeUpdatedItems(offset, subset);
 	
 	//set the list's length & count if we're not repeating the same filter string from an earlier pass
-	if (this.filterString !== filterString) {
+	if (this.filterString !== filterUpper) {
 		listWidget.mojo.setLength(totalSubsetSize);
 		listWidget.mojo.setCount(totalSubsetSize);
 	}
 	// Save the filter string for the next time
-	this.filterString = filterString;
+	this.filterString = filterUpper;
 };
 
 ItemListAssistant.prototype.activate = function(event) {
@@ -157,12 +228,16 @@ ItemListAssistant.prototype.activate = function(event) {
 		this.ring.itemsReSorted = false;
 		this.controller.modelChanged(this.ring);
 	}
+	// Filter by category if needed
+	this.setCategory(this.ring.prefs.category);
 	Mojo.Event.listen(this.controller.get('ring-items'),
 			Mojo.Event.listTap, this.tapped);
 	Mojo.Event.listen(this.controller.get('ring-items'),
 			Mojo.Event.listDelete, this.deleted);
 
 	Keyring.activateLockout(this);
+	
+	this.setSortingStatus();
 };
 
 ItemListAssistant.prototype.deactivate = function(event) {

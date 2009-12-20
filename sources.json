@@ -26,5 +26,9 @@
     {
         "source": "app\/assistants\/locked-assistant.js",
         "scenes": "locked"
+    },
+    {
+        "source": "app\/assistants\/categories-assistant.js",
+        "scenes": "categories"
     }
 ]

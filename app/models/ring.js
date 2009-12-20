@@ -40,7 +40,7 @@ var Ring = Class.create ({
 	_checkData: '',
 	
 	_upgradeCheckData: null,
-
+	
 	// import conflict handling options
 	resolutions: {
 		keep: {code: "keep", label: "Keep existing"},
@@ -52,7 +52,7 @@ var Ring = Class.create ({
 	onDeactivateOptions: {
 		lock: {code: "lock", label: "Lock"},
 		lockSoon: {code: "lockSoon", label: "Lock in 10 sec"},
-		noLock: {code: "noLock", label: "Don't lock"},
+		noLock: {code: "noLock", label: "Don't lock"}
 	},
 	
 	/* If prefs.onDeactivate == 'lockSoon', wait this many seconds after
@@ -61,6 +61,8 @@ var Ring = Class.create ({
 	
 	DEFAULT_PREFS: {
 		sortBy: 'TITLE',
+		category: -1,
+		hideEmpty: true,
 		timeout: 30 * 1000, // in milliseconds
 		requireInitialPassword: false,
 		lockoutTo: 'locked',
@@ -99,6 +101,11 @@ var Ring = Class.create ({
 	items: [],
 	
 	db: {},
+	
+	// FIXME need a way to use DEFAULT_CATEGORIES (create a firstRun method?)
+	DEFAULT_CATEGORIES: {"-1": "All", 0: "Unfiled"},
+	
+	categories: {"-1": "All", 0: "Unfiled"},
 
 	DEPOT_OPTIONS: {
 		name: 'keyring',
@@ -114,15 +121,21 @@ var Ring = Class.create ({
 	 * versioning.  This also allows me to read the version number, and fire
 	 * off the appropriate updater if it's too old.
 	 */
-	SCHEMA_VERSION: 2,
+	SCHEMA_VERSION: 3,
 	
 	DEPOT_DATA_KEY: "data",
 	
 	DEPOT_VERSION_KEY: "version",
 	
 	ENCRYPTED_ATTRS: ['username', 'pass', 'url', 'notes'],
+
+	ENCRYPTED_DEFAULTS: {username: '', pass: '', url: '', notes: ''},
 	
-	PLAINTEXT_ATTRS: ['title', 'created', 'viewed', 'modified'],
+	PLAINTEXT_ATTRS: ['title', 'category'],
+	
+	PLAINTEXT_DEFAULTS: {title: '', category: 0},
+
+	DATE_ATTRS: ['created', 'viewed', 'changed'],
 
 	initialize: function() {
 		Mojo.Log.info("Initializing ring");
@@ -136,24 +149,36 @@ var Ring = Class.create ({
 		);
 	},
 	
-	newPassword: function(password) {
+	newPassword: function(oldPassword, newPassword) {
 		Mojo.Log.info("newPassword");
-		if (! password) {
-			Mojo.Log.Info("no password");
+		if (! newPassword) {
+			Mojo.Log.info("no password");
 			throw new Error("You must enter a password.");
 		}
-		if (Object.keys(this.db).length > 0) {
-			Mojo.Log.warn("Changing pw not supported");
-			throw new Error("Changing the password is not currently supported.");
+		if (! this.firstRun && ! this.validatePassword(oldPassword)) {
+			var errmsg = "Attempt to change password without valid password.";
+			Mojo.Log.warn(errmsg);
+			throw new Error(errmsg);
 		}
-		this._key = b64_sha256(this._salt + password);
+		var oldKey = this._key;
+		this._key = b64_sha256(this._salt + newPassword);
+		if (Object.keys(this.db).length > 0) {
+			// Re-encrypt all items
+			Object.values(this.db).each(function(item) {
+				// Decrypt using the old key, and re-encrypt with the new one
+				var tmpData = this.decrypt(item.encrypted_data, oldKey);
+				item.encrypted_data = this.encrypt(tmpData);
+			}, this);
+		}
 		this._checkData = this.encrypt(this._key);
 		this.saveData();
 		this.updateTimeout();
 		this.firstRun = false;
-		// FIXME re-encrypt the db
 	},
 	
+	/**
+	 * Check the submitted password for validity; call updateTimeout() if valid.
+	 */
 	validatePassword: function(password) {
 		Mojo.Log.info("Validating password");
 		var tmpKey = b64_sha256(this._salt + password);
@@ -173,6 +198,10 @@ var Ring = Class.create ({
 		}
 	},
 	
+	/**
+	 * Return true if we have a valid key and the timeout hasn't passed; calls
+	 * updateTimeout() when true.
+	 */
 	passwordValid: function() {
 		if (this._key) {
 			if ((new Date().getTime() - this._passwordTime) < this.prefs.timeout) {
@@ -189,16 +218,30 @@ var Ring = Class.create ({
 		}
 	},
 	
+	/**
+	 * Lock Keyring by clearing the key and killing the timeout.
+	 */
 	clearPassword: function() {
 		Mojo.Log.info("clearPassword");
 		this._key = '';
 		this._passwordTime = 0;
 	},
 	
+	/**
+	 * Reset the timeout counter.
+	 */
 	updateTimeout: function() {
 		this._passwordTime = new Date().getTime();
 	},
 	
+	/**
+	 * Called to start the data loading process.  Kicks off the read of the
+	 * schema version.
+	 * 
+	 * The loading process is broken down into a number of methods, because
+	 * of asynchronous Depot reads, and to allow the Upgrader to intervene in
+	 * the process as needed.
+	 */
 	initDepotReader: function(callback) {
 		if (this.depotDataLoaded) {
 			// TODO is this always what we want to do?
@@ -206,7 +249,7 @@ var Ring = Class.create ({
 		}
 		this._dataLoadedCallback = callback;
 		this.depot.get(this.DEPOT_VERSION_KEY,
-			this._loadDepotData.bind(this),
+			this._startDepotLoad.bind(this),
 			function(error) {
 				var errmsg = "Could not init Depot reader: " + error;
 				this.errors.push(errmsg);
@@ -215,7 +258,11 @@ var Ring = Class.create ({
 		);
 	},
 	
-	_loadDepotData: function(versionObj) {
+	/**
+	 * Checks the schema version stored in Depot, and either kicks off an
+	 * upgrade, or calls _loadRingData().
+	 */
+	_startDepotLoad: function(versionObj) {
 		var depotVersion;
 		if (versionObj) {
 			depotVersion = versionObj.version;
@@ -229,20 +276,34 @@ var Ring = Class.create ({
 		if (depotVersion != this.SCHEMA_VERSION) {
 			new Upgrader(depotVersion, this).upgrade();
 		} else {
-			this.depot.get(this.DEPOT_DATA_KEY,
-				this._loadDataHandler.bind(this),
-				function(error) {
-					var errmsg = "Could not fetch data: " + error;
-					this.errors.push(errmsg);
-				    Mojo.Log.error(errmsg);
-				}
-			);
+			this._loadRingData(this._postLoadTasks.bind(this));
 		}
 	},
 	
-	_loadDataHandler: function(obj) {
+	/**
+	 * Kicks off the load of the actual keyring data, which is handled by
+	 * _loadDataHandler().
+	 */
+	_loadRingData: function(callAfterLoadDataHandler) {
+		Mojo.Log.info("_loadRingData()");
+		this.depot.get(this.DEPOT_DATA_KEY,
+			this._loadDataHandler.bind(this, callAfterLoadDataHandler),
+			function(error) {
+				var errmsg = "Could not fetch data: " + error;
+				this.errors.push(errmsg);
+			    Mojo.Log.error(errmsg);
+			}
+		);
+	},
+	
+	/**
+	 * Processes the actual keyring data, and calls _postLoadTasks().
+	 */
+	_loadDataHandler: function(nextStep, obj) {
+		Mojo.Log.info("_loadDataHandler()");
 		if (obj) {
 			this.db = obj.db;
+			this.categories = obj.categories;
 			this.prefs = obj.prefs;
 			this._salt = obj.crypt.salt;
 			this._checkData = obj.crypt.checkData;
@@ -266,15 +327,32 @@ var Ring = Class.create ({
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 		} else {
 			// Fill in any missing prefs with defaults
-			this.prefs = $H(Object.clone(this.DEFAULT_PREFS)).merge(this.prefs).toObject();
+			this.prefs = $H(this.DEFAULT_PREFS).update(this.prefs).toObject();
 		}
+		// make sure we always have the "all" and "unfiled" categories
+		this.categories = $H(this.categories).update(this.DEFAULT_CATEGORIES).toObject();
+		nextStep();
+	},
+	
+	/**
+	 * Handles setup of the item list and categories list.
+	 */
+	_postLoadTasks: function() {
+		Mojo.Log.info("_postLoadTasks()");
+		// Build and sort the list of items for display
 		this.buildItemList();
+		
+		// Finally we're done, inform the consumer.
 		this._dataLoadedCallback();
 	},
 
+	/**
+	 * Returns the object that is stored in the db and emitted from export().
+	 */
 	_dataObject: function() {
 		return {
 			db: this.db,
+			categories: this.categories,
 			crypt: {
 				salt: this._salt,
 				checkData: this._checkData
@@ -283,6 +361,10 @@ var Ring = Class.create ({
 		};
 	},
 	
+	/**
+	 * Save our data to the depot.  If upgrading or this.firstRun is true, also
+	 * write out the schema version. 
+	 */
 	saveData: function(upgrading) {
 		Mojo.Log.info("Saving data");
 		this.depot.add(this.DEPOT_DATA_KEY, this._dataObject(),
@@ -311,6 +393,9 @@ var Ring = Class.create ({
 		}
 	},
 	
+	/**
+	 * Return a JSON string of data suitable for export/import. 
+	 */
 	exportableData: function() {
 		if (! this.passwordValid()) {
 			Mojo.Log.warn("Attempt to export db without valid password.");
@@ -324,82 +409,111 @@ var Ring = Class.create ({
 		return JSON.stringify(data);
 	},
 	
-	/*
+	/**
 	 * Import data.
 	 * 
 	 * On success, calls callback with args of true and the number of items
 	 * imported.  On error, passes false and an error message.
+	 * 
+	 * FIXME an exception somewhere in the import process will result in a
+	 * partial import.
 	 */
 	importData: function(jsonData, behavior, usePrefs, password, callback) {
-		var data, errmsg, obj, decryptedJson, tmpKey, reEncrypt, emptyDb;
+		var data, errmsg, obj, decryptedJson, tmpKey, emptyDb;
 		Mojo.Log.info("Importing behavior=%s, usePrefs=%s", behavior, usePrefs);
 		try {
 			data = JSON.parse(jsonData);
 		}
 		catch(e) {
 			errmsg = "Unable to parse data; " + e.name + ": " + e.message;
-			Mojo.Log.info(errmsg);
+			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
 		}
-		if (data.schema_version != this.SCHEMA_VERSION) {
-			// TODO handle version mismatch
-			errmsg = "Incompatible version in import data";
-			Mojo.Log.info(errmsg);
+		if (data.schema_version > this.SCHEMA_VERSION) {
+			errmsg = "Importing data from later versions of Keyring is not supported.  Please upgrade first.";
+			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
-		}
+		} // Data from older versions will upgrade cleanly (at least for now).
+		
 		if (password || data.salt != this._salt) {
 			// imported data encrypted with a different password or salt
 			tmpKey = b64_sha256(data.salt + password);
-			reEncrypt = true;
-		} else {
-			tmpKey = this._key;
-			reEncrypt = false;
 		}
 		decryptedJson = this.decrypt(data.db, tmpKey);
 		try {
 			obj = JSON.parse(decryptedJson);
 		}
 		catch(e) {
-			errmsg = "Unable to parse decrypted data; " + e.name + ": " +
+			errmsg = "Can't parse decrypted data (bad password?); " + e.name + ": " +
 				e.message;
-			Mojo.Log.info(errmsg);
+			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
 		}
+		
 		if (usePrefs) {
-			this.prefs = obj.prefs;
+			// Merge imported prefs into ours
+			this.prefs = $H(this.prefs).update(obj.prefs).toObject();
 		}
-		emptyDb = (Object.keys(this.db).length === 0);
+
+		var categoryMap = false;
+		if (obj.categories) {
+			// Find the next available category number
+			var nextCategory = parseInt(Object.keys(this.categories).sort().pop()) + 1;
+			// Build a reverse hash of category name to number
+			var revCats = {};
+			Object.keys(this.categories).each(function(catKey) {
+				revCats[this.categories[catKey]] = catKey;
+			}, this);
+			/* Go through the imported categories and build a map of import
+			 * category number to our category number, adding new categories
+			 * as needed. */
+			categoryMap = {};
+			Object.keys(obj.categories).each(function(catKey) {
+				var catName = obj.categories[catKey];
+				if (revCats[catName]) {
+					// We have this category, map to our number (which may be the same)
+					categoryMap[catKey] = revCats[catName];
+				} else {
+					// We don't have this category, add it
+					this.categories[nextCategory] = catName;
+					categoryMap[catKey] = nextCategory;
+					nextCategory++;
+				}
+			}, this);
+			
+			// Do we have anything in the category map?
+			if (Object.values(categoryMap).length === 0) {
+				// Nope, don't bother with mapping later on.
+				categoryMap = false;
+			}
+		}
+		
 		// Now, let's see what we do with the imported items
+		emptyDb = (Object.keys(this.db).length === 0);
 		var added = 0, updated = 0;
 		Object.values(obj.db).each(function(item) {
 			var used = false;
 			var title = item.title;
-			Mojo.Log.info("processing", title);
 			var existing = this.db[title];
 			if (existing) {
 				if (behavior === this.resolutions.import_.code) {
-					this.db[title] = item;
 					updated++;
 					used = true;
 				} else if ((behavior === this.resolutions.update.code ||
 						    behavior === this.resolutions.newer.code) &&
 						    existing.changed < item.changed) {
-					this.db[title] = item;
 					updated++;
 					used = true;
 				}
 			} else if (emptyDb || behavior === this.resolutions.import_.code ||
 					   behavior === this.resolutions.keep.code ||
 					   behavior === this.resolutions.newer.code) {
-				this.db[title] = item;
 				added++;
 				used = true;
 			}
-			Mojo.Log.info("used", used);
-			if (used && reEncrypt) {
-				// Need to decrypt using import's key, and re-encrypt with ours
-				var tmpData = this.decrypt(item.encrypted_data, tmpKey);
-				item.encrypted_data = this.encrypt(tmpData);
+			if (used) {
+				// Upgrade the item to the current schema 
+				this.db[title] = this._upgradeItem(item, tmpKey, categoryMap);
 			}
 		}, this);
 		this.buildItemList();
@@ -408,9 +522,49 @@ var Ring = Class.create ({
 		callback(true, updated, added);
 	},
 	
-	/*
+	/**
+	 * Take an item from any (possibly old) schema, possibly encrypted with a different
+	 * key, and transform it into the current schema, encrypted with our key.
+	 * 
+	 * If key is not supplied, don't do anything with the encrypted data.
+	 * 
+	 * Fills in non-existent attributes with appropriate defaults.
+	 */
+	_upgradeItem: function(item, key, categoryMap) {
+		Mojo.Log.info("_upgradeItem");
+		var tmpItem = $H(item);
+		if (key) {
+			var tmpData = this.decrypt(item.encrypted_data, key);
+			try {
+				encryptedObj = JSON.parse(tmpData);
+			}
+			catch(e) {
+				errmsg = "Can't parse decrypted data (bad password?); " + e.name + ": " +
+					e.message;
+				Mojo.Log.warn(errmsg);
+				// FIXME what to do here?
+				throw new Error(errmsg);
+			}
+	
+			// Add the (formerly) encrypted attrs to the item
+			tmpItem.update(encryptedObj);
+			// Remove the old encrypted blob from the item
+			tmpItem.unset('encrypted_data');
+		}
+		
+		// Munge category if necessary
+		if (categoryMap) {
+			tmpItem.set('category', categoryMap[tmpItem.get('category')]);
+		}
+		
+		// And fix it up to conform to the current schema
+		return this._buildItem(tmpItem.toObject());
+	},
+
+	/**
 	 * Clear the database and the items list, save the empty db.  If
-	 * factoryReset is true, clear prefs and checkData & generate a new salt.
+	 * factoryReset is true, clear prefs, categories and checkData & generate
+	 * a new salt.
 	 */
 	clearDatabase: function(factoryReset) {
 		Mojo.Log.info("clearDatabase, factoryReset='%s'", factoryReset);
@@ -425,6 +579,8 @@ var Ring = Class.create ({
 			this._passwordTime = 0;
 			this._checkData = '';
 			this._salt = this.generatePassword({characters: 12, all: true});
+			// FIXME need to find a way to use DEFAULT_CATEGORIES
+			this.categories = {"-1": "All", 0: "Unfiled"};
 			this.firstRun = true;
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 			// Clear everything that was ever in the depot.
@@ -443,7 +599,74 @@ var Ring = Class.create ({
 		return true;
 	},
 	
-	/*
+	/**
+	 * Delete the supplied category, and set the category of all affected
+	 * items to "Unfiled" (0). 
+	 */
+	deleteCategory: function(toDelete) {
+		if (toDelete < 1) {
+			var errmsg = "Can't delete the \"All\" & \"Unfiled\" categories.";
+			Mojo.Log.error(errmsg);
+			throw new Error(errmsg);
+		}
+		if (! this.passwordValid()) {
+			Mojo.Log.warn("Attempt to delete category w/o valid password.");
+			return false;
+		}
+
+		var numAffected = 0;
+		Object.values(this.db).each(function(item) {
+			if (item.category == toDelete) {
+				item.category = 0;
+				numAffected++;
+			}
+		}, this);
+		
+		delete(this.categories[toDelete]);
+		if (this.prefs.category == toDelete) {
+			this.prefs.category = -1;
+		}
+		this.saveData();
+	},
+	
+	/**
+	 * Edit an existing category name, or (if value is undef) add a new category.
+	 * 
+	 * TODO strip whitespace from newLabel.
+	 */
+	editCategory: function(value, newLabel) {
+		Mojo.Log.info("editCategory");
+		if (value === 0) {
+			var errmsg = "Can't edit the \"All\" & \"Unfiled\" categories.";
+			Mojo.Log.error(errmsg);
+			return [false, errmsg];
+		}
+		if (! this.passwordValid()) {
+			var errmsg = "Attempt to edit categories w/o valid password.";
+			Mojo.Log.warn(errmsg);
+			return [false, errmsg];
+		}
+		if (value && ! this.categories[value]) {
+			var errmsg = 'Attempt to edit non-existent category with value "' + value;
+			Mojo.Log.warn(errmsg);
+			return [false, errmsg];
+		}
+		if (! value) {
+			var existing = Object.values(this.categories);
+			for (var i = 0; i < existing.length; i++) {
+				if (newLabel == existing[i]) {
+					return [false, 'Category "' + newLabel + '" already exists.'];
+				}
+			}
+			// New category, find the lowest unused value
+			value = parseInt(Object.keys(this.categories).sort().pop()) + 1;
+		}
+		this.categories[value] = newLabel;
+		this.saveData();
+		return [true, newLabel];
+	},
+	
+	/**
 	 * Generate a random password of the desired length, with characters
 	 * picked from one or more classes.
 	 * 
@@ -499,6 +722,11 @@ var Ring = Class.create ({
 		return syms[Math.floor(Math.random() * 30)];
 	},
 	
+	/**
+	 * Return a decrypted copy of the item corresponding to the given title.
+	 * 
+	 * TODO This will barf if this.db[title] doesn't exist.
+	 */
 	getItem: function(title) {
 		Mojo.Log.info("getItem");
 		var decrypted_obj;
@@ -523,6 +751,9 @@ var Ring = Class.create ({
 		return item;
 	},
 	
+	/**
+	 * Update or create an item from the given data.
+	 */
 	updateItem: function(oldTitle, newData) {
 		Mojo.Log.info("updateItem");
 		if (! this.passwordValid) {
@@ -536,23 +767,7 @@ var Ring = Class.create ({
 			throw new Error(errmsg);
 		}
 		
-		var item = {};
-		var i, attr;
-		for (i = 0; i < this.PLAINTEXT_ATTRS.length; i++) {
-			attr = this.PLAINTEXT_ATTRS[i];
-			item[attr] = newData[attr];
-		}
-		// We cache an uppercase version of the title for sorting
-		item.TITLE = newTitle.toUpperCase();
-		
-		var toBeEncrypted = {};
-		for (i = 0; i < this.ENCRYPTED_ATTRS.length; i++) {
-			attr = this.ENCRYPTED_ATTRS[i];
-			toBeEncrypted[attr] = newData[attr];
-		}
-		var jsonified = JSON.stringify(toBeEncrypted);
-		var encryptedJson = this.encrypt(jsonified);
-		item.encrypted_data = encryptedJson;
+		var item = this._buildItem(newData);
 		
 		if (oldTitle) {
 			if (newTitle != oldTitle) {
@@ -560,17 +775,60 @@ var Ring = Class.create ({
 				delete this.db[oldTitle];
 			}
 			item.changed = item.viewed = new Date().getTime();
-		} else {
-			// Newly created item
-			item.created = item.changed = item.viewed = new Date().getTime();
 		}
-		
+
 		this.db[newTitle] = item;
 		this.saveData();
 		this.buildItemList();
 		this.updateTimeout();
 	},
 	
+	/**
+	 * Given an object, return an item formatted for the current schema, with
+	 * the appropriate encrypted data.
+	 */
+	_buildItem: function(newData) {
+		Mojo.Log.info("_buildItem");
+		var item = {};
+		var i, attr;
+		for (i = 0; i < this.PLAINTEXT_ATTRS.length; i++) {
+			attr = this.PLAINTEXT_ATTRS[i];
+			item[attr] = newData.hasOwnProperty(attr) ?
+					newData[attr] : this.PLAINTEXT_DEFAULTS[attr];
+		}
+		// We cache an uppercase version of the title for sorting
+		item.TITLE = newData.title.toUpperCase();
+		for (i = 0; i < this.DATE_ATTRS.length; i++) {
+			attr = this.DATE_ATTRS[i];
+			item[attr] = newData.hasOwnProperty(attr) ?
+					newData[attr] : new Date().getTime();
+		}
+		// Make sure category is a number, not a string
+		item.category = parseInt(item.category);
+		
+		/* Don't mess with encrypted data if the item isn't decrypted (like
+		 * when we get here from the upgrader). */
+		if (newData.hasOwnProperty('encrypted_data')) {
+			item.encrypted_data = newData.encrypted_data;
+		} else {
+			var toBeEncrypted = {};
+			for (i = 0; i < this.ENCRYPTED_ATTRS.length; i++) {
+				attr = this.ENCRYPTED_ATTRS[i];
+				toBeEncrypted[attr] = newData.hasOwnProperty(attr) ?
+						newData[attr] : this.ENCRYPTED_DEFAULTS[attr];
+			}
+			var jsonified = JSON.stringify(toBeEncrypted);
+			var encryptedJson = this.encrypt(jsonified);
+			item.encrypted_data = encryptedJson;
+		}
+		
+		return item;
+	},
+	
+	/**
+	 * Set the 'viewed' time on the item of the given title, and save the
+	 * whole db.
+	 */
 	noteItemView: function(title) {
 		Mojo.Log.info("noteItemView");
 		this.db[title].viewed = new Date().getTime();
@@ -579,6 +837,9 @@ var Ring = Class.create ({
 		this.updateTimeout();
 	},
 	
+	/**
+	 * Delete the item for the given title.
+	 */
 	deleteItem: function(item) {
 		Mojo.Log.info("deleteItem");
 		delete this.db[item.title];
@@ -587,6 +848,9 @@ var Ring = Class.create ({
 		this.updateTimeout();
 	},
 	
+	/**
+	 * Build the sorted item list, used by the main scene.
+	 */
 	buildItemList: function() {
 		var sortBy = this.prefs.sortBy || 'TITLE';
 		Mojo.Log.info("buildItemList, sortby:", this.prefs.sortBy);
@@ -603,6 +867,9 @@ var Ring = Class.create ({
 	    });
 	},
 	
+	/**
+	 * Encrypt the given data with our key.
+	 */
     encrypt: function(data) {
 		Mojo.Log.info("encrypting");
 		if (! this._key) {
@@ -610,27 +877,57 @@ var Ring = Class.create ({
 			throw this.PasswordError;
 		}
         var encrypted = Mojo.Model.encrypt(this._key, data);
-        Mojo.Log.info("Mojo.Model.encrypt done, encrypted='%s'", encrypted);
+        if (this.debug) Mojo.Log.info("Mojo.Model.encrypt done, encrypted='%s'", encrypted);
         return encrypted;
 	},
 
+	/**
+	 * Decrypt the given data, using the supplied key, or our key.
+	 */
     decrypt: function(data, tempKey) {
 		Mojo.Log.info("decrypt");
 		var key = tempKey ? tempKey : this._key;
-		Mojo.Log.info("Calling Mojo.Model.decrypt. data='%s'", data);
+		if (this.debug) Mojo.Log.info("Calling Mojo.Model.decrypt. data='%s'", data);
         return Mojo.Model.decrypt(key, data);
 	},
 	
-	formatDate: function(millis) {
-		Mojo.Log.info("formatDate");
+	/**
+	 * Return the categories as a list of label/value/command objects, suitable
+	 * for use in various Mojo situations.
+	 */
+	categoriesForMojo: function(excludeFrom) {
+		var cats = [];
+		Object.keys(this.categories).sort().each(function(cat) {
+			if (cat <= excludeFrom) return;
+			cats.push({label: this[cat], value: cat, command: cat});
+		}, this.categories);
+		return cats;
+	},
+	
+	/**
+	 * Returns an item with all default values, to be used in the item creation
+	 * scene.
+	 */
+	emptyItem: function() {
+		return $H(this.PLAINTEXT_DEFAULTS).update(this.ENCRYPTED_DEFAULTS).toObject();
+	},
+	
+	/**
+	 * Format epoch milliseconds as an ISO date, with optional HH:mm.
+	 */
+	formatDate: function(millis, includeTime) {
 		if (typeof(millis) != "number") {
 			return '';
 		}
 		var date = new Date(millis);
 		date.getHours();
-		return date.getFullYear() + '-' + this._zeropad(date.getMonth() + 1) + 
-			'-' + this._zeropad(date.getDate()) + ' ' +
-			this._zeropad(date.getHours()) + ':' + this._zeropad(date.getMinutes());
+		var formatted = date.getFullYear() + '-' + this._zeropad(date.getMonth() + 1) + 
+			'-' + this._zeropad(date.getDate());
+		if (includeTime) {
+			formatted += ' ' + this._zeropad(date.getHours()) + ':' +
+			    this._zeropad(date.getMinutes());
+		}
+		return formatted;
 	},
 	
 	_zeropad: function(val) {

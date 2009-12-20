@@ -1,0 +1,119 @@
+TESTING SCRIPT
+
+Eventually I'll translate this into Mojo.Test...
+
+FIRST RUN
+(emulator only)
+
+*) Delete app
+   palm-install -d tcp -r com.otisbean.keyring
+
+*) Install app
+   palm-install -d tcp /tmp/com.otisbean.keyring_$VERSION_all.ipk
+   
+*) Click on icon
+
+---
+
+*) unit tests on ring.js
+
+*) "locked" scene
+ - check message
+
+*) new password
+ - mismatch
+ - cancel w/o pw
+ - empty pw
+ 
+*) empty item list
+ - add new item
+ 
+*) Add item
+
+*) View item
+ - show empty
+
+*) password generator
+
+*) cancel add item
+
+*) save new item
+
+*) add category
+
+*) add two more items
+ - Use multiple categories
+
+*) Edit item #2
+
+*) sorting
+ - title
+ - last viewed
+ - last changed
+ - created
+
+*) filter by category
+
+*) Change category on item
+ - check filtering
+ 
+*) edit a category
+
+*) delete a category
+
+*) Typedown filtering
+ - case insensitivity
+
+*) About
+
+*) Help
+
+*) Prefs scene
+
+*) sort by pref
+
+*) password gen prefs
+
+*) paranoia prefs
+ - locked @ launch
+ - timeout
+ - lockout to
+ - on deactivate
+
+*) Database actions scene
+
+*) export
+ - clipboard
+ - url
+ 
+*) import source
+ - url
+ - file
+ - clipboard
+
+*) import resolution
+ - use import
+ - update only
+ - use newer
+ - keep existing
+ 
+*) prefs import
+ - does knob on import work
+ - does prefs import work
+
+*) categories import
+ - are they properly mapped
+ - collision avoidance
+
+*) change password
+
+*) clear database
+ - just items
+ - factory reset
+
+==> check that changes really get written to depot
+ - item edits
+ - prefs
+ 
+*) upgrader
+

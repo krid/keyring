@@ -18,3 +18,25 @@
     text-align: center;
     color: red;
 }
+
+#dates-row {
+    font-size: medium;
+    font-stretch: condensed;
+}
+
+#notes-div {
+    margin-top: 0;
+    padding: 0 0.3em 0 0.3em;
+    font-size: medium;
+}
+
+#status {
+    float: right;
+    margin: 0 1em 0 0;
+    font-size: small;
+    font-weight: bold;
+}
+
+#status span {
+    font-weight: normal;
+}

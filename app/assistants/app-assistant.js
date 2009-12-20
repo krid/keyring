@@ -31,6 +31,7 @@ Keyring.MenuModel = {
     items: [ 
         {label: $L("About Keyring..."), command: "do-aboutKeyring"},
         Mojo.Menu.editItem,
+        {label: $L("Edit Categories..."), command: "do-keyRingCategories"},    
         {label: $L("Database Actions..."), command: "do-keyRingActions"},    
         {label: $L("Preferences..."), command: "do-keyRingPrefs"},    
         {label: $L("Help..."), command: "do-keyRingHelp"}            
@@ -122,6 +123,13 @@ AppAssistant.prototype.handleCommand = function(event) {
 					bind(stageController, "actions", this.ring)
 				);
         	break;
+	        	
+	        case "do-keyRingCategories":
+	        	Keyring.doIfPasswordValid(currentScene, this.ring,
+	        			stageController.pushScene.
+	        			bind(stageController, "categories", this.ring)
+	        	);
+	        	break;
 	        	
 	        case "do-keyRingHelp":
 	        	this.ring.updateTimeout();

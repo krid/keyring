@@ -78,6 +78,12 @@ PreferencesAssistant.prototype.setup = function() {
 		          {label: "Created Date", value: "created"}]},
         this.ring.prefs);
 	this.fieldsToListen.push("sortBy");
+	
+	this.controller.setupWidget("hideEmpty",
+		{modelProperty: "hideEmpty",
+		 falseLabel: "no",
+		 trueLabel: "yes"},
+		this.ring.prefs);
 
 	// Character types for password generator
     Object.keys(this.ring.prefs.generatorPrefs).each(function(attr) {
