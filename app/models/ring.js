@@ -835,7 +835,10 @@ var Ring = Class.create ({
 		Mojo.Log.info("noteItemView");
 		this.db[title].viewed = new Date().getTime();
 		this.saveData();
-		this.buildItemList();
+		if (this.prefs.sortBy === "viewed") {
+			this.buildItemList();
+			this.itemsReSorted = true;
+		}
 		this.updateTimeout();
 	},
 	

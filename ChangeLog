@@ -1,7 +1,12 @@
 2009-12-20  Dirk Bergstrom  <krid@otisbean.com>
 
+    * app/assistants/categories-assistant.js (setup): Set initial focus to
+    null.
+
     * app/models/ring.js (getItem): Remove encrypted stuff from item before
     passing it on.  Fixes incredibly stupid bug.
+    (noteItemView): Only re-sort if currently sorting by viewed.  If so,
+    set itemsReSorted, so the UI notices the change.
 
 2009-12-19  Dirk Bergstrom  <krid@otisbean.com>
 

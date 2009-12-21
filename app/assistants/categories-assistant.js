@@ -35,6 +35,9 @@ CategoriesAssistant.prototype.setup = function() {
 	this.deleted = this.deleted.bindAsEventListener(this);
 	this.addCategory = this.addCategory.bindAsEventListener(this);
 	this.categoryEdited = this.categoryEdited.bindAsEventListener(this);
+	
+	// Make sure nothing is focused
+	this.controller.setInitialFocusedElement(null);
 };
 
 CategoriesAssistant.prototype.deleted = function(event) {
