@@ -1,5 +1,14 @@
 2010-01-01  Dirk Bergstrom  <krid@otisbean.com>
 
+Closes gh-2: Can't have more than 10 categories
+    * app/models/ring.js (editCategory): Sort numerically instead of lexically
+    when finding next available index.  Add logging.
+    (categoriesForMojo): Sort numerically instead of lexically.
+    (deleteCategory): Remove unused count of affected records.  Add logging.
+
+    * app/assistants/categories-assistant.js (CategoryDialogAssistant.save):
+    Remove log call.
+
 Closes gh-1: Can't delete first item on item-list
     * stylesheets/keyring.css (#status): Change float: left to text-align: left.
 
@@ -13,6 +22,9 @@ Closes gh-3: Import from clipboard borken
     * stylesheets/keyring.css (#import-data-div): Add max-height to input div,
     now expands to ~3 lines of text before scrolling.
 
+    * app/models/ring.js (importData): Strip whitespace from data before
+    parsing.  Add return calls after calling callback on error.
+    
 2009-12-20  Dirk Bergstrom  <krid@otisbean.com>
 
     * app/assistants/categories-assistant.js (setup): Set initial focus to

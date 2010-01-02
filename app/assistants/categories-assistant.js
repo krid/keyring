@@ -166,7 +166,6 @@ CategoryDialogAssistant = Class.create ({
 		Mojo.Log.info("save");
 		var retval = this.ring.editCategory(undefined, this.categoryModel.value);
 		if (retval[0]) {
-			Mojo.Log.info("category '%s' created", retval[1]);
 			this.widget.mojo.close();
 			this.callbackOnSuccess();
 		} else {

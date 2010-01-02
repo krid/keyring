@@ -421,6 +421,8 @@ var Ring = Class.create ({
 	importData: function(jsonData, behavior, usePrefs, password, callback) {
 		var data, errmsg, obj, decryptedJson, tmpKey, emptyDb;
 		Mojo.Log.info("Importing behavior=%s, usePrefs=%s", behavior, usePrefs);
+		// Remove all whitespace from the data
+		var cleanData = jsonData.replace(/\s/, '');
 		try {
 			data = JSON.parse(jsonData);
 		}
@@ -428,11 +430,13 @@ var Ring = Class.create ({
 			errmsg = "Unable to parse data; " + e.name + ": " + e.message;
 			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
+			return;
 		}
 		if (data.schema_version > this.SCHEMA_VERSION) {
 			errmsg = "Importing data from later versions of Keyring is not supported.  Please upgrade first.";
 			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
+			return;
 		} // Data from older versions will upgrade cleanly (at least for now).
 		
 		if (password || data.salt != this._salt) {
@@ -448,6 +452,7 @@ var Ring = Class.create ({
 				e.message;
 			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
+			return;
 		}
 		
 		if (usePrefs) {
@@ -613,12 +618,11 @@ var Ring = Class.create ({
 			Mojo.Log.warn("Attempt to delete category w/o valid password.");
 			return false;
 		}
-
-		var numAffected = 0;
+		Mojo.Log.info("Deleting category '%s' with index %s",
+				this.categories[toDelete], toDelete);
 		Object.values(this.db).each(function(item) {
 			if (item.category == toDelete) {
 				item.category = 0;
-				numAffected++;
 			}
 		}, this);
 		
@@ -659,8 +663,9 @@ var Ring = Class.create ({
 				}
 			}
 			// New category, find the lowest unused value
-			value = parseInt(Object.keys(this.categories).sort().pop()) + 1;
+			value = parseInt(Object.keys(this.categories).sort(function(a,b) {return a-b;}).pop()) + 1;
 		}
+		Mojo.Log.info("Category '%s' has index %s", newLabel, value);
 		this.categories[value] = newLabel;
 		this.saveData();
 		return [true, newLabel];
@@ -902,7 +907,7 @@ var Ring = Class.create ({
 	 */
 	categoriesForMojo: function(excludeFrom) {
 		var cats = [];
-		Object.keys(this.categories).sort().each(function(cat) {
+		Object.keys(this.categories).sort(function(a,b) {return a-b;}).each(function(cat) {
 			if (cat <= excludeFrom) return;
 			cats.push({label: this[cat], value: cat, command: cat});
 		}, this.categories);
