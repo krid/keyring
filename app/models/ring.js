@@ -2,7 +2,7 @@
  * @author Dirk Bergstrom
  *
  * Keyring for webOS - Easy password management on your phone.
- * Copyright (C) 2009, Dirk Bergstrom, keyring@otisbean.com
+ * Copyright (C) 2009-2010, Dirk Bergstrom, keyring@otisbean.com
  *     
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -149,6 +149,9 @@ var Ring = Class.create ({
 		);
 	},
 	
+	/**
+	 * Create the master password (first run) or change it.
+	 */
 	newPassword: function(oldPassword, newPassword) {
 		Mojo.Log.info("newPassword");
 		if (! newPassword) {
@@ -238,8 +241,8 @@ var Ring = Class.create ({
 	 * Called to start the data loading process.  Kicks off the read of the
 	 * schema version.
 	 * 
-	 * The loading process is broken down into a number of methods, because
-	 * of asynchronous Depot reads, and to allow the Upgrader to intervene in
+	 * The loading process is broken down into a number of methods because
+	 * of asynchronous Depot reads and to allow the Upgrader to intervene in
 	 * the process as needed.
 	 */
 	initDepotReader: function(callback) {
@@ -265,12 +268,16 @@ var Ring = Class.create ({
 	_startDepotLoad: function(versionObj) {
 		var depotVersion;
 		if (versionObj) {
+			// There's data in them thar depots.  This is not the first run
 			depotVersion = versionObj.version;
 			// Avoid race condition on app startup
 			this.firstRun = false;
 		} else {
-			// First releases didn't have a version key in Depot
-			depotVersion = 0;
+			Mojo.Log.info("This is the first run.  Welcome to Keyring.");
+			this._salt = this.generatePassword({characters: 12, all: true});
+			this.prefs = Object.clone(this.DEFAULT_PREFS);
+			this.depotDataLoaded = true;
+			return this._postLoadTasks();
 		}
 		Mojo.Log.info("Current depotVersion", depotVersion);
 		if (depotVersion != this.SCHEMA_VERSION) {
@@ -313,14 +320,6 @@ var Ring = Class.create ({
 			var errmsg = "No data in Depot";
 			this.errors.push(errmsg);
 		    Mojo.Log.error(errmsg);
-		}
-		if (this._salt) {
-			this.firstRun = false;
-			Mojo.Log.info("checkData:", this._checkData, "salt:", this._salt);
-		} else {
-			// First run or factory reset, generate salt
-			this._salt = this.generatePassword({characters: 12, all: true});
-			Mojo.Log.info("Generated new salt: ", this._salt);
 		}
 		if (! this.prefs) {
 			// Copy default prefs

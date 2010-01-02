@@ -1,5 +1,15 @@
 2010-01-01  Dirk Bergstrom  <krid@otisbean.com>
 
+    * appinfo.js: Bump version for release.
+
+Closes gh-4: Remove upgrade support for v0.0.1 db format
+    * app/models/ring.js (_startDepotLoad): Do first-run tasks if no depot
+    data is found.
+    (_loadDataHandler): Remove first-run code and other legacy stuff.
+    Add or enchance comments on a few methods.
+
+    * app/models/upgrader.js: Remove version 0 upgrader, add comments.
+
 Closes gh-2: Can't have more than 10 categories
     * app/models/ring.js (editCategory): Sort numerically instead of lexically
     when finding next available index.  Add logging.
