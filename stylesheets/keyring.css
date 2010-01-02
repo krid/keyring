@@ -1,4 +1,4 @@
-/* Keyring styles.  Nothing yet... */
+/* Keyring styles. */
 .multi-checkbox.checkbox {
   float: none;
 }
@@ -39,4 +39,9 @@
 
 #status span {
     font-weight: normal;
+}
+
+/* Limit height to about three lines */
+#import-data-div {
+    max-height: 4em;
 }

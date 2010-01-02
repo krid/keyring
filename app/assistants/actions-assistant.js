@@ -352,8 +352,9 @@ ImportExportDialogAssistant = Class.create ({
 	             autoFocus: true,
 	             limitResize: true,
 	             autoReplace: false,
+	             multiline: true,
 	             textCase: Mojo.Widget.steModeLowerCase,
-	             enterSubmits: false
+	             enterSubmits: true
 	        },
 	        this.dataModel = {value: this.defaultDataValue});
     

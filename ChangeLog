@@ -1,3 +1,15 @@
+2010-01-01  Dirk Bergstrom  <krid@otisbean.com>
+
+Closes gh-3: Import from clipboard borken
+    * app/assistants/actions-assistant.js (ImportExportDialogAssistant.setup):
+    Make the 'data' input accept & display multi-line text.
+    
+    * app/views/actions/import-export-dialog.html: Add an id to the data
+    input div, so we can control its size.    
+
+    * stylesheets/keyring.css (#import-data-div): Add max-height to input div,
+    now expands to ~3 lines of text before scrolling.
+
 2009-12-20  Dirk Bergstrom  <krid@otisbean.com>
 
     * app/assistants/categories-assistant.js (setup): Set initial focus to
