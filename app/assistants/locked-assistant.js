@@ -24,6 +24,7 @@ function LockedAssistant(ring) {
 }
 
 LockedAssistant.prototype.setup = function() {
+	Mojo.Log.info("LockedAssistant.setup()");
 	this.loadingMessage = this.controller.get("loading-mesg").update($L("Initializing..."));
 	this.controller.setupWidget("loading-spinner",
          {spinnerSize: Mojo.Widget.spinnerSmall},
@@ -35,6 +36,7 @@ LockedAssistant.prototype.setup = function() {
 };
 
 LockedAssistant.prototype.loaded = function() {
+	Mojo.Log.info("LockedAssistant.loaded()");
 	// The ring is loaded, get rid of all the "Loading..." stuff
 	this.spinnerModel.spinning = false;
 	this.controller.modelChanged(this.spinnerModel);
@@ -132,9 +134,16 @@ NewPasswordDialogAssistant.prototype.propChangeHandler = function(event) {
 };
 NewPasswordDialogAssistant.prototype.ok = function() {
 	Mojo.Log.info("got new passwords");
+	this.sceneAssistant.controller.get("errmsg").update("");
 	if (this.passwordModel.value === this.password2Model.value) {
 		Mojo.Log.info("matching");
-		this.ring.newPassword(this.passwordModel.value);
+		try {
+			this.ring.newPassword(undefined, this.passwordModel.value);
+		}
+		catch(e) {
+			this.sceneAssistant.controller.get("errmsg").update(e.message);
+			return;
+		}			
 		this.widget.mojo.close();
 		this.callbackOnSuccess();
 	} else {
@@ -148,5 +157,5 @@ NewPasswordDialogAssistant.prototype.cleanup = function() {
 	this.sceneAssistant.controller.stopListening("okButton", Mojo.Event.tap,
 			this.okHandler);
     this.sceneAssistant.controller.stopListening("password2", Mojo.Event.propertyChange,
-            this.keyPressHandler.bind(this));
+            this.propChangeHandler.bind(this));
 };

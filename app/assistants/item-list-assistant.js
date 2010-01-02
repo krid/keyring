@@ -21,7 +21,7 @@
 function ItemListAssistant(ring) {
 	this.ring = ring;
 	this.category = -1;
-	this.filterString = '';
+	this.filterString = undefined;
 	this.itemList = null;
 	this.sortByChoices = [
         {label: "Title", command: "TITLE"},
@@ -187,9 +187,12 @@ ItemListAssistant.prototype.setCategory = function(category) {
 };
 
 ItemListAssistant.prototype.filterItems = function(filterString, listWidget, offset, count) {
-	/* Filter visible entries based on case-insensitive match with entered text. */
+	/* Filter visible entries based on case-insensitive match with entered text.
+	 * 
+	 * Note that this method is also called at scene setup time, and while
+	 * scrolling the list, as more items are fetched. */
 	var filterUpper = filterString.toUpperCase();
-	Mojo.Log.info("Filtering on '" + filterUpper + "'.");
+	Mojo.Log.info("Filtering on '%s', offset =%s", filterUpper, offset);
 	var subset = [];
 	var totalSubsetSize = 0;
 	
@@ -212,6 +215,7 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	
 	//set the list's length & count if we're not repeating the same filter string from an earlier pass
 	if (this.filterString !== filterUpper) {
+		Mojo.Log.info("Setting length/count to %s.", totalSubsetSize);
 		listWidget.mojo.setLength(totalSubsetSize);
 		listWidget.mojo.setCount(totalSubsetSize);
 	}

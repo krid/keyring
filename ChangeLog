@@ -1,5 +1,7 @@
 2010-01-01  Dirk Bergstrom  <krid@otisbean.com>
 
+    * app/views/help/help-scene.html: Update changelog.
+    
     * appinfo.js: Bump version for release.
 
 Closes gh-4: Remove upgrade support for v0.0.1 db format
