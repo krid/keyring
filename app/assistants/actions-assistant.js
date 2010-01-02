@@ -219,8 +219,10 @@ ActionsAssistant.prototype.importFileOrUrl = function(path, password) {
 			fullPath = path;
 		}
 		this.ring.prefs.import_.url = fullPath;
-	} else if (! path.charAt(0) != '/') {
-		path = '/' + path;
+	} else {
+		if (path.charAt(0) != '/') {
+			path = '/' + path;
+		}
 		fullPath = '/media/internal' + path;
 		this.ring.prefs.import_.filename = path;
 	}

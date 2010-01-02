@@ -420,10 +420,19 @@ var Ring = Class.create ({
 	importData: function(jsonData, behavior, usePrefs, password, callback) {
 		var data, errmsg, obj, decryptedJson, tmpKey, emptyDb;
 		Mojo.Log.info("Importing behavior=%s, usePrefs=%s", behavior, usePrefs);
-		// Remove all whitespace from the data
-		var cleanData = jsonData.replace(/\s/, '');
+		/* Strip leading and trailing non-JSON junk.  The import-from-clipboard method
+		 * often includes cruft like email signatures, etc.
+		 * 
+		 * Javascript's regex engine doesn't support the 's' modifier, so '.'
+		 * can never match a newline.  Thus the subterfuge with '[^}]'.
+		 * It appears that the JSON parser silently ignores trailing junk. */
+		var cleanData = jsonData.replace(/^[^{]*?(\{[^}]+\})[^}]*?$/, '$1');
+		/* Remove all whitespace from the data.  Some email clients insert
+		 * linebreaks in inconvenient places.  This is probably not necessary,
+		 * but it won't hurt anything. */
+		cleanData = cleanData.replace(/\s/g, '');
 		try {
-			data = JSON.parse(jsonData);
+			data = JSON.parse(cleanData);
 		}
 		catch(e) {
 			errmsg = "Unable to parse data; " + e.name + ": " + e.message;

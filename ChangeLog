@@ -1,3 +1,14 @@
+2010-01-02  Dirk Bergstrom  <krid@otisbean.com>
+
+Closes GH-6 - Importer should ignore leading and traling junk
+    * app/models/ring.js (importData): Strip non-JSON junk from the import
+    data before parsing.
+    
+    * app/assistants/actions-assistant.js (importFileOrUrl): Fix broken logic
+    for detecting file import and prepending slash.
+
+    * appinfo.js: Bump version for release.
+
 2010-01-01  Dirk Bergstrom  <krid@otisbean.com>
 
     * app/views/help/help-scene.html: Update changelog.
