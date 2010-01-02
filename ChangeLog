@@ -1,5 +1,8 @@
 2010-01-01  Dirk Bergstrom  <krid@otisbean.com>
 
+Closes gh-1: Can't delete first item on item-list
+    * stylesheets/keyring.css (#status): Change float: left to text-align: left.
+
 Closes gh-3: Import from clipboard borken
     * app/assistants/actions-assistant.js (ImportExportDialogAssistant.setup):
     Make the 'data' input accept & display multi-line text.

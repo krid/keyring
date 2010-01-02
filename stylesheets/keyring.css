@@ -31,7 +31,7 @@
 }
 
 #status {
-    float: right;
+    text-align: right;
     margin: 0 1em 0 0;
     font-size: small;
     font-weight: bold;
