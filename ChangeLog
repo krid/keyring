@@ -1,6 +1,8 @@
 2010-01-01  Dirk Bergstrom  <krid@otisbean.com>
 
     * app/views/help/help-scene.html: Update changelog.
+
+    * stylesheets/keyring.css: Reduce indent on help scene lists.
     
     * appinfo.js: Bump version for release.
 
