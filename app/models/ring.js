@@ -453,7 +453,11 @@ var Ring = Class.create ({
 		}
 		decryptedJson = this.decrypt(data.db, tmpKey);
 		try {
-			obj = JSON.parse(decryptedJson);
+			obj = JSON.parse(decryptedJson,
+				/* FIXME This function is here to get around a bug in 1.3.5.
+				 * Without it, JSON.parse will silently drop keys that
+				 * are numeric. */
+				function(key, value){ return value; });
 		}
 		catch(e) {
 			errmsg = "Can't parse decrypted data (bad password?); " + e.name + ": " +

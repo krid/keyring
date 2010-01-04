@@ -1,3 +1,13 @@
+2010-01-03  Dirk Bergstrom  <krid@otisbean.com>
+
+Closes gh-7: Categories ignored on import
+    * app/models/ring.js (importData): A bug webOS 1.3.5 makes JSON.parse()
+    silently drop numeric keys.  Add a workaround until Palm fixes it.
+
+    * appinfo.js: Bump version for release.
+
+    * app/views/help/help-scene.html: Update changelog.
+
 2010-01-02  Dirk Bergstrom  <krid@otisbean.com>
 
     * app/views/help/help-scene.html: Update changelog.
