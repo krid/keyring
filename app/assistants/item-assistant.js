@@ -62,7 +62,8 @@ GeneratePasswordAssistant.prototype.setup = function(widget) {
 
 GeneratePasswordAssistant.prototype.ok = function() {
 	Mojo.Log.info("generate password");
-	this.callback(this.ring.generatePassword(this.model));
+	this.ring.prefs.generatorPrefs = this.model;
+	this.callback(this.ring.randomCharacters(this.model));
 	this.widget.mojo.close();
 };
 

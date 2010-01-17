@@ -20,7 +20,7 @@
 
 function LockedAssistant(ring) {
 	this.ring = ring;
-	this.beenHereBefore = false;
+	this.startupComplete = false;
 }
 
 LockedAssistant.prototype.setup = function() {
@@ -31,28 +31,36 @@ LockedAssistant.prototype.setup = function() {
          this.spinnerModel = {
              spinning: true 
          });
+	
+	// Start the Depot data read process
 	this.ring.initDepotReader(this.loaded.bind(this));
-	//var dl=function(){}.bind(this);dl.delay(1); // to add a delay for testing
 };
 
-LockedAssistant.prototype.loaded = function() {
-	Mojo.Log.info("LockedAssistant.loaded()");
-	// The ring is loaded, get rid of all the "Loading..." stuff
+/**
+ * This method is passed to the data loading chain of our Ring as a callback.
+ * It's called when the Depot load is finished and the app is ready for
+ * user interaction. 
+ */
+LockedAssistant.prototype.loaded = function(errmsg) {
+	Mojo.Log.info("LockedAssistant.loaded(), errmsg=%s", errmsg);
 	this.spinnerModel.spinning = false;
 	this.controller.modelChanged(this.spinnerModel);
-	//this.controller.get("loading-scrim").removeClassName("palm-scrim");
-	this.loadingMessage.update($L("Ready"));
-	this.doYourThing();
+	if (errmsg) {
+		this.loadingMessage.update($L("Error: ") + errmsg);		
+	} else {
+		// The ring is loaded, get rid of the "Loading..." message
+		this.loadingMessage.update($L("Ready"));
+		this.controller.get("img-div").update('<img src="images/lock.png"/>');
+		this.requestPassword();
+	}
 };
 
-LockedAssistant.prototype.doYourThing = function() {
-	var pushToItemList = function() {
-		this.beenHereBefore = true;
-		this.controller.stageController.pushScene("item-list", this.ring);
-		this.loadingMessage.update($L("Keyring locked"));
-		this.controller.get("img-div").update('<img src="images/lock.png"/>');
-	}.bind(this);
-	
+/**
+ * Display a password dialog.  If this is the first run, it'll be "create
+ * master password", otherwise it's "enter password to unlock".
+ * We get here on timeout/deactivate as well as at launch.
+ */
+LockedAssistant.prototype.requestPassword = function() {
 	if (this.ring.firstRun) {
 		// User has not yet set a master password
 		this.loadingMessage.update($L("Set initial password"));
@@ -60,21 +68,44 @@ LockedAssistant.prototype.doYourThing = function() {
 	        template: "locked/new-password-dialog",
 	        preventCancel:true,
 	        assistant: new NewPasswordDialogAssistant(this, this.ring,
-        		pushToItemList)
+        		this.pushToItemList.bind(this))
 	    });
 	    
-	} else if (this.beenHereBefore || this.ring.prefs.requireInitialPassword) {
-		// We get here on timeout/deactivate as well as at launch
-		Keyring.doIfPasswordValid(this.controller, this.ring, pushToItemList, true);
-		
 	} else {
-		pushToItemList();
+		Keyring.doIfPasswordValid(this.controller, this.ring,
+				this.pushToItemList.bind(this), true);	
 	}
 };
 
+/**
+ * Password has been validated, go to the item list.  First, note that app
+ * startup is complete, and change the message, so that when this scene is
+ * activated again, we'll be ready.
+ */
+LockedAssistant.prototype.pushToItemList = function() {
+	this.startupComplete = true;
+	this.loadingMessage.update($L("Keyring open"));
+	this.controller.get("img-div").update('<img src="images/open-lock.png"/>');
+	this.controller.stageController.pushScene("item-list", this.ring);
+};
+
+/**
+ * This scene is loaded at app startup, but when that happens the Ring is
+ * still loading data, so we need to wait.  Later, the scene is used whenever
+ * the app is "locked out", and at that time, we need to put up the "enter
+ * password" dialog.
+ */
 LockedAssistant.prototype.activate = function(event) {
-	if (this.beenHereBefore) {
-		this.doYourThing();
+	if (this.startupComplete) {
+		this.ring.clearPassword();
+		this.loadingMessage.update($L("Keyring locked"));
+		this.controller.get("img-div").update('<img src="images/lock.png"/>');
+		if (this.ring.prefs.lockoutTo == 'close-app') {
+			Mojo.Log.info("Closing Keyring on lockout.");
+			this.controller.stageController.getAppController().closeAllStages();
+		} else {
+			this.requestPassword();
+		}
 	}
 };
 

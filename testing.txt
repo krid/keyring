@@ -20,30 +20,27 @@ FIRST RUN
 *) "locked" scene
  - check message
 
-*) new password
- - mismatch
- - cancel w/o pw
- - empty pw
- 
 *) empty item list
  - add new item
  
 *) Add item
+ - cancel add item
 
 *) View item
  - show empty
 
 *) password generator
 
-*) cancel add item
-
-*) save new item
-
 *) add category
 
 *) add two more items
  - Use multiple categories
 
+*) filter by category
+
+*) Change category on item
+ - check filtering
+ 
 *) Edit item #2
 
 *) sorting
@@ -52,11 +49,6 @@ FIRST RUN
  - last changed
  - created
 
-*) filter by category
-
-*) Change category on item
- - check filtering
- 
 *) edit a category
 
 *) delete a category
@@ -64,6 +56,11 @@ FIRST RUN
 *) Typedown filtering
  - case insensitivity
 
+*) new password
+ - mismatch
+ - cancel w/o pw
+ - empty pw
+ 
 *) About
 
 *) Help
@@ -79,6 +76,7 @@ FIRST RUN
  - timeout
  - lockout to
  - on deactivate
+ - close on lock
 
 *) Database actions scene
 

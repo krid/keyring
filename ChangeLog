@@ -1,7 +1,68 @@
+2010-01-17  Dirk Bergstrom  <krid@otisbean.com>
+
+Closes gh-13: Work around deficiency in Mojo.Model.encrypt()
+Closes gh-10: Option to clear decrypted in-memory data on lockout
+Closes gh-9: bad usage of encryption - security hole
+    * app/models/ring.js: Data is now stored in the Depot as a large encrypted
+    blob, instead of a JSON object.  This is more secure, and it allows us
+    to get around a deficiency in Mojo.Model.encrypt. 
+    Data loading pathway has been revamped to handle the need to get a
+    password in the middle of the process.
+    (_encryptedData): Temp storage for db data during startup.
+    (DEFAULT_PREFS): Remove requireInitialPassword.
+    (ITEM_SALT_LEN, DB_SALT_LEN): Define amount of pre-encryption salt.
+    (_makeKey): Factored out key building.
+    (newPassword): Add salt when encrypting.  Update timeout before saving.
+    (validatePassword): Now part of the initial data load path.
+    (_dataObject): Now returns what used to be the export format.
+    (exportableData): Now just a thin wrapper around _dataObject.
+    (importData): Use new _makeKey method.
+    (_rndSym): Remove curly braces so we can use this as salt around JSON.
+    (_buildItem): Add salt when encrypting.
+    (encrypt): Prepend salt.
+    (decrypt): Strip off non-JSON salt prefix after decrypting.
+    (onDeactivateOptions): Restructure to match select widget needs.
+    (lockoutToOptions): Move here from preferences-assistant, add new
+    close-app option.
+    Add some more documentation and comments.
+
+    * app/models/upgrader.js: Rewritten (again) for new db system.
+    
+    * app/assistants/app-assistant.js (windowDeactivated, Keyring.lockout):
+    Handle new close-app-on-lock behavior.
+    
+    * app/assistants/locked-assistant.js: Add comments describing control flow.
+    (beenHereBefore, doYourThing): Rename for clarity.
+    (loaded): Check for errors in Depot load.
+    (requestPassword): Make pushToItemList a separate method.  Remove code
+    to handle non-locked-at-launch case.
+    (pushToItemList): Update message & icon to "unlocked" before pushing.
+    (setup): Display lock icon at startup.
+    (activate): Lock ring if user pops to this scene explicitly.  Update
+    message to "locked".  Handle new close-app-on-lock behavior.
+    
+    * app/assistants/item-assistant.js (GeneratePasswordAssistant.ok): Save
+    choices to ring.prefs.
+    
+    * app/assistants/preferences-assistant.js (setup): Remove "Locked at Lanch"
+    pref, since app is now always locked at launch.  Move options for on-
+    deactivate and lockout-to to ring.js.
+    Prep all strings for I18N.
+
+    * app/views/preferences/preferences-scene.html: Remove "Locked at Lanch".
+    
+    * app/views/help/help-scene.html: Update changelog.
+    
+    * appinfo.js: Bump version for release.
+
+    * app/assistants/actions-assistant.js: I18N prep for strings I missed.
+    (ChangePasswordDialogAssistant.ok): Display error message when old password
+    is wrong.
+    
 2010-01-03  Dirk Bergstrom  <krid@otisbean.com>
 
 Closes gh-7: Categories ignored on import
-    * app/models/ring.js (importData): A bug webOS 1.3.5 makes JSON.parse()
+    * app/models/ring.js (importData): A bug in webOS 1.3.5 makes JSON.parse()
     silently drop numeric keys.  Add a workaround until Palm fixes it.
 
     * appinfo.js: Bump version for release.

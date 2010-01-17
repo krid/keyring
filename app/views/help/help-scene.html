@@ -12,7 +12,7 @@
 <h3>Keyring - Easy password management on your phone</h3>
 
 Keyring for webOS stores your account information securely, so you don't have
-to rely on your memory, or on little scraps of paper.  Sensitive data are
+to rely on your memory or little scraps of paper.  Sensitive data are
 encrypted using the Blowfish algorithm, and protected by a master password.
 </div>
 
@@ -37,9 +37,10 @@ encrypted using the Blowfish algorithm, and protected by a master password.
 <div class="palm-info-text">
 <h4>Adding Items</h4>
 Once you have set a master password (you should choose a secure one, at least
-10 random characters), you can add new keys to the database.  The username, password,
-URL and notes fields are stored encrypted, while title and category and the created, changed
-and last-viewed dates are unencrypted. 
+10 random characters), you can add new items to the database.  All data is
+stored in an encrypted blob in the database.  Once loaded into memory, the username,
+password, URL and notes fields remain encrypted until the item is viewed, while
+title and category and the dates are unencrypted for list display and sorting. 
 </div>
 
 <a id="generator"></a>
@@ -136,6 +137,21 @@ AppEngine service.</li>
 <div class="palm-info-text">
 <h4>Change Log</h4>
 <ul>
+<li>Version 0.2.0 - 2010-01-10<br />
+ - Data is now stored in the database as a single encrypted blob, rather than
+ the former mix of encrypted and cleartext structured data.  A salt is prepended
+ to the data prior to encryption, to work around a deficiency in the Palm
+ Mojo.Model.encrypt API.
+ - Keyring always prompts for a password at launch, and the "locked at
+ launch" preference has been removed.
+ - A new "On Lockout" option, "Close App" is available for the paranoid.  It
+ will cause Keyring to close itself whenever there is a timeout of the app is
+ deactivated/minimized. 
+ - Cosmetic changes to the "Keyring locked" scene.
+ - The <a href="http://otisbean.com/keyring/#converter">converter</a> has been
+ updated to add salt when encrypting.
+</li>
+
 <li>Version 0.1.3 - 2010-01-03<br />
  - Work around a webOS 1.3.5 bug in JSON.parse that was breaking categories
  on import. 

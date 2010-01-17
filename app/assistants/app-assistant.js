@@ -50,6 +50,8 @@ AppAssistant.prototype.setup = function() {
 AppAssistant.prototype.windowDeactivated = function() {
 	Mojo.Log.info("windowDeactivated in scene", this.stageController.topScene().sceneName);
 	switch (this.ring.prefs.onDeactivate) {
+		case 'close-app':
+			// First step same as 'lock', fall through
 		case 'lock':
 			Keyring.lockout(this, this.ring);
 			break;
@@ -242,8 +244,10 @@ Keyring.lockout = function(controller, ring) {
 	var sceneName = controller.stageController.topScene().sceneName;
 	Mojo.Log.info("Timeout or Deactivate in scene", sceneName);
 	ring.clearPassword();
-	// Don't pop scene if we're already on the lockoutTo page.
-	if (sceneName != ring.prefs.lockoutTo) {
+	if (ring.prefs.lockoutTo == 'close-app') {
+		controller.stageController.popScenesTo('locked');
+	} else if (sceneName != ring.prefs.lockoutTo) {
+		// Don't pop scene if we're already on the lockoutTo page.
 		controller.stageController.popScenesTo(ring.prefs.lockoutTo);
 	}
 };

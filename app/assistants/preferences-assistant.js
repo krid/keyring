@@ -2,7 +2,7 @@
  * @author Dirk Bergstrom
  * 
  * Keyring for webOS - Easy password management on your phone.
- * Copyright (C) 2009, Dirk Bergstrom, keyring@otisbean.com
+ * Copyright (C) 2009-2010, Dirk Bergstrom, keyring@otisbean.com
  *     
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,63 +26,50 @@ function PreferencesAssistant(ring) {
 PreferencesAssistant.prototype.setup = function() {
 	Mojo.Log.info("setup prefs scene");
 	
-	this.controller.setupWidget("requireInitialPassword",
-		{modelProperty: "requireInitialPassword",
-		 falseLabel: "no",
-		 trueLabel: "yes"},
-		this.ring.prefs);
-	this.fieldsToListen.push("requireInitialPassword");
-	
 	this.controller.setupWidget("timeout",
 		{modelProperty: "timeout",
-		 label: "Timeout",
+		 label: $L("Timeout"),
 		 labelPlacement: Mojo.Widget.labelPlacementLeft,
-    	 choices: [{label: "5 seconds", value: 5000},
-    	           {label: "15 seconds", value: 15000},
-	               {label: "30 seconds", value: 30000}, 
-	               {label: "1 minute", value: 60000},
-	               {label: "2 minutes", value: 120000},
-	               {label: "5 minutes", value: 300000}]},
+    	 choices: [{label: $L("5 seconds"), value: 5000},
+    	           {label: $L("15 seconds"), value: 15000},
+	               {label: $L("30 seconds"), value: 30000}, 
+	               {label: $L("1 minute"), value: 60000},
+	               {label: $L("2 minutes"), value: 120000},
+	               {label: $L("5 minutes"), value: 300000}]},
         this.ring.prefs);
 	this.fieldsToListen.push("timeout");
 
 	this.controller.setupWidget("lockoutTo",
 		{modelProperty: "lockoutTo",
-		 label: "Lockout to",
+		 label: $L("Lockout to"),
 		 labelPlacement: Mojo.Widget.labelPlacementLeft,
-    	 choices: [{label: "Lock scene", value: "locked"},
-    	           {label: "Item list", value: "item-list"}]},
+    	 choices: this.ring.lockoutToOptions},
         this.ring.prefs);
 	this.fieldsToListen.push("lockoutTo");
 
-	var choices = [];
-	Object.keys(this.ring.onDeactivateOptions).each(function(key) {
-		choices.push({label: this[key].label, value: this[key].code});
-	}, this.ring.onDeactivateOptions);
-	choices.sort();
 	this.controller.setupWidget("onDeactivate",
 		{modelProperty: "onDeactivate",
-		 label: "On Deactivate",
+		 label: $L("On Deactivate"),
 		 labelPlacement: Mojo.Widget.labelPlacementLeft,
-		 choices: choices},
+		 choices: this.ring.onDeactivateOptions},
         this.ring.prefs);
 	this.fieldsToListen.push("onDeactivate");
 
 	this.controller.setupWidget("sortBy",
 		{modelProperty: "sortBy",
-		 label: "Sort By",
+		 label: $L("Sort By"),
 		 labelPlacement: Mojo.Widget.labelPlacementLeft,
-		 choices: [{label: "Title", value: "TITLE"},
-		          {label: "Last Viewed", value: "viewed"},
-		          {label: "Last Changed", value: "changed"},
-		          {label: "Created Date", value: "created"}]},
+		 choices: [{label: $L("Title"), value: "TITLE"},
+		          {label: $L("Last Viewed"), value: "viewed"},
+		          {label: $L("Last Changed"), value: "changed"},
+		          {label: $L("Created Date"), value: "created"}]},
         this.ring.prefs);
 	this.fieldsToListen.push("sortBy");
 	
 	this.controller.setupWidget("hideEmpty",
 		{modelProperty: "hideEmpty",
-		 falseLabel: "no",
-		 trueLabel: "yes"},
+		 falseLabel: $L("no"),
+		 trueLabel: $L("yes")},
 		this.ring.prefs);
 
 	// Character types for password generator

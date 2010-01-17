@@ -36,10 +36,23 @@ var Ring = Class.create ({
 	_key: '',
 	
 	_passwordTime: '',
-	
+
+	/** Temporary storage of the encrypted data blob during app init. */
+	_encryptedData: {},
+
+	/**
+	 * Check data is the key encrypted with itself.  It is used to validate
+	 * a user supplied password. We create a temporary key, and decrypt
+	 * the check data with that key, if the result is equal to the temporary
+	 * key, then the password must be the same as the one originally used
+	 * to encrypt the check data.  This is more secure than using a static
+	 * string, since it is impossible to create a rainbow table.  Probably
+	 * overkill given that we're using a 12 character salt, but hey...
+	 */
 	_checkData: '',
 	
-	_upgradeCheckData: null,
+	/** Used during upgrade from previous schema version. */
+	_upgradeDecryptMethod: false,
 	
 	// import conflict handling options
 	resolutions: {
@@ -49,11 +62,17 @@ var Ring = Class.create ({
 		update: {code: "update", label: "Update only"}
 	},
 	
-	onDeactivateOptions: {
-		lock: {code: "lock", label: "Lock"},
-		lockSoon: {code: "lockSoon", label: "Lock in 10 sec"},
-		noLock: {code: "noLock", label: "Don't lock"}
-	},
+	onDeactivateOptions: [
+		{value: "lock", label: "Lock"},
+		{value: "lockSoon", label: "Lock in 10 sec"},
+		{value: "noLock", label: "Don't lock"}
+	],
+	
+	lockoutToOptions: [
+        {label: $L("Item list"), value: "item-list"},
+	    {label: $L("Lock scene"), value: "locked"},
+	    {label: $L("Close App (!)"), value: "close-app"}
+	],
 	
 	/* If prefs.onDeactivate == 'lockSoon', wait this many seconds after
 	 * app deactivation to lock */
@@ -64,7 +83,6 @@ var Ring = Class.create ({
 		category: -1,
 		hideEmpty: true,
 		timeout: 30 * 1000, // in milliseconds
-		requireInitialPassword: false,
 		lockoutTo: 'locked',
 		onDeactivate: 'lock',
 		generatorPrefs: {
@@ -121,7 +139,7 @@ var Ring = Class.create ({
 	 * versioning.  This also allows me to read the version number, and fire
 	 * off the appropriate updater if it's too old.
 	 */
-	SCHEMA_VERSION: 3,
+	SCHEMA_VERSION: 4,
 	
 	DEPOT_DATA_KEY: "data",
 	
@@ -136,6 +154,20 @@ var Ring = Class.create ({
 	PLAINTEXT_DEFAULTS: {title: '', category: 0},
 
 	DATE_ATTRS: ['created', 'viewed', 'changed'],
+	
+	/**
+	 * Number of salt characters to prepend when encrypting secret data
+	 * inside an individual item.  Small number, because this data is
+	 * only available in memory.
+	 */
+	ITEM_SALT_LEN: 4,
+	
+	/**
+	 * Number of salt characters to prepend when encrypting the entire
+	 * database for Depot storage or export.  Sixteen characters is
+	 * two Blowfish blocks.
+	 */
+	DB_SALT_LEN: 16,
 
 	initialize: function() {
 		Mojo.Log.info("Initializing ring");
@@ -159,23 +191,24 @@ var Ring = Class.create ({
 			throw new Error("You must enter a password.");
 		}
 		if (! this.firstRun && ! this.validatePassword(oldPassword)) {
-			var errmsg = "Attempt to change password without valid password.";
+			var errmsg = $L("Old password invalid.");
 			Mojo.Log.warn(errmsg);
 			throw new Error(errmsg);
 		}
-		var oldKey = this._key;
+		var oldKey = this._key; 
 		this._key = b64_sha256(this._salt + newPassword);
 		if (Object.keys(this.db).length > 0) {
 			// Re-encrypt all items
 			Object.values(this.db).each(function(item) {
 				// Decrypt using the old key, and re-encrypt with the new one
 				var tmpData = this.decrypt(item.encrypted_data, oldKey);
-				item.encrypted_data = this.encrypt(tmpData);
+				item.encrypted_data = this.encrypt(tmpData, this.ITEM_SALT_LEN);
 			}, this);
 		}
-		this._checkData = this.encrypt(this._key);
-		this.saveData();
+		// Check data is salted with one Blowfish block of random characters.
+		this._checkData = this.encrypt('{' + this._key + '}', 8);
 		this.updateTimeout();
+		this.saveData();
 		this.firstRun = false;
 	},
 	
@@ -185,15 +218,21 @@ var Ring = Class.create ({
 	validatePassword: function(password) {
 		Mojo.Log.info("Validating password");
 		var tmpKey = b64_sha256(this._salt + password);
-		Mojo.Log.info("_upgradeCheckData=%j", this._upgradeCheckData);
-		if (this._upgradeCheckData) {
-			this._upgradeCheckData(tmpKey);
-		}
-		if (this.decrypt(this._checkData, tmpKey) == tmpKey) {
+		if (! this.depotDataLoaded) {
+			/* Startup in process.  See if the supplied password will
+			 * decrypt the db. */
+			if (this._upgradeDecryptMethod) {
+				return this._upgradeDecryptMethod(tmpKey);
+			} else {
+				return this._decryptData(tmpKey);
+			}
+			
+		} else if (this.decrypt(this._checkData, tmpKey) == '{' + tmpKey + '}') {
 			Mojo.Log.info("Password validated");
 			this._key = tmpKey;
 			this.updateTimeout();
 			return true;
+			
 		} else {
 			Mojo.Log.info("invalid password");
 			this._passwordTime = 0;
@@ -274,16 +313,18 @@ var Ring = Class.create ({
 			this.firstRun = false;
 		} else {
 			Mojo.Log.info("This is the first run.  Welcome to Keyring.");
-			this._salt = this.generatePassword({characters: 12, all: true});
+			this._salt = this.randomCharacters({characters: 12, all: true});
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 			this.depotDataLoaded = true;
-			return this._postLoadTasks();
+			this.buildItemList();
+			this._dataLoadedCallback();
+			return;
 		}
 		Mojo.Log.info("Current depotVersion", depotVersion);
 		if (depotVersion != this.SCHEMA_VERSION) {
 			new Upgrader(depotVersion, this).upgrade();
 		} else {
-			this._loadRingData(this._postLoadTasks.bind(this));
+			this._loadRingData();
 		}
 	},
 	
@@ -291,10 +332,10 @@ var Ring = Class.create ({
 	 * Kicks off the load of the actual keyring data, which is handled by
 	 * _loadDataHandler().
 	 */
-	_loadRingData: function(callAfterLoadDataHandler) {
+	_loadRingData: function() {
 		Mojo.Log.info("_loadRingData()");
 		this.depot.get(this.DEPOT_DATA_KEY,
-			this._loadDataHandler.bind(this, callAfterLoadDataHandler),
+			this._loadDataHandler.bind(this),
 			function(error) {
 				var errmsg = "Could not fetch data: " + error;
 				this.errors.push(errmsg);
@@ -304,23 +345,68 @@ var Ring = Class.create ({
 	},
 	
 	/**
-	 * Processes the actual keyring data, and calls _postLoadTasks().
+	 * Depot data has been loaded, but we don't yet have a password to decrypt
+	 * it with.  Pass control back to the UI, so the user can enter their
+	 * password.
 	 */
-	_loadDataHandler: function(nextStep, obj) {
+	_loadDataHandler: function(obj) {
 		Mojo.Log.info("_loadDataHandler()");
 		if (obj) {
-			this.db = obj.db;
-			this.categories = obj.categories;
-			this.prefs = obj.prefs;
-			this._salt = obj.crypt.salt;
-			this._checkData = obj.crypt.checkData;
-			this.depotDataLoaded = true;
-			Mojo.Log.info("Depot data loaded");
+			this._encryptedData = obj.db;
+			this._salt = obj.salt;
+			this._dataLoadedCallback();
 		} else {
+			// FIXME need to handle this error more gracefully
 			var errmsg = "No data in Depot";
 			this.errors.push(errmsg);
 		    Mojo.Log.error(errmsg);
+		    // FIXME do we call the callback here?
+		    this._dataLoadedCallback(errmsg);
 		}
+	},
+	
+	/**
+	 * Attempt to decrypt the loaded data with the supplied key.  If it parses,
+	 * the key is good, and loading is complete.  If not, it's a bad password.
+	 */
+	_decryptData: function(tmpKey) {
+		Mojo.Log.info("_decryptData()");
+		var decryptedJson = this.decrypt(this._encryptedData, tmpKey);
+		var obj;
+		try {
+			obj = JSON.parse(decryptedJson,
+				/* FIXME This function is here to get around a bug in webOS 1.3.5.
+				 * Without it, JSON.parse will silently drop keys that
+				 * are numeric. */
+				function(key, value){ return value; });
+		}
+		catch(e) {
+			/* Can't parse decrypted data.  This is almost always due to a  
+			 * bad password, but it's possible that the db is corrupt.
+			 * Unfortunately, there's no good way to tell the difference...
+			 * 
+			 * TODO Hmmm, we could check to see if the last character is a
+			 * closing curly brace... */
+			return false;
+		}
+		// Clear temp storage
+		this._encryptedData = null;
+		Mojo.Log.info("Depot data loaded");
+
+		// Stash the key
+		this._key = tmpKey;
+		
+		return this._processDecryptedData(obj);
+	},
+		
+	_processDecryptedData: function(obj) {
+		// We've got our data, pull it apart into usable pieces
+		this.db = obj.db;
+		this.categories = obj.categories;
+		this.prefs = obj.prefs;
+		this._checkData = obj.crypt.checkData;
+		this.depotDataLoaded = true;
+		
 		if (! this.prefs) {
 			// Copy default prefs
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
@@ -330,34 +416,15 @@ var Ring = Class.create ({
 		}
 		// make sure we always have the "all" and "unfiled" categories
 		this.categories = $H(this.categories).update(this.DEFAULT_CATEGORIES).toObject();
-		nextStep();
-	},
-	
-	/**
-	 * Handles setup of the item list and categories list.
-	 */
-	_postLoadTasks: function() {
-		Mojo.Log.info("_postLoadTasks()");
-		// Build and sort the list of items for display
+		
+		// Make the list used by the UI
 		this.buildItemList();
 		
-		// Finally we're done, inform the consumer.
-		this._dataLoadedCallback();
-	},
-
-	/**
-	 * Returns the object that is stored in the db and emitted from export().
-	 */
-	_dataObject: function() {
-		return {
-			db: this.db,
-			categories: this.categories,
-			crypt: {
-				salt: this._salt,
-				checkData: this._checkData
-			},
-			prefs: this.prefs
-		};
+		// Set the password timeout
+		this.updateTimeout();
+		
+		Mojo.Log.info("Depot data processed");
+		return true;
 	},
 	
 	/**
@@ -391,21 +458,34 @@ var Ring = Class.create ({
 			);
 		}
 	},
+
+	_dataObject: function() {
+		var innerObject = {
+			db: this.db,
+			categories: this.categories,
+			crypt: {
+				salt: this._salt,
+				checkData: this._checkData
+			},
+			prefs: this.prefs
+		};
+		return {
+			schema_version: this.SCHEMA_VERSION,
+			salt: this._salt,
+			db: this.encrypt(JSON.stringify(innerObject), this.DB_SALT_LEN)
+		};
+	},
 	
 	/**
-	 * Return a JSON string of data suitable for export/import. 
+	 * Return a JSON string of data that can be written to the Depot or
+	 * exported for backup.
 	 */
 	exportableData: function() {
 		if (! this.passwordValid()) {
 			Mojo.Log.warn("Attempt to export db without valid password.");
 			throw this.PasswordError;
 		}
-		var data = {
-			schema_version: this.SCHEMA_VERSION,
-			salt: this._salt,
-			db: this.encrypt(JSON.stringify(this._dataObject()))
-		};
-		return JSON.stringify(data);
+		return JSON.stringify(this._dataObject());
 	},
 	
 	/**
@@ -595,7 +675,7 @@ var Ring = Class.create ({
 			this._key = '';
 			this._passwordTime = 0;
 			this._checkData = '';
-			this._salt = this.generatePassword({characters: 12, all: true});
+			this._salt = this.randomCharacters({characters: 12, all: true});
 			// FIXME need to find a way to use DEFAULT_CATEGORIES
 			this.categories = {"-1": "All", 0: "Unfiled"};
 			this.firstRun = true;
@@ -690,8 +770,8 @@ var Ring = Class.create ({
 	 * XXX??? This doesn't guarantee that the generated password will actually
 	 * contain a character from every class desired.
 	 */
-	generatePassword: function(model) {
-		Mojo.Log.info("generatePassword");
+	randomCharacters: function(model) {
+		Mojo.Log.info("randomCharacters");
 		if (! model.characters || model.characters < 1) {
 			var errmsg = "Can't deliver a password of less than one character.";
 			Mojo.Log.error(errmsg);
@@ -734,9 +814,11 @@ var Ring = Class.create ({
 		return Math.floor(Math.random() * 10);
 	},
 	
+	/* Curly braces not included, as the output may be used as a salt for
+	 * JSON data. */
 	_rndSym: function() {
-		var syms = "!@#$%^&*()_+-={}|[]\\:\";'<>?,./";
-		return syms[Math.floor(Math.random() * 30)];
+		var syms = "!@#$%^&*()_+-=|[]\\:\";'<>?,./";
+		return syms[Math.floor(Math.random() * 28)];
 	},
 	
 	/**
@@ -825,8 +907,7 @@ var Ring = Class.create ({
 		// Make sure category is a number, not a string
 		item.category = parseInt(item.category);
 		
-		/* Don't mess with encrypted data if the item isn't decrypted (like
-		 * when we get here from the upgrader). */
+		/* Don't mess with encrypted data if the item isn't decrypted. */
 		if (newData.hasOwnProperty('encrypted_data')) {
 			item.encrypted_data = newData.encrypted_data;
 		} else {
@@ -837,7 +918,7 @@ var Ring = Class.create ({
 						newData[attr] : this.ENCRYPTED_DEFAULTS[attr];
 			}
 			var jsonified = JSON.stringify(toBeEncrypted);
-			var encryptedJson = this.encrypt(jsonified);
+			var encryptedJson = this.encrypt(jsonified, this.ITEM_SALT_LEN);
 			item.encrypted_data = encryptedJson;
 		}
 		
@@ -890,27 +971,39 @@ var Ring = Class.create ({
 	},
 	
 	/**
-	 * Encrypt the given data with our key.
+	 * Encrypt the given cleartext with our key, prepending saltLength random
+	 * characters.
+	 * 
+	 * See the comment at the top of the file for a discussion of weaknesses 
+	 * in the implementation of Mojo.Model.encrypt().
 	 */
-    encrypt: function(data) {
+    encrypt: function(cleartext, saltLength) {
 		Mojo.Log.info("encrypting");
 		if (! this._key) {
 			Mojo.Log.warn("Attempt to encrypt w/o valid key.");
 			throw this.PasswordError;
 		}
-        var encrypted = Mojo.Model.encrypt(this._key, data);
+		if (saltLength > 0) {
+			// Add some salt to the beginning of the cleartext
+			cleartext = this.randomCharacters({characters: saltLength, all: true}) + cleartext;
+		}
+        var encrypted = Mojo.Model.encrypt(this._key, cleartext);
         if (this.debug) Mojo.Log.info("Mojo.Model.encrypt done, encrypted='%s'", encrypted);
         return encrypted;
 	},
 
 	/**
-	 * Decrypt the given data, using the supplied key, or our key.
+	 * Decrypt the given data using the supplied key or our key.
+	 * 
+	 * Strips off leading non-JSON salt characters.
 	 */
-    decrypt: function(data, tempKey) {
+    decrypt: function(cryptext, tempKey) {
 		Mojo.Log.info("decrypt");
 		var key = tempKey ? tempKey : this._key;
-		if (this.debug) Mojo.Log.info("Calling Mojo.Model.decrypt. data='%s'", data);
-        return Mojo.Model.decrypt(key, data);
+		if (this.debug) Mojo.Log.info("Calling Mojo.Model.decrypt. cryptext='%s'", cryptext);
+        var cleartext = Mojo.Model.decrypt(key, cryptext);
+        // Remove any leading non-JSON salt characters
+        return cleartext.replace(/^[^\{]*\{/, '{');
 	},
 	
 	/**

@@ -2,7 +2,7 @@
  * @author Dirk Bergstrom
  *
  * Keyring for webOS - Easy password management on your phone.
- * Copyright (C) 2009, Dirk Bergstrom, keyring@otisbean.com
+ * Copyright (C) 2009-2010, Dirk Bergstrom, keyring@otisbean.com
  *     
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@ function ActionsAssistant(ring) {
 }
 
 ActionsAssistant.prototype.setup = function() {
-	Mojo.Log.info("setup");
+	Mojo.Log.info("ActionsAssistant setup");
 	
 	// Export
 	this.controller.setupWidget("destination",
 		{modelProperty: "destination",
-		 label: "Destination",
+		 label: $L("Destination"),
 		 labelPlacement: Mojo.Widget.labelPlacementLeft,
     	 choices: [{label: $L("Clipboard"), value: "clipboard"},
     	           {label: $L("URL"), value: "url"}
@@ -46,7 +46,7 @@ ActionsAssistant.prototype.setup = function() {
     // Data source
 	this.controller.setupWidget("source",
 		{modelProperty: "source",
-		 label: "Source",
+		 label: $L("Source"),
 		 labelPlacement: Mojo.Widget.labelPlacementLeft,
     	 choices: [{label: $L("Clipboard"), value: "clipboard"},
     	           {label: $L("File"), value: "file"},
@@ -61,7 +61,7 @@ ActionsAssistant.prototype.setup = function() {
 	choices.sort();
 	this.controller.setupWidget("resolution",
 		{modelProperty: "resolution",
-		 label: "Resolution",
+		 label: $L("Resolution"),
 		 labelPlacement: Mojo.Widget.labelPlacementLeft,
 		 choices: choices},
         this.ring.prefs.import_);
@@ -102,13 +102,12 @@ ActionsAssistant.prototype.export_ = function() {
 	this.ring.updateTimeout();
 	if (this.ring.prefs.export_.destination === 'clipboard') {
 		var encrypted = this.ring.exportableData();
-		Mojo.Log.info("\n\n", encrypted, "\n\n");
 		try {
-			this.controller.stageController.setClipboard("Keyring database:\n" +
+			this.controller.stageController.setClipboard($L("Keyring database:\n") +
 				encrypted);
 		}
 		catch(e) {
-			Mojo.Controller.errorDialog(e.name + " error copying to clipboard: " +
+			Mojo.Controller.errorDialog(e.name + $L(" error copying to clipboard: ") +
 				e.message, this.controller.window);
 			return;
 		}
@@ -480,8 +479,13 @@ ChangePasswordDialogAssistant.prototype.ok = function() {
 	Mojo.Log.info("got new passwords");
 	if (this.model.newPassword === this.model.newPassword2) {
 		Mojo.Log.info("matching");
-		this.ring.newPassword(this.model.oldPassword, this.model.newPassword);
-		this.widget.mojo.close();
+		try {
+			this.ring.newPassword(this.model.oldPassword, this.model.newPassword);
+			this.widget.mojo.close();
+		} catch(e) {
+			this.controller.get("errmsg").update(e.message);
+			this.controller.get("oldPassword").mojo.focus();
+		}
 	} else {
 		Mojo.Log.info("no match");
 		this.controller.get("errmsg").update($L("Passwords do not match"));
