@@ -170,7 +170,7 @@ CategoryDialogAssistant = Class.create ({
 			this.callbackOnSuccess();
 		} else {
 			Mojo.Log.info("Bad category");
-			this.controller.get("errmsg").update($L(retval[1]));
+			this.controller.get("errmsg").update(retval[1]);
 			this.controller.get("name").mojo.focus();
 		}
 	},

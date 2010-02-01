@@ -20,7 +20,7 @@
 
 var Ring = Class.create ({
 
-	PasswordError: { name: "PasswordError", message: "Re-enter Password" },
+	PasswordError: { name: 'PasswordError', message: $L("Re-enter Password") },
 	
 	firstRun: true,
 	
@@ -56,22 +56,22 @@ var Ring = Class.create ({
 	
 	// import conflict handling options
 	resolutions: {
-		keep: {code: "keep", label: "Keep existing"},
-		import_: {code: "import", label: "Use import"},
-		newer: {code: "newer", label: "Use newer"},
-		update: {code: "update", label: "Update only"}
+		keep: {code: 'keep', label: $L("Keep existing")},
+		import_: {code: 'import', label: $L("Use import")},
+		newer: {code: 'newer', label: $L("Use newer")},
+		update: {code: 'update', label: $L("Update only")}
 	},
 	
 	onDeactivateOptions: [
-		{value: "lock", label: "Lock"},
-		{value: "lockSoon", label: "Lock in 10 sec"},
-		{value: "noLock", label: "Don't lock"}
+		{value: 'lock', label: $L("Lock")},
+		{value: 'lockSoon', label: $L("Lock in 10 sec")},
+		{value: 'noLock', label: $L("Don't lock")}
 	],
 	
 	lockoutToOptions: [
-        {label: $L("Item list"), value: "item-list"},
-	    {label: $L("Lock scene"), value: "locked"},
-	    {label: $L("Close App (!)"), value: "close-app"}
+        {label: $L("Item list"), value: 'item-list'},
+	    {label: $L("Lock scene"), value: 'locked'},
+	    {label: $L("Close App (!)"), value: 'close-app'}
 	],
 	
 	/* If prefs.onDeactivate == 'lockSoon', wait this many seconds after
@@ -121,9 +121,11 @@ var Ring = Class.create ({
 	db: {},
 	
 	// FIXME need a way to use DEFAULT_CATEGORIES (create a firstRun method?)
-	DEFAULT_CATEGORIES: {"-1": "All", 0: "Unfiled"},
+	DEFAULT_CATEGORIES: {'-1': $L({'value': "All", 'key': 'all category'}),
+	                     0: $L({'value': "Unfiled", 'key': 'unfiled category'})},
 	
-	categories: {"-1": "All", 0: "Unfiled"},
+	categories: {'-1': $L({'value': "All", 'key': 'all category'}),
+	             0: $L({'value': "Unfiled", 'key': 'unfiled category'})},
 
 	DEPOT_OPTIONS: {
 		name: 'keyring',
@@ -141,9 +143,9 @@ var Ring = Class.create ({
 	 */
 	SCHEMA_VERSION: 4,
 	
-	DEPOT_DATA_KEY: "data",
+	DEPOT_DATA_KEY: 'data',
 	
-	DEPOT_VERSION_KEY: "version",
+	DEPOT_VERSION_KEY: 'version',
 	
 	ENCRYPTED_ATTRS: ['username', 'pass', 'url', 'notes'],
 
@@ -170,11 +172,12 @@ var Ring = Class.create ({
 	DB_SALT_LEN: 16,
 
 	initialize: function() {
-		Mojo.Log.info("Initializing ring");
+		Mojo.Log.info('Initializing ring');
 		this.depot = new Mojo.Depot(this.DEPOT_OPTIONS,
 			null,
 			function(error) {
-				var errmsg = "Failed to open database: " + error;
+				var errmsg = $L("Failed to open database: #{error}").
+				    interpolate({error: error});
 				this.errors.push(errmsg);
 				Mojo.Log.error(errmsg);
 			}
@@ -185,10 +188,10 @@ var Ring = Class.create ({
 	 * Create the master password (first run) or change it.
 	 */
 	newPassword: function(oldPassword, newPassword) {
-		Mojo.Log.info("newPassword");
+		Mojo.Log.info('newPassword');
 		if (! newPassword) {
-			Mojo.Log.info("no password");
-			throw new Error("You must enter a password.");
+			Mojo.Log.info('no password');
+			throw new Error($L("You must enter a password."));
 		}
 		if (! this.firstRun && ! this.validatePassword(oldPassword)) {
 			var errmsg = $L("Old password invalid.");
@@ -216,7 +219,7 @@ var Ring = Class.create ({
 	 * Check the submitted password for validity; call updateTimeout() if valid.
 	 */
 	validatePassword: function(password) {
-		Mojo.Log.info("Validating password");
+		Mojo.Log.info('Validating password');
 		var tmpKey = b64_sha256(this._salt + password);
 		if (! this.depotDataLoaded) {
 			/* Startup in process.  See if the supplied password will
@@ -228,13 +231,13 @@ var Ring = Class.create ({
 			}
 			
 		} else if (this.decrypt(this._checkData, tmpKey) == '{' + tmpKey + '}') {
-			Mojo.Log.info("Password validated");
+			Mojo.Log.info('Password validated');
 			this._key = tmpKey;
 			this.updateTimeout();
 			return true;
 			
 		} else {
-			Mojo.Log.info("invalid password");
+			Mojo.Log.info('invalid password');
 			this._passwordTime = 0;
 			return false;
 		}
@@ -264,7 +267,7 @@ var Ring = Class.create ({
 	 * Lock Keyring by clearing the key and killing the timeout.
 	 */
 	clearPassword: function() {
-		Mojo.Log.info("clearPassword");
+		Mojo.Log.info('clearPassword');
 		this._key = '';
 		this._passwordTime = 0;
 	},
@@ -293,7 +296,8 @@ var Ring = Class.create ({
 		this.depot.get(this.DEPOT_VERSION_KEY,
 			this._startDepotLoad.bind(this),
 			function(error) {
-				var errmsg = "Could not init Depot reader: " + error;
+				var errmsg = $L("Could not init Depot reader: #{error}").
+				    interpolate({error: error});
 				this.errors.push(errmsg);
 			    Mojo.Log.error(errmsg);
 	        }
@@ -312,7 +316,7 @@ var Ring = Class.create ({
 			// Avoid race condition on app startup
 			this.firstRun = false;
 		} else {
-			Mojo.Log.info("This is the first run.  Welcome to Keyring.");
+			Mojo.Log.info('This is the first run.  Welcome to Keyring.');
 			this._salt = this.randomCharacters({characters: 12, all: true});
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 			this.depotDataLoaded = true;
@@ -320,7 +324,7 @@ var Ring = Class.create ({
 			this._dataLoadedCallback();
 			return;
 		}
-		Mojo.Log.info("Current depotVersion", depotVersion);
+		Mojo.Log.info('Current depotVersion', depotVersion);
 		if (depotVersion != this.SCHEMA_VERSION) {
 			new Upgrader(depotVersion, this).upgrade();
 		} else {
@@ -333,11 +337,12 @@ var Ring = Class.create ({
 	 * _loadDataHandler().
 	 */
 	_loadRingData: function() {
-		Mojo.Log.info("_loadRingData()");
+		Mojo.Log.info('_loadRingData()');
 		this.depot.get(this.DEPOT_DATA_KEY,
 			this._loadDataHandler.bind(this),
 			function(error) {
-				var errmsg = "Could not fetch data: " + error;
+				var errmsg = $L("Could not fetch data: #{error}").
+				    interpolate({error: error});
 				this.errors.push(errmsg);
 			    Mojo.Log.error(errmsg);
 			}
@@ -350,14 +355,14 @@ var Ring = Class.create ({
 	 * password.
 	 */
 	_loadDataHandler: function(obj) {
-		Mojo.Log.info("_loadDataHandler()");
+		Mojo.Log.info('_loadDataHandler()');
 		if (obj) {
 			this._encryptedData = obj.db;
 			this._salt = obj.salt;
 			this._dataLoadedCallback();
 		} else {
 			// FIXME need to handle this error more gracefully
-			var errmsg = "No data in Depot";
+			var errmsg = $L("No data in Depot");
 			this.errors.push(errmsg);
 		    Mojo.Log.error(errmsg);
 		    // FIXME do we call the callback here?
@@ -370,7 +375,7 @@ var Ring = Class.create ({
 	 * the key is good, and loading is complete.  If not, it's a bad password.
 	 */
 	_decryptData: function(tmpKey) {
-		Mojo.Log.info("_decryptData()");
+		Mojo.Log.info('_decryptData()');
 		var decryptedJson = this.decrypt(this._encryptedData, tmpKey);
 		var obj;
 		try {
@@ -391,7 +396,7 @@ var Ring = Class.create ({
 		}
 		// Clear temp storage
 		this._encryptedData = null;
-		Mojo.Log.info("Depot data loaded");
+		Mojo.Log.info('Depot data loaded');
 
 		// Stash the key
 		this._key = tmpKey;
@@ -423,7 +428,7 @@ var Ring = Class.create ({
 		// Set the password timeout
 		this.updateTimeout();
 		
-		Mojo.Log.info("Depot data processed");
+		Mojo.Log.info('Depot data processed');
 		return true;
 	},
 	
@@ -432,26 +437,28 @@ var Ring = Class.create ({
 	 * write out the schema version. 
 	 */
 	saveData: function(upgrading) {
-		Mojo.Log.info("Saving data");
+		Mojo.Log.info('Saving data');
 		this.depot.add(this.DEPOT_DATA_KEY, this._dataObject(),
 			function() {
-				Mojo.Log.info("Data saved");
+				Mojo.Log.info('Data saved');
 			},
 			function(error) {
-				var errmsg = "Failed to save data: " + error;
+				var errmsg = $L("Failed to save data: #{error}").
+				    interpolate({error: error});
 				this.errors.push(errmsg);
 				Mojo.Log.error(errmsg);
 			}
 		);
 		if (this.firstRun || upgrading) {
-			Mojo.Log.info("Writing schema version");
+			Mojo.Log.info('Writing schema version');
 			this.depot.add(this.DEPOT_VERSION_KEY,
 				{ 'version': this.SCHEMA_VERSION },
 				function() {
-					Mojo.Log.info("Schema version saved");
+					Mojo.Log.info('Schema version saved');
 				},
 				function(error) {
-					var errmsg = "Failed to save schema version: " + error;
+					var errmsg = $L("Failed to save schema version: #{error}").
+				    interpolate({error: error});
 					this.errors.push(errmsg);
 					Mojo.Log.error(errmsg);
 				}
@@ -482,7 +489,7 @@ var Ring = Class.create ({
 	 */
 	exportableData: function() {
 		if (! this.passwordValid()) {
-			Mojo.Log.warn("Attempt to export db without valid password.");
+			Mojo.Log.warn('Attempt to export db without valid password.');
 			throw this.PasswordError;
 		}
 		return JSON.stringify(this._dataObject());
@@ -499,7 +506,7 @@ var Ring = Class.create ({
 	 */
 	importData: function(jsonData, behavior, usePrefs, password, callback) {
 		var data, errmsg, obj, decryptedJson, tmpKey, emptyDb;
-		Mojo.Log.info("Importing behavior=%s, usePrefs=%s", behavior, usePrefs);
+		Mojo.Log.info('Importing behavior=%s, usePrefs=%s', behavior, usePrefs);
 		/* Strip leading and trailing non-JSON junk.  The import-from-clipboard method
 		 * often includes cruft like email signatures, etc.
 		 * 
@@ -515,13 +522,15 @@ var Ring = Class.create ({
 			data = JSON.parse(cleanData);
 		}
 		catch(e) {
-			errmsg = "Unable to parse data; " + e.name + ": " + e.message;
+			errmsg = $L("Unable to parse data; #{name}: #{message}").
+				interpolate(e);
 			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
 			return;
 		}
 		if (data.schema_version > this.SCHEMA_VERSION) {
-			errmsg = "Importing data from later versions of Keyring is not supported.  Please upgrade first.";
+			errmsg = $L("Importing data from later versions of Keyring is not " +
+					"supported.  Please upgrade first.");
 			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
 			return;
@@ -540,8 +549,8 @@ var Ring = Class.create ({
 				function(key, value){ return value; });
 		}
 		catch(e) {
-			errmsg = "Can't parse decrypted data (bad password?); " + e.name + ": " +
-				e.message;
+			errmsg = $L("Can't parse decrypted data (bad password?); #{name}: #{message}").
+				interpolate(e);
 			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
 			return;
@@ -628,7 +637,7 @@ var Ring = Class.create ({
 	 * Fills in non-existent attributes with appropriate defaults.
 	 */
 	_upgradeItem: function(item, key, categoryMap) {
-		Mojo.Log.info("_upgradeItem");
+		Mojo.Log.info('_upgradeItem');
 		var tmpItem = $H(item);
 		if (key) {
 			var tmpData = this.decrypt(item.encrypted_data, key);
@@ -636,8 +645,8 @@ var Ring = Class.create ({
 				encryptedObj = JSON.parse(tmpData);
 			}
 			catch(e) {
-				errmsg = "Can't parse decrypted data (bad password?); " + e.name + ": " +
-					e.message;
+				errmsg = $L("Can't parse decrypted data (bad password?); #{name}: #{message}").
+				    interpolate(e);
 				Mojo.Log.warn(errmsg);
 				// FIXME what to do here?
 				throw new Error(errmsg);
@@ -664,9 +673,9 @@ var Ring = Class.create ({
 	 * a new salt.
 	 */
 	clearDatabase: function(factoryReset) {
-		Mojo.Log.info("clearDatabase, factoryReset='%s'", factoryReset);
+		Mojo.Log.info('clearDatabase, factoryReset="%s"', factoryReset);
 		if (! this.passwordValid()) {
-			Mojo.Log.warn("Attempt to clear db without valid password.");
+			Mojo.Log.warn('Attempt to clear db without valid password.');
 			return false;
 		}
 		this.db = {};
@@ -677,15 +686,17 @@ var Ring = Class.create ({
 			this._checkData = '';
 			this._salt = this.randomCharacters({characters: 12, all: true});
 			// FIXME need to find a way to use DEFAULT_CATEGORIES
-			this.categories = {"-1": "All", 0: "Unfiled"};
+			this.categories = {'-1': $L({'value': "All", 'key': 'all category'}),
+					0: $L({'value': "Unfiled", 'key': 'unfiled category'})};
 			this.firstRun = true;
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 			// Clear everything that was ever in the depot.
 			this.depot.removeAll(function() {
-					Mojo.Log.info("Depot cleared");
+					Mojo.Log.info('Depot cleared');
 				},
 				function(error) {
-					var errmsg = "Failed to clear depot: " + error;
+					var errmsg = $L("Failed to clear depot: #{error}").
+				        interpolate({error: error});
 					this.errors.push(errmsg);
 					Mojo.Log.error(errmsg);
 				}
@@ -702,15 +713,15 @@ var Ring = Class.create ({
 	 */
 	deleteCategory: function(toDelete) {
 		if (toDelete < 1) {
-			var errmsg = "Can't delete the \"All\" & \"Unfiled\" categories.";
+			var errmsg = $L("Can't delete the \"All\" or \"Unfiled\" categories.");
 			Mojo.Log.error(errmsg);
 			throw new Error(errmsg);
 		}
 		if (! this.passwordValid()) {
-			Mojo.Log.warn("Attempt to delete category w/o valid password.");
+			Mojo.Log.warn('Attempt to delete category w/o valid password.');
 			return false;
 		}
-		Mojo.Log.info("Deleting category '%s' with index %s",
+		Mojo.Log.info('Deleting category \'%s\' with index %s',
 				this.categories[toDelete], toDelete);
 		Object.values(this.db).each(function(item) {
 			if (item.category == toDelete) {
@@ -731,19 +742,20 @@ var Ring = Class.create ({
 	 * TODO strip whitespace from newLabel.
 	 */
 	editCategory: function(value, newLabel) {
-		Mojo.Log.info("editCategory");
+		Mojo.Log.info('editCategory');
 		if (value === 0) {
-			var errmsg = "Can't edit the \"All\" & \"Unfiled\" categories.";
+			var errmsg = $L("Can't edit the \"All\" & \"Unfiled\" categories.");
 			Mojo.Log.error(errmsg);
 			return [false, errmsg];
 		}
 		if (! this.passwordValid()) {
-			var errmsg = "Attempt to edit categories w/o valid password.";
+			var errmsg = $L("Attempt to edit categories w/o valid password.");
 			Mojo.Log.warn(errmsg);
 			return [false, errmsg];
 		}
 		if (value && ! this.categories[value]) {
-			var errmsg = 'Attempt to edit non-existent category with value "' + value;
+			var errmsg = $L("Attempt to edit non-existent category with value \"#{value}\"").
+			    interpolate({value: value});
 			Mojo.Log.warn(errmsg);
 			return [false, errmsg];
 		}
@@ -751,13 +763,15 @@ var Ring = Class.create ({
 			var existing = Object.values(this.categories);
 			for (var i = 0; i < existing.length; i++) {
 				if (newLabel == existing[i]) {
-					return [false, 'Category "' + newLabel + '" already exists.'];
+					return [false,
+					        $L("Category \"#{newLabel}\" already exists.").
+					            interpolate({newLabel: newLabel})];
 				}
 			}
 			// New category, find the lowest unused value
 			value = parseInt(Object.keys(this.categories).sort(function(a,b) {return a-b;}).pop()) + 1;
 		}
-		Mojo.Log.info("Category '%s' has index %s", newLabel, value);
+		Mojo.Log.info('Category \'%s\' has index %s', newLabel, value);
 		this.categories[value] = newLabel;
 		this.saveData();
 		return [true, newLabel];
@@ -771,14 +785,14 @@ var Ring = Class.create ({
 	 * contain a character from every class desired.
 	 */
 	randomCharacters: function(model) {
-		Mojo.Log.info("randomCharacters");
+		Mojo.Log.info('randomCharacters');
 		if (! model.characters || model.characters < 1) {
-			var errmsg = "Can't deliver a password of less than one character.";
+			var errmsg = $L("Can't deliver a password of less than one character.");
 			Mojo.Log.error(errmsg);
 			throw new Error(errmsg);
 		}
 		if (!(model.lowcase || model.cap || model.num || model.sym || model.all)) {
-			var errmsg = "Must choose at least one of lowercase, uppercase, numbers or symbols.";
+			var errmsg = $L("Must choose at least one of lowercase, uppercase, numbers or symbols.");
 			Mojo.Log.error(errmsg);
 			throw new Error(errmsg);
 		}
@@ -817,7 +831,7 @@ var Ring = Class.create ({
 	/* Curly braces not included, as the output may be used as a salt for
 	 * JSON data. */
 	_rndSym: function() {
-		var syms = "!@#$%^&*()_+-=|[]\\:\";'<>?,./";
+		var syms = '!@#$%^&*()_+-=|[]\\:";\'<>?,./';
 		return syms[Math.floor(Math.random() * 28)];
 	},
 	
@@ -827,7 +841,7 @@ var Ring = Class.create ({
 	 * TODO This will barf if this.db[title] doesn't exist.
 	 */
 	getItem: function(title) {
-		Mojo.Log.info("getItem");
+		Mojo.Log.info('getItem');
 		var decrypted_obj;
 		// Get a copy of the item, since we'll be adding in unencrypted data
 		var item = Object.clone(this.db[title]);
@@ -839,7 +853,8 @@ var Ring = Class.create ({
 			decrypted_obj = JSON.parse(decrypted_json);
 		}
 		catch(e) {
-			var errmsg = "Unable to decrypt item; " + e.name + ": " + e.message;
+			var errmsg = $L("Unable to decrypt item; #{name}: #{message}").
+				interpolate(e);
 			Mojo.Log.error(errmsg);
 			this.errors.push(errmsg);
 			throw new Error(errmsg);
@@ -856,14 +871,15 @@ var Ring = Class.create ({
 	 * Update or create an item from the given data.
 	 */
 	updateItem: function(oldTitle, newData) {
-		Mojo.Log.info("updateItem");
+		Mojo.Log.info('updateItem');
 		if (! this.passwordValid) {
-			Mojo.Log.warn("Attempt to update item without valid password.");
+			Mojo.Log.warn('Attempt to update item without valid password.');
 			throw this.PasswordError;
 		}
 		var newTitle = newData.title;
 		if (newTitle != oldTitle && this.db[newTitle]) {
-			var errmsg = "An entry with title \"" + newTitle +"\" already exists.";
+			var errmsg = $L("An entry with title \"#{newTitle}\" already exists.").
+			    interpolate({newTitle: newTitle});
 			Mojo.Log.error(errmsg);
 			throw new Error(errmsg);
 		}
@@ -889,7 +905,7 @@ var Ring = Class.create ({
 	 * the appropriate encrypted data.
 	 */
 	_buildItem: function(newData) {
-		Mojo.Log.info("_buildItem");
+		Mojo.Log.info('_buildItem');
 		var item = {};
 		var i, attr;
 		for (i = 0; i < this.PLAINTEXT_ATTRS.length; i++) {
@@ -930,10 +946,10 @@ var Ring = Class.create ({
 	 * whole db.
 	 */
 	noteItemView: function(title) {
-		Mojo.Log.info("noteItemView");
+		Mojo.Log.info('noteItemView');
 		this.db[title].viewed = new Date().getTime();
 		this.saveData();
-		if (this.prefs.sortBy === "viewed") {
+		if (this.prefs.sortBy === 'viewed') {
 			this.buildItemList();
 			this.itemsReSorted = true;
 		}
@@ -944,7 +960,7 @@ var Ring = Class.create ({
 	 * Delete the item for the given title.
 	 */
 	deleteItem: function(item) {
-		Mojo.Log.info("deleteItem");
+		Mojo.Log.info('deleteItem');
 		delete this.db[item.title];
 		this.saveData();
 		this.buildItemList();
@@ -956,15 +972,15 @@ var Ring = Class.create ({
 	 */
 	buildItemList: function() {
 		var sortBy = this.prefs.sortBy || 'TITLE';
-		Mojo.Log.info("buildItemList, sortby:", this.prefs.sortBy);
+		Mojo.Log.info('buildItemList, sortby:', this.prefs.sortBy);
 		this.items = Object.values(this.db).sort(function(x, y) {
 	      var a = x[sortBy];
 	      var b = y[sortBy];
 	      if (a > b) {
-	    	  return (sortBy == "TITLE") ? 1 : -1;
+	    	  return (sortBy == 'TITLE') ? 1 : -1;
 	      }
 	      if (a < b) {
-	    	  return (sortBy == "TITLE") ? -1 : 1;
+	    	  return (sortBy == 'TITLE') ? -1 : 1;
 	      }
 	      return 0;
 	    });
@@ -978,9 +994,9 @@ var Ring = Class.create ({
 	 * in the implementation of Mojo.Model.encrypt().
 	 */
     encrypt: function(cleartext, saltLength) {
-		Mojo.Log.info("encrypting");
+		Mojo.Log.info('encrypting');
 		if (! this._key) {
-			Mojo.Log.warn("Attempt to encrypt w/o valid key.");
+			Mojo.Log.warn('Attempt to encrypt w/o valid key.');
 			throw this.PasswordError;
 		}
 		if (saltLength > 0) {
@@ -988,7 +1004,7 @@ var Ring = Class.create ({
 			cleartext = this.randomCharacters({characters: saltLength, all: true}) + cleartext;
 		}
         var encrypted = Mojo.Model.encrypt(this._key, cleartext);
-        if (this.debug) Mojo.Log.info("Mojo.Model.encrypt done, encrypted='%s'", encrypted);
+        if (this.debug) Mojo.Log.info('Mojo.Model.encrypt done, encrypted=\'%s\'', encrypted);
         return encrypted;
 	},
 
@@ -998,9 +1014,9 @@ var Ring = Class.create ({
 	 * Strips off leading non-JSON salt characters.
 	 */
     decrypt: function(cryptext, tempKey) {
-		Mojo.Log.info("decrypt");
+		Mojo.Log.info('decrypt');
 		var key = tempKey ? tempKey : this._key;
-		if (this.debug) Mojo.Log.info("Calling Mojo.Model.decrypt. cryptext='%s'", cryptext);
+		if (this.debug) Mojo.Log.info('Calling Mojo.Model.decrypt. cryptext=\'%s\'', cryptext);
         var cleartext = Mojo.Model.decrypt(key, cryptext);
         // Remove any leading non-JSON salt characters
         return cleartext.replace(/^[^\{]*\{/, '{');
@@ -1031,7 +1047,7 @@ var Ring = Class.create ({
 	 * Format epoch milliseconds as an ISO date, with optional HH:mm.
 	 */
 	formatDate: function(millis, includeTime) {
-		if (typeof(millis) != "number") {
+		if (typeof(millis) != 'number') {
 			return '';
 		}
 		var date = new Date(millis);
@@ -1047,7 +1063,7 @@ var Ring = Class.create ({
 	
 	_zeropad: function(val) {
 		if (val < 10) {
-			val = "0" + val;
+			val = '0' + val;
 		}
 		return val;
 	}

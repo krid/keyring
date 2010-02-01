@@ -24,23 +24,23 @@ function ItemListAssistant(ring) {
 	this.filterString = undefined;
 	this.itemList = null;
 	this.sortByChoices = [
-        {label: "Title", command: "TITLE"},
-        {label: "Last Viewed", command: "viewed"},
-        {label: "Last Changed", command: "changed"},
-        {label: "Created Date", command: "created"}
+        {label: $L("Title"), command: 'TITLE'},
+        {label: $L("Last Viewed"), command: 'viewed'},
+        {label: $L("Last Changed"), command: 'changed'},
+        {label: $L("Created Date"), command: 'created'}
     ];
 }
 
 ItemListAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
 
-	Mojo.Log.info("rendering item-list");
+	Mojo.Log.info('rendering item-list');
 	this.controller.setupWidget(Mojo.Menu.appMenu,
 			Keyring.MenuAttr, Keyring.MenuModel);
 	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, 
-			{items:	[{label:"new", command:'new'},
-			       	 {label:'category', command:'category'},
-			       	 {label:"sort by...", command:'sort'}]});
+			{items:	[{label:$L("new"), command:'new'},
+			       	 {label:$L("category"), command:'category'},
+			       	 {label:$L("sort by..."), command:'sort'}]});
 	
 	var listAttributes = {
 		itemTemplate: 'item-list/item',
@@ -55,10 +55,10 @@ ItemListAssistant.prototype.setup = function() {
 	this.itemList = this.controller.get('ring-items');
 
 	// Set the status messages
-	this.controller.get("category").update(this.ring.categories[this.category]);
+	this.controller.get('category').update(this.ring.categories[this.category]);
 	
 	/* add event handlers to listen to events from widgets */
-	Mojo.Log.info("binding tap and delete events");
+	Mojo.Log.info('binding tap and delete events');
 	this.tapped = this.tapped.bindAsEventListener(this);
 	this.deleted = this.deleted.bindAsEventListener(this);
 };
@@ -70,7 +70,7 @@ ItemListAssistant.prototype.handleCommand = function(event) {
 			case 'new':
 				Keyring.doIfPasswordValid(this.controller, this.ring,
 					this.controller.stageController.pushScene.
-					bind(this.controller.stageController, "item", '', this.ring)
+					bind(this.controller.stageController, 'item', '', this.ring)
 				);
 				break;
 			case 'sort':
@@ -94,7 +94,7 @@ ItemListAssistant.prototype.handleCommand = function(event) {
 					}));
 				break;
 			default:
-				//Mojo.Controller.errorDialog("Got command " + event.command);
+				//Mojo.Controller.errorDialog($L("Got command ") + event.command);
 				break;
 		}
 	}
@@ -104,7 +104,7 @@ ItemListAssistant.prototype.sortPopupHandler = function(command) {
 	if (! command) {
 		return;
 	}
-	Mojo.Log.info("sortPopupHandler, command='%s'", command);
+	Mojo.Log.info('sortPopupHandler, command=\'%s\'', command);
 	this.ring.prefs.sortBy = command;
 	this.ring.saveData();
 	this.ring.buildItemList();
@@ -115,13 +115,13 @@ ItemListAssistant.prototype.sortPopupHandler = function(command) {
 ItemListAssistant.prototype.setSortingStatus = function() {
 	this.sortByChoices.each(function(sb){
 		if (this.ring.prefs.sortBy == sb.command) {
-			this.controller.get("sortby").update(sb.label)
+			this.controller.get('sortby').update(sb.label)
 		}
 	}, this);
 };
 
 ItemListAssistant.prototype.tapped = function(event) {
-	Mojo.Log.info("Tapped item '%s'", event.item.title);
+	Mojo.Log.info('Tapped item \'%s\'', event.item.title);
 	Keyring.doIfPasswordValid(this.controller, this.ring,
 			this.pushItemScene.bind(this, event.item.title));
 };
@@ -137,15 +137,15 @@ ItemListAssistant.prototype.pushItemScene = function(title) {
 		return;
 	}
 	if (! item) {
-		Mojo.Log.info("Error fetching item, retrieved null");
-		Mojo.Controller.errorDialog("Error decrypting item.", this.controller.window);
+		Mojo.Log.info('Error fetching item, retrieved null');
+		Mojo.Controller.errorDialog($L("Error decrypting item."), this.controller.window);
 		return;
 	}
-	this.controller.stageController.pushScene("item", item, this.ring);
+	this.controller.stageController.pushScene('item', item, this.ring);
 };
 
 ItemListAssistant.prototype.deleted = function(event) {
-	Mojo.Log.info("Deleting item '%s'", event.item.title);
+	Mojo.Log.info('Deleting item \'%s\'', event.item.title);
 	Keyring.doIfPasswordValid(this.controller, this.ring,
 			this.ring.deleteItem.bind(this.ring, event.item));
 };
@@ -154,11 +154,11 @@ ItemListAssistant.prototype.setCategory = function(category) {
 	if (category == '++edit++') {
 		Keyring.doIfPasswordValid(this.controller, this.ring,
 			this.controller.stageController.pushScene.
-			bind(this.controller.stageController, "categories", this.ring));
+			bind(this.controller.stageController, 'categories', this.ring));
 		return;
 	}
 	if (category == undefined || category == this.category) return;
-	Mojo.Log.info("Setting category to '%s'", category);
+	Mojo.Log.info('Setting category to \'%s\'', category);
 	var subset = [];
 	this.category = category;
 	if (category == -1 && this.filterString == '') {
@@ -180,7 +180,7 @@ ItemListAssistant.prototype.setCategory = function(category) {
 	this.ring.saveData();
 	
 	// Note the category in the header
-	this.controller.get("category").update(this.ring.categories[category]);
+	this.controller.get('category').update(this.ring.categories[category]);
 	
 	// Scroll back to the top, in case the list has shrunk
 	this.itemList.mojo.revealItem(0, false);
@@ -192,7 +192,7 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	 * Note that this method is also called at scene setup time, and while
 	 * scrolling the list, as more items are fetched. */
 	var filterUpper = filterString.toUpperCase();
-	Mojo.Log.info("Filtering on '%s', offset =%s", filterUpper, offset);
+	Mojo.Log.info('Filtering on \'%s\', offset =%s', filterUpper, offset);
 	var subset = [];
 	var totalSubsetSize = 0;
 	
@@ -208,14 +208,14 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 		}
 		i++;
 	}
-	Mojo.Log.info("Filtered down to %s items.", totalSubsetSize);
+	Mojo.Log.info('Filtered down to %s items.', totalSubsetSize);
 	
 	//update the items in the list with the subset
 	listWidget.mojo.noticeUpdatedItems(offset, subset);
 	
 	//set the list's length & count if we're not repeating the same filter string from an earlier pass
 	if (this.filterString !== filterUpper) {
-		Mojo.Log.info("Setting length/count to %s.", totalSubsetSize);
+		Mojo.Log.info('Setting length/count to %s.', totalSubsetSize);
 		listWidget.mojo.setLength(totalSubsetSize);
 		listWidget.mojo.setCount(totalSubsetSize);
 	}
@@ -224,7 +224,7 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 };
 
 ItemListAssistant.prototype.activate = function(event) {
-	Mojo.Log.info("activate");
+	Mojo.Log.info('activate');
 	if (this.ring.itemsReSorted) {
 		// Need to redisplay the item list
 		// FIXME When we do this, if there was a filter set, it is retained,

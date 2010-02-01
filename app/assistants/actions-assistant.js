@@ -150,16 +150,15 @@ ActionsAssistant.prototype.exportToUrl = function(url) {
 	    onSuccess: function(transport) {
     		if (transport.status < 200 || transport.status > 299 ||
     			! transport.responseText.match(/^\s*ok\s*$/i)) {
-    			Mojo.Controller.errorDialog($L("Error exporting to ") + url,
+    			Mojo.Controller.errorDialog($L("Error exporting to #{url}").interpolate({url: url}),
 					this.controller.window);
     		} else {
 	    		this.ring.prefs.export_.url= url;
 	    		this.controller.showAlertDialog({
 	    			onChoose: function(value) {},
 	    			title: $L("Database Exported"),
-	    			message: $L("An encrypted copy of the Keyring database was POSTed to ") +
-						url,
-	    			choices:[{label:$L("OK"), value:""}]
+	    			message: $L("An encrypted copy of the Keyring database was POSTed to #{url}").
+	    			    interpolate({url: url}), choices:[{label:$L("OK"), value:""}]
 	    		});
     		}
     	}.bind(this),
@@ -258,7 +257,8 @@ ActionsAssistant.prototype.importResults = function(success, arg1, arg2) {
 	if (success) {
 		this.controller.showAlertDialog({onChoose: function() {}.bind(this),
 			title: $L("Import finished"),
-			message: arg1 + $L(" items updated, ") + arg2 + $L(" items added"),
+			message: $L("#{updated} items updated, #{added} items added").
+			    interpolate({updated: arg1, added: arg2}),
 			choices:[{label: $L('Ok'), value: "ok", type: 'affirmative'}]
 		});
 	} else {

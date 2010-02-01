@@ -1,3 +1,12 @@
+2010-02-01  Dirk Bergstrom  <krid@otisbean.com>
+
+	* app/models/ring.js, upgrader.js: Add $L localization to all strings.
+	
+	* app/assistants/item-list-assistant.js: Add $L localization to all strings.
+	
+	* app/assistants/actions-assistant, categories-assistant.js: Tidy up a few
+	localization issues.
+
 2010-01-17  Dirk Bergstrom  <krid@otisbean.com>
 
 Closes gh-13: Work around deficiency in Mojo.Model.encrypt()

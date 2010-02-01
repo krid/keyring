@@ -48,7 +48,8 @@ var _V2And3Upgrader = Class.create ({
 				this.ring._dataLoadedCallback();
 			}.bind(this),
 			function(error) {
-				var errmsg = "Could not fetch data: " + error;
+				var errmsg = $L("Could not fetch data: #{error}").
+				    interpolate({error: error});
 				this.errors.push(errmsg);
 			    Mojo.Log.error(errmsg);
 			    this.ring._dataLoadedCallback(errmsg);
