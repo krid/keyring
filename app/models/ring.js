@@ -18,6 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var DEFAULT_CATEGORIES = {
+	'-1': $L({value: "All",
+		key: "name for the pseudo-category used to show 'All' categories"}),
+	0: $L({value: "Unfiled",
+		key: "name for the default 'Unfiled' category"})};
+
 var Ring = Class.create ({
 
 	PasswordError: { name: 'PasswordError', message: $L("Re-enter Password") },
@@ -56,22 +62,32 @@ var Ring = Class.create ({
 	
 	// import conflict handling options
 	resolutions: {
-		keep: {code: 'keep', label: $L("Keep existing")},
-		import_: {code: 'import', label: $L("Use import")},
-		newer: {code: 'newer', label: $L("Use newer")},
-		update: {code: 'update', label: $L("Update only")}
+		keep: {code: 'keep', label: $L({value: "Keep existing",
+			key: "'Keep existing' option for import resolution"})},
+		import_: {code: 'import', label: $L({value: "Use import",
+			key: "'Use import' option for import resolution"})},
+		newer: {code: 'newer', label: $L({value: "Use newer",
+			key: "'Use newer' option for import resolution"})},
+		update: {code: 'update', label: $L({value: "Update only",
+			key: "'Update only' option for import resolution"})}
 	},
 	
 	onDeactivateOptions: [
-		{value: 'lock', label: $L("Lock")},
-		{value: 'lockSoon', label: $L("Lock in 10 sec")},
-		{value: 'noLock', label: $L("Don't lock")}
+		{value: 'lock', label: $L({value: "Lock",
+			key: "'Lock' option for on-deactivate behavior"})},
+		{value: 'lockSoon', label: $L({value: "Lock in 10 sec",
+			key: "'Lock in 10 sec' option for on-deactivate behavior"})},
+		{value: 'noLock', label: $L({value: "Don't lock",
+			key: "'Don't Lock' option for on-deactivate behavior"})}
 	],
 	
 	lockoutToOptions: [
-        {label: $L("Item list"), value: 'item-list'},
-	    {label: $L("Lock scene"), value: 'locked'},
-	    {label: $L("Close App (!)"), value: 'close-app'}
+        {value: 'item-list', label: $L({value: "Item list",
+			key: "'Don't Lock' option for lockout-to behavior"})},
+	    {value: 'locked', label: $L({value: "Lock scene",
+			key: "'Lock scene' option for lockout-to behavior"})},
+	    {value: 'close-app', label: $L({value: "Close App (!)",
+			key: "'Close App (!)' option for lockout-to behavior"})}
 	],
 	
 	/* If prefs.onDeactivate == 'lockSoon', wait this many seconds after
@@ -120,12 +136,7 @@ var Ring = Class.create ({
 	
 	db: {},
 	
-	// FIXME need a way to use DEFAULT_CATEGORIES (create a firstRun method?)
-	DEFAULT_CATEGORIES: {'-1': $L({'value': "All", 'key': 'all category'}),
-	                     0: $L({'value': "Unfiled", 'key': 'unfiled category'})},
-	
-	categories: {'-1': $L({'value': "All", 'key': 'all category'}),
-	             0: $L({'value': "Unfiled", 'key': 'unfiled category'})},
+	categories: Object.clone(DEFAULT_CATEGORIES),
 
 	DEPOT_OPTIONS: {
 		name: 'keyring',
@@ -420,7 +431,7 @@ var Ring = Class.create ({
 			this.prefs = $H(this.DEFAULT_PREFS).update(this.prefs).toObject();
 		}
 		// make sure we always have the "all" and "unfiled" categories
-		this.categories = $H(this.categories).update(this.DEFAULT_CATEGORIES).toObject();
+		this.categories = $H(this.categories).update(DEFAULT_CATEGORIES).toObject();
 		
 		// Make the list used by the UI
 		this.buildItemList();
@@ -529,8 +540,7 @@ var Ring = Class.create ({
 			return;
 		}
 		if (data.schema_version > this.SCHEMA_VERSION) {
-			errmsg = $L("Importing data from later versions of Keyring is not " +
-					"supported.  Please upgrade first.");
+			errmsg = $L("Importing data from later versions of Keyring is not supported.  Please upgrade first.");
 			Mojo.Log.warn(errmsg);
 			callback(false, errmsg);
 			return;
@@ -685,9 +695,7 @@ var Ring = Class.create ({
 			this._passwordTime = 0;
 			this._checkData = '';
 			this._salt = this.randomCharacters({characters: 12, all: true});
-			// FIXME need to find a way to use DEFAULT_CATEGORIES
-			this.categories = {'-1': $L({'value': "All", 'key': 'all category'}),
-					0: $L({'value': "Unfiled", 'key': 'unfiled category'})};
+			this.categories = Object.clone(DEFAULT_CATEGORIES);
 			this.firstRun = true;
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 			// Clear everything that was ever in the depot.

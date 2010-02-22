@@ -149,7 +149,7 @@ NewPasswordDialogAssistant.prototype.setup = function(widget) {
     this.sceneAssistant.controller.listen("password2", Mojo.Event.propertyChange,
             this.propChangeHandler.bind(this));
 	
-	this.okButtonModel = {label: $L("Ok"), disabled: false};
+	this.okButtonModel = {label: $L("OK"), disabled: false};
 	this.sceneAssistant.controller.setupWidget("okButton", {},
 			this.okButtonModel);
 	this.okButton = this.sceneAssistant.controller.get("okButton");

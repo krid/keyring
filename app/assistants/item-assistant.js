@@ -28,7 +28,15 @@ function GeneratePasswordAssistant(sceneAssistant, ring, callback) {
 GeneratePasswordAssistant.prototype.setup = function(widget) {
     this.widget = widget;
     
-    this.sceneAssistant.controller.get("generate-title").update($L("Generate Password"));
+    this.sceneAssistant.controller.get("dialog-title").
+    	update($L({value: "Generate Password",
+    		key: "title for 'Generate Password' dialog"}));
+    this.sceneAssistant.controller.get("chars-label").
+    	update($L({value: "Characters",
+    		key: "label for number of 'Characters' in gen. passw. dialog"}));
+    this.sceneAssistant.controller.get("types-label").
+    	update($L({value: "Types",
+    		key: "label for 'Types' of characters in gen. passw. dialog"}));
 
     this.model = Object.clone(this.ring.prefs.generatorPrefs);
     Object.keys(this.model).each(function(attr) {
@@ -44,7 +52,7 @@ GeneratePasswordAssistant.prototype.setup = function(widget) {
     	           {label: 16, value: 16}]},
          this.model);
     
-    this.okButtonModel = {label: $L("Ok"), disabled: false};
+    this.okButtonModel = {label: $L("OK"), disabled: false};
     this.sceneAssistant.controller.setupWidget("okButton",
 		{type: Mojo.Widget.defaultButton}, this.okButtonModel);
     this.okHandler = this.ok.bindAsEventListener(this);
@@ -163,11 +171,15 @@ ItemAssistant.prototype.setup = function() {
 		this.menuModel.items.push({label: $L("done"), command: 'done'});
 	}
 	if (somethingHidden) {
-		var labelSE = this.item.pass ? $L("show empty") : $L("show empty fields");
+		var labelSE = this.item.pass ?
+				$L({value: "show empty", key: "short version of 'show empty' fields button"}) :
+				$L({value: "show empty fields", key: "long version of 'show empty fields' button"});
 		this.menuModel.items.push({label: labelSE, command:'showHidden'});
 	}
 	if (this.createNew || this.item.pass || (! this.ring.prefs.hideEmpty)) {
-		var labelGP = somethingHidden ? $L("gen. passwd") : $L("generate password");
+		var labelGP = somethingHidden ?
+			$L({value: "gen. passwd", key: "short version of 'gen. passwd' (generate password) button"}) :
+			$L({value: "generate password", key: "long version of 'generate password' button"});
 		this.menuModel.items.push({label: labelGP, command: 'generate'});
 	}
 	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, this.menuModel);

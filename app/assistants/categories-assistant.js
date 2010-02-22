@@ -4,7 +4,9 @@ function CategoriesAssistant(ring) {
 }
 
 CategoriesAssistant.prototype.setup = function() {
-	Mojo.Log.info("rendering item-list");
+	Mojo.Log.info("rendering category list");
+	this.controller.get("main-hdr").update($L({value: "Categories",
+		key: "title of the 'Categories' scene"}));
 	this.controller.setupWidget(Mojo.Menu.appMenu,
 			Keyring.MenuAttr, Keyring.MenuModel);
 	this.model.items = this.ring.categoriesForMojo(0);
@@ -122,7 +124,7 @@ CategoryDialogAssistant = Class.create ({
 	setup: function(widget) {
 	    this.widget = widget;
 	    
-	    this.controller.get("cat-title").update($L("Enter New Category"));
+	    this.controller.get("dialog-title").update($L("Enter New Category"));
 	        
 	    this.controller.setupWidget(
 	        "name",

@@ -1,3 +1,33 @@
+2010-02-18  Dirk Bergstrom  <krid@otisbean.com>
+
+Further prep for Localization.
+
+    * app/assistants/actions-assistant.js: Change "Ok" to "OK" globally.
+    (ChangePasswordDialogAssistant): Add L10N for dialog title.
+    
+    * app/assistants/app-assistant.js (handleCommand): Update copyright year
+    in "About" dialog.
+    (Keyring.version): Remove, now sourced from appinfo.json.
+
+    * app/assistants/categories-assistant.js: L10N for scene and dialog titles.
+
+    * app/assistants/item-assistant.js: Switch to key/value L10N calls for
+    clarity.
+    
+    * app/assistants/item-list-assistant.js: Remove commented dead code.
+    
+    * app/assistants/locked-assistant.js: Change "Ok" to "OK".
+    
+    * app/models/ring.js (DEFAULT_CATEGORIES): Move outside of Ring to allow
+    better default behavior.
+    (categories, _processDecryptedData, clearDatabase): Use new
+    DEFAULT_CATEGORIES.
+    (importData, resolutions, onDeactivateOptions, lockoutToOptions): Better
+    L10N keys.
+   
+	* app/views/*: Small changes to multiple files to simplify L10N.  Use
+	id's and do L10N in the js layer.	
+
 2010-02-01  Dirk Bergstrom  <krid@otisbean.com>
 
 	* app/models/ring.js, upgrader.js: Add $L localization to all strings.

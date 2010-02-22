@@ -94,7 +94,6 @@ ItemListAssistant.prototype.handleCommand = function(event) {
 					}));
 				break;
 			default:
-				//Mojo.Controller.errorDialog($L("Got command ") + event.command);
 				break;
 		}
 	}

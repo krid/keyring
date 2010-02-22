@@ -259,7 +259,7 @@ ActionsAssistant.prototype.importResults = function(success, arg1, arg2) {
 			title: $L("Import finished"),
 			message: $L("#{updated} items updated, #{added} items added").
 			    interpolate({updated: arg1, added: arg2}),
-			choices:[{label: $L('Ok'), value: "ok", type: 'affirmative'}]
+			choices:[{label: $L('OK'), value: "ok", type: 'affirmative'}]
 		});
 	} else {
 		Mojo.Controller.errorDialog(arg1, this.controller.window);
@@ -376,7 +376,7 @@ ImportExportDialogAssistant = Class.create ({
 	    }
 	    
 	    this.controller.setupWidget("okButton", {type: Mojo.Widget.activityButton},
-	        {label: $L("Ok"), disabled: false});
+	        {label: $L("OK"), disabled: false});
 	    this.okHandler = this.ok.bindAsEventListener(this);
 	    this.controller.listen("okButton", Mojo.Event.tap, this.okHandler);
 	      
@@ -423,6 +423,8 @@ function ChangePasswordDialogAssistant(controller, ring) {
 ChangePasswordDialogAssistant.prototype.setup = function(widget) {
 	this.widget = widget;
 	
+	this.controller.get("dialog-title").update($L("Change Password"));
+	
 	var oldOpts = {
 		hintText: $L("Old password"),
 		autoFocus: true,
@@ -454,7 +456,7 @@ ChangePasswordDialogAssistant.prototype.setup = function(widget) {
     this.controller.listen("newPassword2", Mojo.Event.propertyChange,
             this.propChangeHandler.bind(this));
 	
-	this.okButtonModel = {label: $L("Ok"), disabled: false};
+	this.okButtonModel = {label: $L("OK"), disabled: false};
 	this.controller.setupWidget("okButton", {}, this.okButtonModel);
 	this.okButton = this.controller.get("okButton");
 	this.okHandler = this.ok.bindAsEventListener(this);
