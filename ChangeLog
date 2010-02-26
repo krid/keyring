@@ -1,3 +1,10 @@
+2010-02-26  Dirk Bergstrom  <krid@otisbean.com>
+
+	* README-translations.txt: Instructions for translators.
+	
+	* resources/views.json: List of html files needing translation (will
+	eventually be processed by python localization helper).
+
 2010-02-18  Dirk Bergstrom  <krid@otisbean.com>
 
 Further prep for Localization.

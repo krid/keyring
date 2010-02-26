@@ -1,0 +1,10 @@
+{
+	"translate": [
+	          "actions/actions-scene.html",
+	          "help/help-scene.html",
+	          "item/item-scene.html",
+	          "item-list/item-list-scene.html",
+	          "locked/new-password-dialog.html",
+	          "preferences/preferences-scene.html"
+	          ]
+}
