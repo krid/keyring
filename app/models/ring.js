@@ -885,11 +885,12 @@ var Ring = Class.create ({
 			throw this.PasswordError;
 		}
 		var newTitle = newData.title;
+		if (! newTitle) {
+			throw new Error($L("Title is required"));
+		}
 		if (newTitle != oldTitle && this.db[newTitle]) {
-			var errmsg = $L("An entry with title \"#{newTitle}\" already exists.").
-			    interpolate({newTitle: newTitle});
-			Mojo.Log.error(errmsg);
-			throw new Error(errmsg);
+			throw new Error($L("An entry with title \"#{newTitle}\" already exists.").
+			    interpolate({newTitle: newTitle}));
 		}
 		
 		var item = this._buildItem(newData);

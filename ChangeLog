@@ -1,3 +1,58 @@
+2010-03-08  Dirk Bergstrom  <krid@otisbean.com>
+
+Closes gh-19: Tapping in the title field while editing results in multiple...
+Closes gh-18:  Duplicate title check works, but doesn't give any indication...
+Closes gh-17: Requiring explicit save on item create can lead to data loss...
+	* app/assistants/item-assistant.js (fieldUpdated): Improve error handling
+	and fix title tracking.
+	(done): If there is a bad field value, put up an error dialog instead
+	of popping the scene.
+	(cancel): Delete the new item if it has been automatically saved.
+	(setTitle, activate, TitleDialogAssistant): Ensure that new items have
+	a title, and that it is unique.
+	(activate, deactivate, timeoutOrDeactivate): Don't special-case item
+	creation.
+
+    * app/models/ring.js (updateItem): Check for empty title, and simplify
+    error reporting.
+    
+Closes gh-25: Starting up as a "lightweight" app creates an extra process
+	* app/assistants/app-assistant.js: Renamed to stage-assistant.js, and
+	reworked to load the app in a standard way.  The old system resulted
+	in two separate processes.
+	
+	* app/assistants/locked-assistant.js (activate): Use window.close() to
+	close app, since previous method only worked for "lightweight" apps.
+
+Closes gh-24: Item scene formatting bug under 1.4
+	* app/views/item/item-scene.html: Move "title" divs outside of "label"
+	divs, to fix a rendering bug that showed up under 1.4.
+
+Closes gh-26: "Lock after 10 seconds" can't be canceled
+	* app/assistants/stage-assistant.js (windowDeactivated, windowActivated,
+	setup): Cancel lockSoon timer on stageActivate event.
+
+Closes gh-20: Not all items visible after import
+	* app/assistants/item-list-assistant.js (filterItems, activate): Better
+	method to determine if we need to reset item list length.
+
+	* app/assistants/categories-assistant.js (addCategory,
+	CategoryDialogAssistant): Use new textfield-dialog.html.
+	
+	* app/views/categories/new-category-dialog.html: Remove in favor of
+	generic textfield-dialog.html.
+	
+	* sources.json: Follow rename of app-assistant to stage-assistant.
+	
+	* appinfo.json: Remove "nowindow" attr, and bump version number.
+    
+    * app/views/help/help-scene.html: Update changelog and edit section
+    on the Java converter.
+
+	* index.html: Remove text to conform to new 1.4 standard.
+	
+	* icon.png: Less sucky version courtesy of Michael Piefel.
+	
 2010-02-26  Dirk Bergstrom  <krid@otisbean.com>
 
 	* README-translations.txt: Instructions for translators.

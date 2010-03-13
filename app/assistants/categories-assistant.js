@@ -52,7 +52,7 @@ CategoriesAssistant.prototype.addCategory = function(event) {
 	Mojo.Log.info("Adding new category");
 	this.ring.updateTimeout();
 	this.controller.showDialog({
-		template: "categories/new-category-dialog",
+		template: "textfield-dialog",
 		assistant: new CategoryDialogAssistant(this.controller, this.ring,
 			this.categoryAdded.bind(this))
 	});
@@ -112,7 +112,7 @@ CategoriesAssistant.prototype.deactivate = function(event) {
 
 
 /*
- * The "Enter your password" dialog, used throughout the application.
+ * The new category dialog.
  */
 CategoryDialogAssistant = Class.create ({
 	initialize: function(controller, ring, callback) {
@@ -127,7 +127,7 @@ CategoryDialogAssistant = Class.create ({
 	    this.controller.get("dialog-title").update($L("Enter New Category"));
 	        
 	    this.controller.setupWidget(
-	        "name",
+	        "text",
 	        {
 	              hintText: $L("Name"),
 	              autoFocus: true,
@@ -139,7 +139,7 @@ CategoryDialogAssistant = Class.create ({
 	        },
 	        this.categoryModel = {value: ''});
 	
-	    this.controller.listen("name", Mojo.Event.propertyChange,
+	    this.controller.listen("text", Mojo.Event.propertyChange,
 	        this.keyPressHandler.bind(this));
 	    
 	    this.saveButtonModel = {label: $L("Save"), disabled: false};
@@ -173,7 +173,7 @@ CategoryDialogAssistant = Class.create ({
 		} else {
 			Mojo.Log.info("Bad category");
 			this.controller.get("errmsg").update(retval[1]);
-			this.controller.get("name").mojo.focus();
+			this.controller.get("text").mojo.focus();
 		}
 	},
 
@@ -183,7 +183,7 @@ CategoryDialogAssistant = Class.create ({
 		    this.saveHandler);
 		this.controller.stopListening("cancelButton", Mojo.Event.tap,
 			this.widget.mojo.close);
-		this.controller.stopListening("name", Mojo.Event.propertyChange,
+		this.controller.stopListening("text", Mojo.Event.propertyChange,
 	        this.keyPressHandler.bind(this));
 	}
 });

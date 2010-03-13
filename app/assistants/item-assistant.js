@@ -2,7 +2,7 @@
  * @author Dirk Bergstrom
  *
  * Keyring for webOS - Easy password management on your phone.
- * Copyright (C) 2009, Dirk Bergstrom, keyring@otisbean.com
+ * Copyright (C) 2009-2010, Dirk Bergstrom, keyring@otisbean.com
  *     
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,6 +95,7 @@ function ItemAssistant(item, ring) {
     this.menuModel= {items: []};
 	this.fields = this.ring.PLAINTEXT_ATTRS.concat(this.ring.ENCRYPTED_ATTRS);
 	this.hideableFields = ["username", "pass", "url", "category"];
+	this.fieldError = false;
 }
 
 ItemAssistant.prototype.setup = function() {
@@ -130,7 +131,7 @@ ItemAssistant.prototype.setup = function() {
 		if (field == "category") { return; }
 		var fieldAttrs = Object.clone(baseTextFieldAttrs);
 		fieldAttrs.hintText = field;
-		fieldAttrs.textFieldName = field;
+		fieldAttrs.inputName = field;
 		fieldAttrs.modelProperty = field;
 		if (field == "notes") {
 			fieldAttrs.multiline = true;
@@ -163,7 +164,7 @@ ItemAssistant.prototype.setup = function() {
 	}
 	
 	if (this.createNew) {
-		// Creation of new items requires explicit save
+		// Label button "save" instead of "done"
 		this.menuModel.items.push({label: $L("save"), command: 'done'});
 		// Add a cancel button, in case the user doesn't want to create an item
 		this.menuModel.items.push({label: $L("cancel"), command:"cancel"});
@@ -187,9 +188,9 @@ ItemAssistant.prototype.setup = function() {
 	if (! this.createNew) {
 		// Register that the item has been viewed.
 		this.ring.noteItemView(this.item.title);
-		// Prevent focus
-		this.controller.setInitialFocusedElement(null);
 	}
+	// Prevent focus
+	this.controller.setInitialFocusedElement(null);
 	this.ring.updateTimeout();
 };
 
@@ -197,31 +198,60 @@ ItemAssistant.prototype.setup = function() {
  * Called when a field is changed (unfocused).  Note that the back gesture
  * generates an un-focus event before the scene is popped, so we're covered.
  * 
- * Not used for the new item case, which requires an explicit save.
+ * FIXME This is called if the user taps in an already active field
+ * during an edit.  This generates a "false" blur event.  I can't figure
+ * out how to detect this, since there's no property that says whether the
+ * field is/was focused.  We can't use "Mojo.View.getFocusedElement(containingElement)",
+ * because at the time this is called, the updated field is still focused.
  * 
  * We also don't want to trigger this on the blur that's caused as a result
- * of a timeout-initiated scene pop.
+ * of a timeout-initiated scene pop, since that's handled in timeoutOrDeactivate.
  */
 ItemAssistant.prototype.fieldUpdated = function(event) {
-	this.ring.updateTimeout();
 	if (event.value != event.oldValue && ! this.timedOut) {
+		this.ring.updateTimeout();
 		Mojo.Log.info("field '%s' changed", event.property);
 		this.ring.itemsReSorted = true;
-		this.ring.updateItem(this.originalTitle, this.item);
+		try {
+			this.ring.updateItem(this.originalTitle, this.item);
+		}
+		catch (err) {
+			Mojo.Controller.errorDialog(err.message);
+			this.fieldError = err.message;
+			return false;
+		}
+		this.fieldError = false;
+		if (event.property == 'title' || ! this.originalTitle) {
+			// title has been changed, update originalTitle
+			this.originalTitle = this.item.title;
+		}
 	}
 };
 
 ItemAssistant.prototype.done = function() {
 	Mojo.Log.info("done/save");
 	this.ring.updateTimeout();
-	if (! this.item.title) {
-		Mojo.Controller.errorDialog($L("Title is required"), this.controller.window);
-		return;
+	if (this.fieldError) {
+		// Don't leave if there is something wrong (probably duplicate or empty title).
+		Mojo.Log.info("Error, not leaving");
+		/* TODO If the field error occurs because the
+		 * user hit the "done/save" button, the errorDialog will already be
+		 * displayed when we get here.  It looks as if the Right Thing happens
+		 * (no duplicate errorDialog), but it may break later. */
+		Mojo.Controller.errorDialog(this.fieldError);
+	} else {
+		this.controller.stageController.popScene();
 	}
-	if (this.createNew) {
-		Mojo.Log.info("Saving new item");
-		this.ring.itemsReSorted = true;
-		this.ring.updateItem(null, this.item);
+};
+
+ItemAssistant.prototype.cancel = function() {
+	Mojo.Log.info("Cancelling new item creation.");
+	this.ring.updateTimeout();
+	if (this.originalTitle && this.ring.db[this.item.title]) {
+		/* The current item has been saved to the db, so we need to delete
+		 * it before we leave. */
+		Mojo.Log.info("Deleting cancelled item");
+		this.ring.deleteItem(this.item);
 	}
 	this.controller.stageController.popScene();
 };
@@ -230,43 +260,53 @@ ItemAssistant.prototype.done = function() {
 ItemAssistant.prototype.setGeneratedPassword = function(password) {
 	Mojo.Log.info("setGenerated", password);
 	this.item.pass = password;
-	if (! this.createNew) {
-		this.ring.updateItem(this.originalTitle, this.item);
-	}
 	this.controller.modelChanged(this.item);
+	this.ring.updateItem(this.originalTitle, this.item);
+};
+
+/* Callback to set title for new item creation. */
+ItemAssistant.prototype.setTitle = function(newTitle) {
+	Mojo.Log.info("setTitle='%s'", newTitle);
+	this.item.title = newTitle;
+	this.controller.modelChanged(this.item);
+	this.controller.get('usernameField').mojo.focus.delay(0.5);
 };
 
 /* Don't leave a password visible when we minimize. */
 ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 	Mojo.Log.info("Item scene timeoutOrDeactivate");
-	if (! this.createNew) {
-		/* If a field's value has been changed, but it it still focused (and thus
-		 * hasn't generated a change event), we need to save the value. */
-		var dirty = false;
-		this.fields.each(function(field) {
-			/* Skip 'category', since 1) it's a list selector, and thus doesn't
-			 * have a simple mojo.getValue() accessor & 2) list selectors
-			 * can't hae unsubmitted changes anyways. */
-			if (field === 'category') return;
-			var value = this.controller.get(field+'Field').mojo.getValue();
-			if (this.item[field] != value) {
-				if (field == 'title' && ! value) {
-					// We won't wipe out the title
+	/* If a field's value has been changed, but it it still focused (and thus
+	 * hasn't generated a change event), we need to save the value. */
+	var dirty = false;
+	this.fields.each(function(field) {
+		/* Skip 'category', since 1) it's a list selector, and thus doesn't
+		 * have a simple mojo.getValue() accessor & 2) list selectors
+		 * can't have unsubmitted changes anyways. */
+		if (field === 'category') return;
+		var value = this.controller.get(field+'Field').mojo.getValue();
+		if (this.item[field] != value) {
+			if (field == 'title') {
+				if (! value) {
+					// We won't wipe out the title; stick with the old one.
+					return;
+				} else if (value != this.originalTitle && this.ring.db[value]) {
+					/* Title has been changed, and now collides with another
+					 * item.  Stick with originalTitle. */
 					return;
 				}
-				this.item[field] = value;
-				dirty = true;
 			}
-		}, this);
-		if (dirty) {
-			Mojo.Log.info("Found dirty field after timeout, saving");
-			this.ring.updateItem(this.originalTitle, this.item);
+			this.item[field] = value;
+			dirty = true;
 		}
+	}, this);
+	if (dirty) {
+		Mojo.Log.info("Found dirty field after timeout, saving");
+		this.ring.updateItem(this.originalTitle, this.item);
 	}
 	this.timedOut = true;
 	if (! (event && event.type == "mojo-stage-deactivate")) {
 		// app-assistant does this on deactivate
-		Keyring.lockout(this.controller, this.ring);
+		Keyring.lockout(this.controller.stageController, this.ring);
 	}
 };
 
@@ -278,8 +318,7 @@ ItemAssistant.prototype.handleCommand = function(event) {
 				this.done();
 				break;
 			case 'cancel':
-				Mojo.Log.info("Cancelling new item creation.");
-				this.controller.stageController.popScene();
+				this.cancel();
 				break;
 			case 'showHidden':
 				this.hideableFields.each(function(field) {
@@ -310,14 +349,10 @@ ItemAssistant.prototype.handleCommand = function(event) {
 
 ItemAssistant.prototype.activate = function(event) {
 	this.timedOut = false;
-	if (! this.createNew) {
-		/* We only monitor changes on existing items.  New ones must be
-		 * explicitly saved. */
-		this.fields.each(function(field) {
-			Mojo.Event.listen(this.controller.get(field+'Field'),
-					Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
-		}, this);
-	}
+	this.fields.each(function(field) {
+		Mojo.Event.listen(this.controller.get(field+'Field'),
+				Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
+	}, this);
 	Mojo.Event.listen(this.controller.stageController.document,
 			Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
 	
@@ -326,22 +361,116 @@ ItemAssistant.prototype.activate = function(event) {
 			this.timeoutOrDeactivate.bind(this), this.ring.prefs.timeout);
 	
 	this.ring.updateTimeout();
+	if (this.createNew) {
+		this.controller.showDialog({
+			template: "textfield-dialog",
+			assistant: new TitleDialogAssistant(this.controller, this.ring,
+				this.setTitle.bind(this)),
+	        preventCancel: false
+		});
+	}
 };
 
 ItemAssistant.prototype.deactivate = function(event) {
-	if (! this.createNew) {
-		// FIXME not sure if this.fieldUpdated.bind(this) is the right thing here
-		this.fields.each(function(field) {
-			Mojo.Event.stopListening(this.controller.get(field+'Field'),
-					Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
-		}, this);
-	}
+	// FIXME not sure if this.fieldUpdated.bind(this) is the right thing here
+	this.fields.each(function(field) {
+		Mojo.Event.stopListening(this.controller.get(field+'Field'),
+				Mojo.Event.propertyChange, this.fieldUpdated.bind(this));
+	}, this);
 	Mojo.Event.stopListening(this.controller.stageController.document,
 			Mojo.Event.stageDeactivate, this.timeoutOrDeactivate.bind(this));
 	this.cancelIdleTimeout();
 };
 
-ItemAssistant.prototype.cleanup = function(event) {
-	/* this function should do any cleanup needed before the scene is destroyed as 
-	   a result of being popped off the scene stack */
-};
+
+/*
+ * Dialog to take the title for a newly created item.
+ */
+TitleDialogAssistant = Class.create ({
+	initialize: function(controller, ring, callback) {
+		this.controller = controller;
+	    this.ring = ring;
+	    this.callbackOnSuccess = callback;
+	    this.titleEntered = false;
+	},
+
+	setup: function(widget) {
+	    this.widget = widget;
+	    
+	    this.controller.get("dialog-title").update($L("Title for item"));
+	        
+	    this.controller.setupWidget(
+	        "text",
+	        {
+	              hintText: $L("Title"),
+	              autoFocus: true,
+	              changeOnKeyPress: true,
+	              limitResize: true,
+	              autoReplace: false,
+	              enterSubmits: true,
+	              requiresEnterKey: true
+	        },
+	        this.model = {value: ''});
+	
+	    this.controller.listen("text", Mojo.Event.propertyChange,
+	        this.keyPressHandler.bind(this));
+	    
+	    this.saveButtonModel = {label: $L("OK"), disabled: false};
+	    this.controller.setupWidget("saveButton", {type: Mojo.Widget.defaultButton},
+	        this.saveButtonModel);
+	    this.saveHandler = this.save.bindAsEventListener(this);
+	    this.controller.listen("saveButton", Mojo.Event.tap,
+	        this.saveHandler);
+	    
+	    this.cancelButtonModel = {label: $L("Cancel"), disabled: false};
+	    this.controller.setupWidget("cancelButton", {type: Mojo.Widget.defaultButton},
+	        this.cancelButtonModel);
+	    this.controller.listen("cancelButton", Mojo.Event.tap,
+	    	this.cancel.bind(this));
+	},
+	
+	keyPressHandler: function(event) {
+		if (Mojo.Char.isEnterKey(event.originalEvent.keyCode)) {
+		    this.save();
+		}
+	},
+	
+	save: function() {
+		Mojo.Log.info("save");
+		var newTitle = this.model.value.replace(/^\s*(.*?)\s*$/, '$1');
+		Mojo.Log.info("newTitle='%s'", newTitle);
+		if (! newTitle) {
+			Mojo.Log.info("No title");
+			var errmsg = $L("Title is required.");
+			this.controller.get("errmsg").update(errmsg);
+			this.controller.get("text").mojo.focus.delay(0.25);
+		} else if (this.ring.db[newTitle]) {
+			Mojo.Log.info("Dup title");
+			var errmsg = $L("Item \"#{newTitle}\" already exists.").
+			    interpolate({newTitle: newTitle});
+			this.controller.get("errmsg").update(errmsg);
+			this.controller.get("text").mojo.focus.delay(0.25);
+		} else {
+			this.titleEntered = true;
+			this.widget.mojo.close();
+			this.callbackOnSuccess(newTitle);
+		}
+	},
+	
+	cancel: function() {
+		this.controller.stageController.popScene();
+	},
+	
+	//cleanup  - remove listeners
+	cleanup: function() {
+		this.controller.stopListening("saveButton", Mojo.Event.tap,
+		    this.saveHandler);
+		this.controller.stopListening("cancelButton", Mojo.Event.tap,
+			this.widget.mojo.close);
+		this.controller.stopListening("text", Mojo.Event.propertyChange,
+	        this.keyPressHandler.bind(this));
+		if (! this.titleEntered) {
+			this.cancel();
+		}
+	}
+});

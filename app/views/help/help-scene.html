@@ -24,7 +24,7 @@ encrypted using the Blowfish algorithm, and protected by a master password.
 <a href="#categories">Categories</a> | 
 <a href="#viewedit">View / Edit</a> | 
 <a href="#import">Import/Export</a> | 
-<a href="#convert">Converting from PalmOS</a> | 
+<a href="#convert">Converting Other Formats</a> | 
 <a href="#coming">Coming Soon</a> |
 <a href="#changelog">Change Log</a> |
 <a href="#license">License</a>
@@ -100,14 +100,13 @@ imported items that are not already in the list).</li>
 
 <a id="convert"></a>
 <div class="palm-info-text">
-<h4>Converting from Keyring for PalmOS</h4>
+<h4>Converting from Other Formats</h4>
 Building on code from the good folks who brought you
 <a href="http://gnukeyring.sourceforge.net/conduits.html">Keyring for PalmOS</a>,
-there is now a Java utility that reads the legacy .pdb files and writes Keyring for
-webOS import/export format.  See details on the
+there is now a Java utility that converts data from other password systems to
+Keyring for webOS import/export format.  It currently accepts data in 
+CodeWallet, eWallet, Keyring for PalmOS and CSV formats. See details on the
 <a href="http://otisbean.com/keyring/#converter">Keyring project page</a>.
-This will later be expanded to accept CSV data to support import from other
-systems.
 </div>
 
 <a id="coming"></a>
@@ -119,8 +118,6 @@ tap-to-launch for the URL and easy copy-to-clipboard for name or password.</li>
 
 <li> A periodic export-to-url system, possibly backed by an optional Google
 AppEngine service.</li>
-
-<li> A Java utility to convert from CSV to Keyring.</li>
 
 <li> A better way to access Keyring data on your computer, via a Java utility.</li>
 
@@ -137,19 +134,27 @@ AppEngine service.</li>
 <div class="palm-info-text">
 <h4>Change Log</h4>
 <ul>
+<li>Version 0.2.1 - 2010-03-12<br />
+ - Creating a new item no longer requires explicit save, so you won't lose
+ data if the app times out before you save.<br />
+ - Tapping in the title field while editing no longer creates spurious records.
+ - Fixed bug in duplicate item title detection.<br />
+ - Changed app startup mechanism to reduce resource consumption.<br />
+ - Fixed item scene formatting problems under webOS 1.4.
+</li>
 <li>Version 0.2.0 - 2010-01-10<br />
  - Data is now stored in the database as a single encrypted blob, rather than
  the former mix of encrypted and cleartext structured data.  A salt is prepended
  to the data prior to encryption, to work around a deficiency in the Palm
- Mojo.Model.encrypt API.
+ Mojo.Model.encrypt API.<br />
  - Keyring always prompts for a password at launch, and the "locked at
- launch" preference has been removed.
+ launch" preference has been removed.<br />
  - A new "On Lockout" option, "Close App" is available for the paranoid.  It
  will cause Keyring to close itself whenever there is a timeout of the app is
- deactivated/minimized. 
- - Cosmetic changes to the "Keyring locked" scene.
+ deactivated/minimized.<br />
+ - Cosmetic changes to the "Keyring locked" scene.<br />
  - The <a href="http://otisbean.com/keyring/#converter">converter</a> has been
- updated to add salt when encrypting.
+ updated to add salt when encrypting.<br />
 </li>
 
 <li>Version 0.1.3 - 2010-01-03<br />

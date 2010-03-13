@@ -102,7 +102,7 @@ LockedAssistant.prototype.activate = function(event) {
 		this.controller.get("img-div").update('<img src="images/lock.png"/>');
 		if (this.ring.prefs.lockoutTo == 'close-app') {
 			Mojo.Log.info("Closing Keyring on lockout.");
-			this.controller.stageController.getAppController().closeAllStages();
+			window.close();
 		} else {
 			this.requestPassword();
 		}

@@ -22,6 +22,7 @@ function ItemListAssistant(ring) {
 	this.ring = ring;
 	this.category = -1;
 	this.filterString = undefined;
+	this.listSubsetSize = 0;
 	this.itemList = null;
 	this.sortByChoices = [
         {label: $L("Title"), command: 'TITLE'},
@@ -189,7 +190,7 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	/* Filter visible entries based on case-insensitive match with entered text.
 	 * 
 	 * Note that this method is also called at scene setup time, and while
-	 * scrolling the list, as more items are fetched. */
+	 * scrolling the list as more items are fetched. */
 	var filterUpper = filterString.toUpperCase();
 	Mojo.Log.info('Filtering on \'%s\', offset =%s', filterUpper, offset);
 	var subset = [];
@@ -212,12 +213,13 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	//update the items in the list with the subset
 	listWidget.mojo.noticeUpdatedItems(offset, subset);
 	
-	//set the list's length & count if we're not repeating the same filter string from an earlier pass
-	if (this.filterString !== filterUpper) {
+	// Set the list's length & count if it has changed.
+	if (this.listSubsetSize !== totalSubsetSize) {
 		Mojo.Log.info('Setting length/count to %s.', totalSubsetSize);
 		listWidget.mojo.setLength(totalSubsetSize);
 		listWidget.mojo.setCount(totalSubsetSize);
 	}
+	this.listSubsetSize = totalSubsetSize;
 	// Save the filter string for the next time
 	this.filterString = filterUpper;
 };
@@ -228,7 +230,6 @@ ItemListAssistant.prototype.activate = function(event) {
 		// Need to redisplay the item list
 		// FIXME When we do this, if there was a filter set, it is retained,
 		// but the value in the filter input is cleared.
-		this.ring.itemsReSorted = false;
 		this.controller.modelChanged(this.ring);
 	}
 	// Filter by category if needed

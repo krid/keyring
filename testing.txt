@@ -23,8 +23,13 @@ FIRST RUN
 *) empty item list
  - add new item
  
-*) Add item
+*) Cancel add item
  - cancel add item
+ - cancel add after entering username
+
+*) Check title validation
+ - Add new item, empty title
+ - Add new item, duplicate title
 
 *) View item
  - show empty
@@ -71,8 +76,9 @@ FIRST RUN
 
 *) password gen prefs
 
+*) Hide empty fields pref
+
 *) paranoia prefs
- - locked @ launch
  - timeout
  - lockout to
  - on deactivate

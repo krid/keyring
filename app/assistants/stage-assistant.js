@@ -2,7 +2,7 @@
  * @author Dirk Bergstrom
  * 
  * Keyring for webOS - Easy password management on your phone.
- * Copyright (C) 2009, Dirk Bergstrom, keyring@otisbean.com
+ * Copyright (C) 2009-2010, Dirk Bergstrom, keyring@otisbean.com
  *     
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,67 +36,48 @@ Keyring.MenuModel = {
     ]
 };
 
-function AppAssistant(controller) {
-	this.appController = controller;
+function StageAssistant() {
 }
 
-AppAssistant.prototype.setup = function() {
+StageAssistant.prototype.setup = function() {
 	this.ring = new Ring();
 	Keyring.version = Mojo.appInfo.version;
+	Mojo.Event.listen(document,
+		Mojo.Event.stageDeactivate, this.windowDeactivated.bind(this));
+	Mojo.Event.listen(document,
+			Mojo.Event.stageActivate, this.windowActivated.bind(this));
+	this.controller.pushScene('locked', this.ring);
 };
 
-AppAssistant.prototype.windowDeactivated = function() {
-	Mojo.Log.info("windowDeactivated in scene", this.stageController.topScene().sceneName);
+StageAssistant.prototype.windowActivated = function() {
+	Mojo.Log.info("windowActivated in scene", this.controller.topScene().sceneName);
+	if (this.cancelIdleLockoutId) {
+		window.clearTimeout(this.cancelIdleLockoutId);
+	}
+	this.cancelIdleLockoutId = false;
+};
+
+StageAssistant.prototype.windowDeactivated = function() {
+	var scene = this.controller.topScene();
+	Mojo.Log.info("windowDeactivated in scene", scene.sceneName);
 	switch (this.ring.prefs.onDeactivate) {
-		case 'close-app':
-			// First step same as 'lock', fall through
 		case 'lock':
-			Keyring.lockout(this, this.ring);
+			Keyring.lockout(this.controller, this.ring);
 			break;
 		case 'lockSoon':
-			Keyring.lockout.delay(this.ring.lockSoonDelay, this, this.ring);
+			this.cancelIdleLockoutId =
+				Keyring.lockout.delay(this.ring.lockSoonDelay, this.controller, this.ring);
 			break;
 		default:
-			// Do nothing
+			// noLock, do nothing
 	}
 };
 
-AppAssistant.prototype.handleLaunch = function() {
-	// This function is required for a light-weight application to be
-	// able to open a window of its own. It is not required if the app
-	// is always launched from another application cross-app.
-	this.openChildWindow(this.appController);
-};
-
-AppAssistant.prototype.openChildWindow = function() {
-	this.stageController = this.appController.getStageController('lightWeight');
-	if (this.stageController){
-		/* app window is open, give it focus.  We presume that ring data has
-		 * already been loaded. */
-		Mojo.Log.info("give open window focus");
-		this.stageController.activate();
-	} else{
-		Mojo.Log.info("create app window");
-		this.appController.createStageWithCallback(
-			{name: 'lightWeight', lightweight: true},
-			this.pushOpeningScene.bind(this));
-	}
-
-};
-
-AppAssistant.prototype.pushOpeningScene = function(stageController) {
-	this.stageController = stageController;
-	Mojo.Event.listen(stageController.document,
-			Mojo.Event.stageDeactivate, this.windowDeactivated.bind(this));
-	stageController.pushScene('locked', this.ring);
-};
-
-//-----------------------------------------
-//handleCommand - called to handle app menu selections
-// 
-AppAssistant.prototype.handleCommand = function(event) {    
-	var stageController = this.controller.getActiveStageController();
-	var currentScene = stageController.activeScene();
+/**
+ * handleCommand - called to handle app menu selections
+*/ 
+StageAssistant.prototype.handleCommand = function(event) {    
+	var currentScene = this.controller.activeScene();
 
 	if(event.type == Mojo.Event.command) {
 	    switch(event.command) {
@@ -112,28 +93,28 @@ AppAssistant.prototype.handleCommand = function(event) {
 	         
 	        case "do-keyRingPrefs":
 	        	Keyring.doIfPasswordValid(currentScene, this.ring,
-					stageController.pushScene.
-					bind(stageController, "preferences", this.ring)
+					this.controller.pushScene.
+					bind(this.controller, "preferences", this.ring)
 				);
         	break;
 	         
 	        case "do-keyRingActions":
 	        	Keyring.doIfPasswordValid(currentScene, this.ring,
-					stageController.pushScene.
-					bind(stageController, "actions", this.ring)
+					this.controller.pushScene.
+					bind(this.controller, "actions", this.ring)
 				);
         	break;
 	        	
 	        case "do-keyRingCategories":
 	        	Keyring.doIfPasswordValid(currentScene, this.ring,
-	        			stageController.pushScene.
-	        			bind(stageController, "categories", this.ring)
+	        			this.controller.pushScene.
+	        			bind(this.controller, "categories", this.ring)
 	        	);
 	        	break;
 	        	
 	        case "do-keyRingHelp":
 	        	this.ring.updateTimeout();
-	            stageController.pushScene("help", this.ring);
+	            this.controller.pushScene("help", this.ring);
 	        break;
 	    }
 	}
@@ -205,7 +186,7 @@ PasswordDialogAssistant = Class.create ({
 			// TODO select random insult from the sudo list
 			// FIXME apply some decent styling to the error message
 			this.controller.get("errmsg").update($L("Invalid Password"));
-			this.controller.get("password").mojo.focus();
+			this.controller.get("password").mojo.focus.delay(0.25);
 		}
 	},
 
@@ -238,15 +219,15 @@ Keyring.doIfPasswordValid = function(sceneController, ring, callback, preventCan
 };
 
 /* Called by scenes on timeout or app deactivation/minimization. */
-Keyring.lockout = function(controller, ring) {
-	var sceneName = controller.stageController.topScene().sceneName;
+Keyring.lockout = function(stageController, ring) {
+	var sceneName = stageController.topScene().sceneName;
 	Mojo.Log.info("Timeout or Deactivate in scene", sceneName);
 	ring.clearPassword();
 	if (ring.prefs.lockoutTo == 'close-app') {
-		controller.stageController.popScenesTo('locked');
+		stageController.popScenesTo('locked');
 	} else if (sceneName != ring.prefs.lockoutTo) {
 		// Don't pop scene if we're already on the lockoutTo page.
-		controller.stageController.popScenesTo(ring.prefs.lockoutTo);
+		stageController.popScenesTo(ring.prefs.lockoutTo);
 	}
 };
 
@@ -256,7 +237,7 @@ Keyring.activateLockout = function(sceneAssistant) {
 	// Clear password after idle timeout
 	sceneAssistant.cancelIdleTimeout = sceneAssistant.controller.setUserIdleTimeout(
 		sceneAssistant.controller.sceneElement,
-		Keyring.lockout.bind(Keyring, sceneAssistant.controller, sceneAssistant.ring),
+		Keyring.lockout.bind(Keyring, sceneAssistant.controller.stageController, sceneAssistant.ring),
 		sceneAssistant.ring.prefs.timeout);
 };
 
