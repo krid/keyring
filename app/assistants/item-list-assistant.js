@@ -108,7 +108,12 @@ ItemListAssistant.prototype.sortPopupHandler = function(command) {
 	this.ring.prefs.sortBy = command;
 	this.ring.saveData();
 	this.ring.buildItemList();
+	// Make sure that scrolling will reveal more items
+	this.listSubsetSize = 0;
+	// Tell the OS that the list has changed
 	this.controller.modelChanged(this.ring);
+	// Scroll back to the top
+	this.itemList.mojo.revealItem(0, false);
 	this.setSortingStatus();
 };
 
@@ -226,6 +231,8 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 
 ItemListAssistant.prototype.activate = function(event) {
 	Mojo.Log.info('activate');
+	// Reset this to keep the list functioning properly
+	this.listSubsetSize = 0;
 	if (this.ring.itemsReSorted) {
 		// Need to redisplay the item list
 		// FIXME When we do this, if there was a filter set, it is retained,

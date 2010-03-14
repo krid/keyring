@@ -1,4 +1,19 @@
-2010-03-08  Dirk Bergstrom  <krid@otisbean.com>
+2010-03-14  Dirk Bergstrom  <krid@otisbean.com>
+
+	* app/assistants/item-assistant.js (originalTitle): Renamed to
+	titleInDatabase for clarity.
+	(cancel): Deletion of saved item could affect the wrong record.  Use
+	titleInDatabase instead of item.title to ensure that we get the right one.
+	
+    * app/assistants/item-list-assistant.js (sortPopupHandler): Reset
+    list length flag so that scrolling will correctly reveal more items.
+    Scroll list back to the top because it looks better.
+    (activate): Reset list length flag.
+    Continuation of the fix for gh-20.
+
+	* app/views/help/help-scene.html: Forgot to note a change.
+
+2010-03-12  Dirk Bergstrom  <krid@otisbean.com>
 
 Closes gh-19: Tapping in the title field while editing results in multiple...
 Closes gh-18:  Duplicate title check works, but doesn't give any indication...

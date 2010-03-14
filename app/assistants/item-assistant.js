@@ -89,7 +89,7 @@ GeneratePasswordAssistant.prototype.cleanup = function() {
  */
 function ItemAssistant(item, ring) {
 	this.item = item;
-	this.originalTitle = item ? item.title : '';
+	this.titleInDatabase = item ? item.title : '';
 	this.createNew = false;
 	this.ring = ring;
     this.menuModel= {items: []};
@@ -213,7 +213,7 @@ ItemAssistant.prototype.fieldUpdated = function(event) {
 		Mojo.Log.info("field '%s' changed", event.property);
 		this.ring.itemsReSorted = true;
 		try {
-			this.ring.updateItem(this.originalTitle, this.item);
+			this.ring.updateItem(this.titleInDatabase, this.item);
 		}
 		catch (err) {
 			Mojo.Controller.errorDialog(err.message);
@@ -221,9 +221,9 @@ ItemAssistant.prototype.fieldUpdated = function(event) {
 			return false;
 		}
 		this.fieldError = false;
-		if (event.property == 'title' || ! this.originalTitle) {
-			// title has been changed, update originalTitle
-			this.originalTitle = this.item.title;
+		if (event.property == 'title' || ! this.titleInDatabase) {
+			// title has been changed, update titleInDatabase
+			this.titleInDatabase = this.item.title;
 		}
 	}
 };
@@ -247,10 +247,13 @@ ItemAssistant.prototype.done = function() {
 ItemAssistant.prototype.cancel = function() {
 	Mojo.Log.info("Cancelling new item creation.");
 	this.ring.updateTimeout();
-	if (this.originalTitle && this.ring.db[this.item.title]) {
+	if (this.titleInDatabase && this.ring.db[this.titleInDatabase]) {
 		/* The current item has been saved to the db, so we need to delete
 		 * it before we leave. */
 		Mojo.Log.info("Deleting cancelled item");
+		/* this.item.title may have been changed and not saved (duplicate?).
+		 * Switch it to the saved value so the correct record is deleted. */
+		this.item.title = this.titleInDatabase;
 		this.ring.deleteItem(this.item);
 	}
 	this.controller.stageController.popScene();
@@ -261,7 +264,7 @@ ItemAssistant.prototype.setGeneratedPassword = function(password) {
 	Mojo.Log.info("setGenerated", password);
 	this.item.pass = password;
 	this.controller.modelChanged(this.item);
-	this.ring.updateItem(this.originalTitle, this.item);
+	this.ring.updateItem(this.titleInDatabase, this.item);
 };
 
 /* Callback to set title for new item creation. */
@@ -289,9 +292,9 @@ ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 				if (! value) {
 					// We won't wipe out the title; stick with the old one.
 					return;
-				} else if (value != this.originalTitle && this.ring.db[value]) {
+				} else if (value != this.titleInDatabase && this.ring.db[value]) {
 					/* Title has been changed, and now collides with another
-					 * item.  Stick with originalTitle. */
+					 * item.  Stick with titleInDatabase. */
 					return;
 				}
 			}
@@ -301,7 +304,7 @@ ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 	}, this);
 	if (dirty) {
 		Mojo.Log.info("Found dirty field after timeout, saving");
-		this.ring.updateItem(this.originalTitle, this.item);
+		this.ring.updateItem(this.titleInDatabase, this.item);
 	}
 	this.timedOut = true;
 	if (! (event && event.type == "mojo-stage-deactivate")) {
