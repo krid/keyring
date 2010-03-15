@@ -1,5 +1,8 @@
 2010-03-15  Dirk Bergstrom  <krid@otisbean.com>
 
+	* appinfo.json: Change version number to 0.3.0, since the changes seem
+	to warrant it.
+
 	* icon.png: Vastly improved icon courtesy of Alberto Dominguez (chav1to).
 	
 	* images/lock.png, open-lock.png: New images from clipart provided by
