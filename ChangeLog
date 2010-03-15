@@ -8,6 +8,9 @@
 	* images/lock.png, open-lock.png: New images from clipart provided by
 	chav1to.
 
+	* app/views/help/help-scene.html: Note new icon in changelog, adjust
+	version number and releaes date.
+
 2010-03-14  Dirk Bergstrom  <krid@otisbean.com>
 
 	* app/assistants/item-assistant.js (originalTitle): Renamed to
