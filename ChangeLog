@@ -1,3 +1,10 @@
+2010-03-15  Dirk Bergstrom  <krid@otisbean.com>
+
+	* icon.png: Vastly improved icon courtesy of Alberto Dominguez (chav1to).
+	
+	* images/lock.png, open-lock.png: New images from clipart provided by
+	chav1to.
+
 2010-03-14  Dirk Bergstrom  <krid@otisbean.com>
 
 	* app/assistants/item-assistant.js (originalTitle): Renamed to
