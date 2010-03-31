@@ -9,10 +9,10 @@
 <div class="palm-text-wrapper">
 
 <div class="palm-info-text">
-<h3>Keyring - Easy password management on your phone</h3>
+<h3>Keyring &mdash; Easy password management on your phone</h3>
 
 Keyring for webOS stores your account information securely, so you don't have
-to rely on your memory or little scraps of paper.  Sensitive data are
+to rely on your memory or carry around scraps of paper.  Sensitive data are
 encrypted using the Blowfish algorithm, and protected by a master password.
 </div>
 
@@ -23,8 +23,8 @@ encrypted using the Blowfish algorithm, and protected by a master password.
 <a href="#list">Item List</a> | 
 <a href="#categories">Categories</a> | 
 <a href="#viewedit">View / Edit</a> | 
-<a href="#import">Import/Export</a> | 
-<a href="#convert">Converting Other Formats</a> | 
+<a href="#backup">Backup / Restore</a> | 
+<a href="#desktop">Desktop Client and Importer</a> | 
 <a href="#coming">Coming Soon</a> |
 <a href="#changelog">Change Log</a> |
 <a href="#license">License</a>
@@ -77,36 +77,46 @@ field to edit the contents.  The three dates displayed above the notes area are
 the created date, last modified date and the last viewed date.
 </div>
 
-<a id="import"></a>
+<a id="backup"></a>
 <div class="palm-info-text">
-<h4>Import / Export</h4>
-You may export your Keyring database, import new items, change the password, or clear the entire
-database via the "Database Actions" menu.  Data may be exported to the clipboard,
-or to a URL (a POST request will be sent, with a single "data" parameter
-containing the standard export format).  Data may be imported from the clipboard,
-a file on the media partition, or a URL (which should return output in the format
-that export emits).
+<h4>Backup / Restore</h4>
+You may back up and restore your Keyring database, import new items, change the
+password, or clear the entire database via the "Database Actions" menu.  Data
+may be backed up to the clipboard, or to a URL (a POST request will be sent,
+with a single "data" parameter containing the standard backup format).  Data
+may be restored from the clipboard, a file on the media partition, or a URL
+(which should return output in the format that backup emits).
 <br/>
-When importing, you may specify the "resolution", which dictates how imported
-data will be integrated with existing data:
+When restoring or importing, you must specify the resolution for conflicts
+between existing and restored items:
 <ul>
-<li><b>Keep existing</b> - Imported data will not overwrite existing data.</li>
-<li><b>Use import</b> - Imported data overwrites existing data.</li>
-<li><b>Use newer</b> - Use whichever data is newer.</li>
-<li><b>Update only</b> - Only import newer versions of existing data (skips
-imported items that are not already in the list).</li>
+<li><b>Use newest (sync)</b> - Use whichever item is newer; synchronize.</li>
+<li><b>Keep existing</b> - Restored items will never overwrite existing items.</li>
+<li><b>Use restored</b> - Restored items overwrite existing items.</li>
+<li><b>Update only</b> - Only restore newer versions of existing items (skips
+restored items that are not already in the database).</li>
 </ul> 
 </div>
 
-<a id="convert"></a>
+<a id="desktop"></a>
 <div class="palm-info-text">
-<h4>Converting from Other Formats</h4>
-Building on code from the good folks who brought you
-<a href="http://gnukeyring.sourceforge.net/conduits.html">Keyring for PalmOS</a>,
-there is now a Java utility that converts data from other password systems to
-Keyring for webOS import/export format.  It currently accepts data in 
-CodeWallet, eWallet, Keyring for PalmOS and CSV formats. See details on the
-<a href="http://otisbean.com/keyring/#converter">Keyring project page</a>.
+<h4>Desktop Client and Importer</h4>
+A <a href="http://otisbean.com/keyring/#desktop">desktop client</a> is available,
+providing the following features:
+
+<ul>
+<li> Load and save Keyring databases via the file system or URL
+<li> View, edit, add and delete items
+<li> Import from the following formats:
+<ul>
+ <li> CSV (plain and Excel flavors)
+ <li> Keyring for PalmOS
+ <li> eWallet
+ <li> CodeWallet
+</ul>
+<li> Export to CSV
+<li> Automatic lockout after 60s idle time.
+</ul>
 </div>
 
 <a id="coming"></a>
@@ -118,8 +128,6 @@ tap-to-launch for the URL and easy copy-to-clipboard for name or password.</li>
 
 <li> A periodic export-to-url system, possibly backed by an optional Google
 AppEngine service.</li>
-
-<li> A better way to access Keyring data on your computer, via a Java utility.</li>
 
 <li> A last-modified date for the entire db.</li>
 
@@ -134,6 +142,10 @@ AppEngine service.</li>
 <div class="palm-info-text">
 <h4>Change Log</h4>
 <ul>
+<li>Version 1.0.0 - 2010-03-30<br />
+ - German translation courtesy of Daniel Saat.<br />
+ - First version in the official App Catalog.
+</li>
 <li>Version 0.3.0 - 2010-03-15<br />
  - Creating a new item no longer requires explicit save, so you won't lose
  data if the app times out before you save.<br />

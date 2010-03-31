@@ -86,7 +86,7 @@ StageAssistant.prototype.handleCommand = function(event) {
 	            currentScene.showAlertDialog({
 	                onChoose: function(value) {},
 	                title: $L("Keyring — Easy password management"),
-	                message: $L("Version #{version}\nCopyright 2009-2010, Dirk Bergstrom.\nReleased under the GPLv3.").interpolate({version: Keyring.version}),
+	                message: $L("Version #{version} Copyright 2009-2010, Dirk Bergstrom.  Released under the GPLv3.").interpolate({version: Keyring.version}),
 	                choices:[{label:$L("OK"), value:""}]
 	            });
 	        break;

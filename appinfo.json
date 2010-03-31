@@ -1,11 +1,13 @@
 {
 	"id": "com.otisbean.keyring",
-	"version": "0.3.0",
+	"version": "1.0.0",
 	"vendor": "Otisbean",
 	"type": "web",
 	"main": "index.html",
 	"title": "Keyring",
 	"icon": "icon.png",
+	"smallicon": "icon48.png",
+	"splashicon": "icon256.png",
     "removable": "true",
     "visible": "true"
 }

@@ -16,7 +16,7 @@ CategoriesAssistant.prototype.setup = function() {
 		fixedHeightItems: true,
 		swipeToDelete: true,
 		reorderable: false,
-		addItemLabel: 'Add new'
+		addItemLabel: $L("Add new")
 	};
 	this.controller.setupWidget('categories', listAttributes, this.model);
 	this.list = this.controller.get('categories');

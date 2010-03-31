@@ -60,16 +60,16 @@ var Ring = Class.create ({
 	/** Used during upgrade from previous schema version. */
 	_upgradeDecryptMethod: false,
 	
-	// import conflict handling options
+	// restore options for conflict handling 
 	resolutions: {
+		sync: {code: 'newer', label: $L({value: "Use newest (sync)",
+			key: "'Use newest (sync)' option for restore resolution"})},
 		keep: {code: 'keep', label: $L({value: "Keep existing",
-			key: "'Keep existing' option for import resolution"})},
-		import_: {code: 'import', label: $L({value: "Use import",
-			key: "'Use import' option for import resolution"})},
-		newer: {code: 'newer', label: $L({value: "Use newer",
-			key: "'Use newer' option for import resolution"})},
+			key: "'Keep existing' option for restore resolution"})},
+		import_: {code: 'import', label: $L({value: "Use restored",
+			key: "'Use restored' option for restore resolution"})},
 		update: {code: 'update', label: $L({value: "Update only",
-			key: "'Update only' option for import resolution"})}
+			key: "'Update only' option for restore resolution"})}
 	},
 	
 	onDeactivateOptions: [
@@ -113,7 +113,7 @@ var Ring = Class.create ({
 			 * import from 'clipboard' & 'url'. */
 			source: 'url',
 			// Only overwrite existing items with newer data
-			/* XXX??? I'd like to refer to "this.resolutions.newer", but there
+			/* XXX??? I'd like to refer to "this.resolutions.sync.code", but there
 			 * is no "this" when we get here. */ 
 			resolution: 'newer',
 			// Don't import preferences
@@ -616,14 +616,14 @@ var Ring = Class.create ({
 					updated++;
 					used = true;
 				} else if ((behavior === this.resolutions.update.code ||
-						    behavior === this.resolutions.newer.code) &&
+						    behavior === this.resolutions.sync.code) &&
 						    existing.changed < item.changed) {
 					updated++;
 					used = true;
 				}
 			} else if (emptyDb || behavior === this.resolutions.import_.code ||
 					   behavior === this.resolutions.keep.code ||
-					   behavior === this.resolutions.newer.code) {
+					   behavior === this.resolutions.sync.code) {
 				added++;
 				used = true;
 			}

@@ -35,7 +35,7 @@ ActionsAssistant.prototype.setup = function() {
 	               ]},
         this.ring.prefs.export_);
     this.controller.setupWidget("exportButton", {}, {
-    	label: $L("Export"),
+    	label: $L("Backup"),
     	disabled: false
     });
     this.exportAction = Keyring.doIfPasswordValid.bind(
@@ -61,7 +61,7 @@ ActionsAssistant.prototype.setup = function() {
 	choices.sort();
 	this.controller.setupWidget("resolution",
 		{modelProperty: "resolution",
-		 label: $L("Resolution"),
+		 label: $L("Conflicts"),
 		 labelPlacement: Mojo.Widget.labelPlacementLeft,
 		 choices: choices},
         this.ring.prefs.import_);
@@ -69,7 +69,7 @@ ActionsAssistant.prototype.setup = function() {
 	this.controller.setupWidget("prefs", {modelProperty: "prefs"},
 		this.ring.prefs.import_);
     this.controller.setupWidget("importButton", {}, {
-    	label: $L("Import"),
+    	label: $L("Restore"),
     	disabled: false
     });
     this.importAction = Keyring.doIfPasswordValid.bind(
@@ -98,12 +98,13 @@ ActionsAssistant.prototype.setup = function() {
 };
 
 ActionsAssistant.prototype.export_ = function() {
-	Mojo.Log.info("Exporting to", this.ring.prefs.export_.destination);
+	Mojo.Log.info("Backup to", this.ring.prefs.export_.destination);
 	this.ring.updateTimeout();
 	if (this.ring.prefs.export_.destination === 'clipboard') {
 		var encrypted = this.ring.exportableData();
 		try {
-			this.controller.stageController.setClipboard($L("Keyring database:\n") +
+			// Localization plumbing chokes on newlines in strings
+			this.controller.stageController.setClipboard($L("Keyring database:") + "\n" +
 				encrypted);
 		}
 		catch(e) {
@@ -113,7 +114,7 @@ ActionsAssistant.prototype.export_ = function() {
 		}
 		this.controller.showAlertDialog({
 		    onChoose: function(value) {},
-		    title: $L("Database Exported"),
+		    title: $L("Database Backed Up"),
 		    message: $L("An encrypted copy of the Keyring database is in the clipboard.  You may paste it into an email, memo, or web form as needed."),
 		    choices:[{label:$L("OK"), value:""}]
 	    });
@@ -124,7 +125,7 @@ ActionsAssistant.prototype.export_ = function() {
 			assistant: new ImportExportDialogAssistant(
 				this.controller,
 				this.exportToUrl.bind(this),
-				$L("Export to URL"),
+				$L("Backup to URL"),
 				$L("URL"),
 				this.ring.prefs.export_.url,
 				false)
@@ -133,7 +134,7 @@ ActionsAssistant.prototype.export_ = function() {
 };
 
 ActionsAssistant.prototype.exportToUrl = function(url) {
-    Mojo.Log.info("POSTing export file to", url);
+    Mojo.Log.info("POSTing backup file to", url);
     // Strip whitespace
     url = url.replace(/^\s*(.+?)\s*$/, '$1');
 	if(url.substring(0,4) != 'http') {
@@ -150,20 +151,20 @@ ActionsAssistant.prototype.exportToUrl = function(url) {
 	    onSuccess: function(transport) {
     		if (transport.status < 200 || transport.status > 299 ||
     			! transport.responseText.match(/^\s*ok\s*$/i)) {
-    			Mojo.Controller.errorDialog($L("Error exporting to #{url}").interpolate({url: url}),
+    			Mojo.Controller.errorDialog($L("Error backing up to #{url}").interpolate({url: url}),
 					this.controller.window);
     		} else {
 	    		this.ring.prefs.export_.url= url;
 	    		this.controller.showAlertDialog({
 	    			onChoose: function(value) {},
-	    			title: $L("Database Exported"),
+	    			title: $L("Database Backed Up"),
 	    			message: $L("An encrypted copy of the Keyring database was POSTed to #{url}").
 	    			    interpolate({url: url}), choices:[{label:$L("OK"), value:""}]
 	    		});
     		}
     	}.bind(this),
 	    onFailure: function(transport) {
-			Mojo.Controller.errorDialog(e.name + " error exporting: " +
+			Mojo.Controller.errorDialog("Backup error: " +
 					transport.responseText, this.controller.window);
 			return;
 		}.bind(this)
@@ -172,7 +173,7 @@ ActionsAssistant.prototype.exportToUrl = function(url) {
 };
 
 ActionsAssistant.prototype.import_ = function() {
-	Mojo.Log.info("Importing from", this.ring.prefs.import_.source);
+	Mojo.Log.info("Restoring from", this.ring.prefs.import_.source);
 	var callback, title, hint, defaultDataValue;
 	if (this.ring.prefs.import_.source === 'clipboard') {
 		callback = function(pastedData, password) {
@@ -182,19 +183,19 @@ ActionsAssistant.prototype.import_ = function() {
 				password,
 				this.importResults.bind(this));
 		}.bind(this);
-		title = $L("Import from clipboard");
-		hint = $L("Paste import data here");
+		title = $L("Restore from clipboard");
+		hint = $L("Paste data here");
 
 	} else if (this.ring.prefs.import_.source === 'file') {
 		callback = this.importFileOrUrl.bind(this);
-		title = $L("Import from file");
+		title = $L("Restore from file");
 		hint = $L("File path, relative to media partition");
 		defaultDataValue = this.ring.prefs.import_.filename;
 		
 	} else if (this.ring.prefs.import_.source === 'url') {
 		callback = this.importFileOrUrl.bind(this);
-		title = $L("Import from URL");
-		hint = $L("URL of import data");
+		title = $L("Restore from URL");
+		hint = $L("URL of data");
 		defaultDataValue = this.ring.prefs.import_.url;
 	}
 
@@ -256,7 +257,7 @@ ActionsAssistant.prototype.importFileOrUrl = function(path, password) {
 ActionsAssistant.prototype.importResults = function(success, arg1, arg2) {
 	if (success) {
 		this.controller.showAlertDialog({onChoose: function() {}.bind(this),
-			title: $L("Import finished"),
+			title: $L("Restore finished"),
 			message: $L("#{updated} items updated, #{added} items added").
 			    interpolate({updated: arg1, added: arg2}),
 			choices:[{label: $L('OK'), value: "ok", type: 'affirmative'}]
@@ -365,7 +366,7 @@ ImportExportDialogAssistant = Class.create ({
 		    this.controller.setupWidget(
 		        "password",
 		        {
-		          hintText: $L("Password for imported data"),
+		          hintText: $L("Password for restored data"),
 		          autoFocus: false
 		        },
 		        this.passwordModel

@@ -142,7 +142,7 @@ ItemAssistant.prototype.setup = function() {
 	
 	this.controller.setupWidget("categoryField",
 		{modelProperty: "category",
-		 label: "Category",
+		 label: $L("Category"),
 		 labelPlacement: Mojo.Widget.labelPlacementRight,
 		 /* FIXME If categories are edited/added directly from the item page,
 		  * they may not show up when swiping back.  If so, the choices

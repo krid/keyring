@@ -1,3 +1,33 @@
+2010-03-29  Dirk Bergstrom  <krid@otisbean.com>
+
+	* app/assistants/actions-assistant.js: Change import/export to restore/
+	backup, since that better reflects usage.  Import and export are really
+	handled by the desktop client.
+
+    * app/models/ring.js (resolutions): s/imported/restored, and change
+    "newer" to "newest" for clarity.
+
+	* app/views/actions/actions-scene.html: Change import/export to restore/
+	backup.
+
+	* app/views/help/help-scene.html: Revise sections on export/backup, add
+	section on desktop client, which subsumes former converter section.  Add
+	changelog for 1.0 release. 
+	 
+	* app/assistants/categories-assistant.js (setup): Localize another string.
+	
+	* app/assistants/item-assistant.js (setup): Localize another string.
+
+	* app/assistants/stage-assistant.js (handleCommand): Remove newlines from
+	"About" dialog text, since l10n plumbing barfs on them.
+
+	* appinfo.json: Change version number to 1.0.0 in preparation for app
+	catalog submission.  Add smallicon and splashicon entries.
+	
+	* icon.png: Slightly cleaner version of the icon.
+	
+	* icon48.png, icon256.png: Mini and splash icons.
+
 2010-03-15  Dirk Bergstrom  <krid@otisbean.com>
 
 	* appinfo.json: Change version number to 0.3.0, since the changes seem
