@@ -100,7 +100,7 @@ LockedAssistant.prototype.activate = function(event) {
 		this.ring.clearPassword();
 		this.loadingMessage.update($L("Keyring locked"));
 		this.controller.get("img-div").update('<img src="images/lock.png"/>');
-		if (this.ring.prefs.lockoutTo == 'close-app') {
+		if (this.ring.prefs.lockoutTo === 'close-app') {
 			Mojo.Log.info("Closing Keyring on lockout.");
 			window.close();
 		} else {
@@ -159,7 +159,7 @@ NewPasswordDialogAssistant.prototype.setup = function(widget) {
 };
 
 NewPasswordDialogAssistant.prototype.propChangeHandler = function(event) {
-	if (event.originalEvent.type == 'blur') {
+	if (event.originalEvent.type === 'blur') {
         this.ok();
     }
 };

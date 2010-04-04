@@ -74,7 +74,7 @@ PreferencesAssistant.prototype.setup = function() {
 
 	// Character types for password generator
     Object.keys(this.ring.prefs.generatorPrefs).each(function(attr) {
-    	if (attr == "characters") { return; }
+    	if (attr === "characters") { return; }
         this.controller.setupWidget(attr+"Field",
             {modelProperty: attr}, this.ring.prefs.generatorPrefs);
         this.fieldsToListen.push(attr+"Field");
@@ -93,10 +93,10 @@ PreferencesAssistant.prototype.setup = function() {
 };
 
 PreferencesAssistant.prototype.fieldUpdated = function(event) {
-	if (event.value != event.oldValue) {
+	if (event.value !== event.oldValue) {
 		Mojo.Log.info("field '%s' changed", event.property);
 		this.ring.saveData();
-		if (event.property == "sortBy") {
+		if (event.property === "sortBy") {
 			this.ring.buildItemList();
 			this.ring.itemsReSorted = true;
 		}

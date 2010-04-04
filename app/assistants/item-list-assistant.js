@@ -65,7 +65,7 @@ ItemListAssistant.prototype.setup = function() {
 };
 
 ItemListAssistant.prototype.handleCommand = function(event) {
-	if(event.type == Mojo.Event.command) {
+	if(event.type === Mojo.Event.command) {
 		switch(event.command)
 		{
 			case 'new':
@@ -119,8 +119,8 @@ ItemListAssistant.prototype.sortPopupHandler = function(command) {
 
 ItemListAssistant.prototype.setSortingStatus = function() {
 	this.sortByChoices.each(function(sb){
-		if (this.ring.prefs.sortBy == sb.command) {
-			this.controller.get('sortby').update(sb.label)
+		if (this.ring.prefs.sortBy === sb.command) {
+			this.controller.get('sortby').update(sb.label);
 		}
 	}, this);
 };
@@ -156,21 +156,21 @@ ItemListAssistant.prototype.deleted = function(event) {
 };
 
 ItemListAssistant.prototype.setCategory = function(category) {
-	if (category == '++edit++') {
+	if (category === '++edit++') {
 		Keyring.doIfPasswordValid(this.controller, this.ring,
 			this.controller.stageController.pushScene.
 			bind(this.controller.stageController, 'categories', this.ring));
 		return;
 	}
-	if (category == undefined || category == this.category) return;
+	if (category === undefined || category === this.category) { return; }
 	Mojo.Log.info('Setting category to \'%s\'', category);
 	var subset = [];
 	this.category = category;
-	if (category == -1 && this.filterString == '') {
+	if (category === -1 && this.filterString === '') {
 		subset = this.ring.items;
 	} else {
 		this.ring.items.each(function(item) {
-			if ((category == -1 || item.category == category)
+			if ((category === -1 || item.category === category)
 					&& item.TITLE.include(this.filterString)) {
 				subset.push(item);
 			}
@@ -205,7 +205,7 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	while (i < this.ring.items.length) {
 		var item = this.ring.items[i];
         if (item.TITLE.include(filterUpper) &&
-        		(this.category == -1 || item.category == this.category)) {
+        		(this.category === -1 || item.category === this.category)) {
 			if (subset.length < count && totalSubsetSize >= offset) {
 				subset.push(item);
 			}

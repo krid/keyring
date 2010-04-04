@@ -20,7 +20,7 @@
 
 function HelpAssistant(ring) {
 	this.ring = ring;
-};
+}
 
 HelpAssistant.prototype.setup = function() {
 	if (this.ring.errors.length > 0) {

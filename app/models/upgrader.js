@@ -22,7 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var _V2And3Upgrader = Class.create ({
+var V2And3Upgrader = Class.create ({
 	
 	ring: null,
 	
@@ -69,7 +69,7 @@ var _V2And3Upgrader = Class.create ({
 		Mojo.Log.info("upgrader.processData()");
 		/* See if the supplied password is valid by checking if it decrypts
 		 * the stored checkData. */
-		if (Mojo.Model.decrypt(tmpKey, this.loadedData.crypt.checkData) != tmpKey) {
+		if (Mojo.Model.decrypt(tmpKey, this.loadedData.crypt.checkData) !== tmpKey) {
 			// BZZZZT! Worng password!
 			return false;
 		}
@@ -103,8 +103,8 @@ var Upgrader = Class.create ({
 	
 	initialize: function(version, ring) {
 		Mojo.Log.info("Initializing upgrader for version", version);
-		if (version === 2 || version == 3) {
-			this.worker = new _V2And3Upgrader(ring);
+		if (version === 2 || version === 3) {
+			this.worker = new V2And3Upgrader(ring);
 		} 
 	},
 

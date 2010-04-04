@@ -8,6 +8,7 @@
 	"icon": "icon.png",
 	"smallicon": "icon48.png",
 	"splashicon": "icon256.png",
+	"splashBackground": "images/splash-screen.png",
     "removable": "true",
     "visible": "true"
 }

@@ -137,7 +137,7 @@ ActionsAssistant.prototype.exportToUrl = function(url) {
     Mojo.Log.info("POSTing backup file to", url);
     // Strip whitespace
     url = url.replace(/^\s*(.+?)\s*$/, '$1');
-	if(url.substring(0,4) != 'http') {
+	if(url.substring(0,4) !== 'http') {
 		url = 'http://' + url;
 	}
     this.ring.prefs.export_.url = url;
@@ -212,14 +212,14 @@ ActionsAssistant.prototype.importFileOrUrl = function(path, password) {
 	path = path.replace(/^\s*(.+?)\s*$/, '$1');
 	if (this.ring.prefs.import_.source === 'url') {
 		// URL import
-		if( path.substring(0,4) != 'http') {
+		if (path.substring(0,4) !== 'http') {
 			fullPath = 'http://' + path;
 		} else {
 			fullPath = path;
 		}
 		this.ring.prefs.import_.url = fullPath;
 	} else {
-		if (path.charAt(0) != '/') {
+		if (path.charAt(0) !== '/') {
 			path = '/' + path;
 		}
 		fullPath = '/media/internal' + path;
@@ -279,9 +279,9 @@ ActionsAssistant.prototype.clearDatabase = function() {
 	this.controller.showAlertDialog({
 		onChoose: function(value) {
 		if (value.search("yes") > -1) {
-			this.ring.clearDatabase(value == "yes-factory");
+			this.ring.clearDatabase(value === "yes-factory");
 			this.ring.itemsReSorted = true;
-			var popTo = (value == "yes-factory") ? "locked" : "item-list";
+			var popTo = (value === "yes-factory") ? "locked" : "item-list";
 			this.controller.stageController.popScenesTo(popTo);
 		}
 	}.bind(this),
@@ -329,7 +329,7 @@ ActionsAssistant.prototype.cleanup = function(event) {
 /*
  * Dialog used for a number of different import/export actions
  */
-ImportExportDialogAssistant = Class.create ({
+var ImportExportDialogAssistant = Class.create ({
 	initialize: function(controller, callback, title, hint, defaultDataValue,
 			showPassword) {
 		Mojo.Log.info("ImportExportDialog.initialize()");
@@ -369,8 +369,7 @@ ImportExportDialogAssistant = Class.create ({
 		          hintText: $L("Password for restored data"),
 		          autoFocus: false
 		        },
-		        this.passwordModel
-		        );
+		        this.passwordModel);
 	    } else {
 			this.controller.get("password-group").hide();
 			this.controller.hideWidgetContainer("password-group");
@@ -473,7 +472,7 @@ ChangePasswordDialogAssistant.prototype.setup = function(widget) {
 };
 
 ChangePasswordDialogAssistant.prototype.propChangeHandler = function(event) {
-	if (event.originalEvent.type == 'blur') {
+	if (event.originalEvent.type === 'blur') {
         this.ok();
     }
 };

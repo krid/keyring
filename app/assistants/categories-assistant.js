@@ -78,7 +78,7 @@ CategoriesAssistant.prototype.categoryAdded = function() {
 
 CategoriesAssistant.prototype.categoryEdited = function(event) {
 	this.ring.updateTimeout();
-	if (event.value != event.oldValue) {
+	if (event.value !== event.oldValue) {
 		Mojo.Log.info("Category '%s' changed to '%s'", event.oldValue, event.value);
 		this.ring.editCategory(event.model.value, event.value);
 	}
@@ -114,7 +114,7 @@ CategoriesAssistant.prototype.deactivate = function(event) {
 /*
  * The new category dialog.
  */
-CategoryDialogAssistant = Class.create ({
+var CategoryDialogAssistant = Class.create ({
 	initialize: function(controller, ring, callback) {
 		this.controller = controller;
 	    this.ring = ring;

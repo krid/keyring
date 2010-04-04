@@ -241,7 +241,7 @@ var Ring = Class.create ({
 				return this._decryptData(tmpKey);
 			}
 			
-		} else if (this.decrypt(this._checkData, tmpKey) == '{' + tmpKey + '}') {
+		} else if (this.decrypt(this._checkData, tmpKey) === '{' + tmpKey + '}') {
 			Mojo.Log.info('Password validated');
 			this._key = tmpKey;
 			this.updateTimeout();
@@ -336,8 +336,9 @@ var Ring = Class.create ({
 			return;
 		}
 		Mojo.Log.info('Current depotVersion', depotVersion);
-		if (depotVersion != this.SCHEMA_VERSION) {
-			new Upgrader(depotVersion, this).upgrade();
+		if (depotVersion !== this.SCHEMA_VERSION) {
+			var upgrader = new Upgrader(depotVersion, this);
+			upgrader.upgrade();
 		} else {
 			this._loadRingData();
 		}
@@ -546,7 +547,7 @@ var Ring = Class.create ({
 			return;
 		} // Data from older versions will upgrade cleanly (at least for now).
 		
-		if (password || data.salt != this._salt) {
+		if (password || data.salt !== this._salt) {
 			// imported data encrypted with a different password or salt
 			tmpKey = b64_sha256(data.salt + password);
 		}
@@ -650,12 +651,13 @@ var Ring = Class.create ({
 		Mojo.Log.info('_upgradeItem');
 		var tmpItem = $H(item);
 		if (key) {
+			var encryptedObj;
 			var tmpData = this.decrypt(item.encrypted_data, key);
 			try {
 				encryptedObj = JSON.parse(tmpData);
 			}
 			catch(e) {
-				errmsg = $L("Can't parse decrypted data (bad password?); #{name}: #{message}").
+				var errmsg = $L("Can't parse decrypted data (bad password?); #{name}: #{message}").
 				    interpolate(e);
 				Mojo.Log.warn(errmsg);
 				// FIXME what to do here?
@@ -732,13 +734,13 @@ var Ring = Class.create ({
 		Mojo.Log.info('Deleting category \'%s\' with index %s',
 				this.categories[toDelete], toDelete);
 		Object.values(this.db).each(function(item) {
-			if (item.category == toDelete) {
+			if (item.category === toDelete) {
 				item.category = 0;
 			}
 		}, this);
 		
 		delete(this.categories[toDelete]);
-		if (this.prefs.category == toDelete) {
+		if (this.prefs.category === toDelete) {
 			this.prefs.category = -1;
 		}
 		this.saveData();
@@ -751,18 +753,19 @@ var Ring = Class.create ({
 	 */
 	editCategory: function(value, newLabel) {
 		Mojo.Log.info('editCategory');
+		var errmsg;
 		if (value === 0) {
-			var errmsg = $L("Can't edit the \"All\" & \"Unfiled\" categories.");
+			errmsg = $L("Can't edit the \"All\" & \"Unfiled\" categories.");
 			Mojo.Log.error(errmsg);
 			return [false, errmsg];
 		}
 		if (! this.passwordValid()) {
-			var errmsg = $L("Attempt to edit categories w/o valid password.");
+			errmsg = $L("Attempt to edit categories w/o valid password.");
 			Mojo.Log.warn(errmsg);
 			return [false, errmsg];
 		}
 		if (value && ! this.categories[value]) {
-			var errmsg = $L("Attempt to edit non-existent category with value \"#{value}\"").
+			errmsg = $L("Attempt to edit non-existent category with value \"#{value}\"").
 			    interpolate({value: value});
 			Mojo.Log.warn(errmsg);
 			return [false, errmsg];
@@ -770,7 +773,7 @@ var Ring = Class.create ({
 		if (! value) {
 			var existing = Object.values(this.categories);
 			for (var i = 0; i < existing.length; i++) {
-				if (newLabel == existing[i]) {
+				if (newLabel === existing[i]) {
 					return [false,
 					        $L("Category \"#{newLabel}\" already exists.").
 					            interpolate({newLabel: newLabel})];
@@ -794,13 +797,14 @@ var Ring = Class.create ({
 	 */
 	randomCharacters: function(model) {
 		Mojo.Log.info('randomCharacters');
+		var errmsg;
 		if (! model.characters || model.characters < 1) {
-			var errmsg = $L("Can't deliver a password of less than one character.");
+			errmsg = $L("Can't deliver a password of less than one character.");
 			Mojo.Log.error(errmsg);
 			throw new Error(errmsg);
 		}
 		if (!(model.lowcase || model.cap || model.num || model.sym || model.all)) {
-			var errmsg = $L("Must choose at least one of lowercase, uppercase, numbers or symbols.");
+			errmsg = $L("Must choose at least one of lowercase, uppercase, numbers or symbols.");
 			Mojo.Log.error(errmsg);
 			throw new Error(errmsg);
 		}
@@ -888,7 +892,7 @@ var Ring = Class.create ({
 		if (! newTitle) {
 			throw new Error($L("Title is required"));
 		}
-		if (newTitle != oldTitle && this.db[newTitle]) {
+		if (newTitle !== oldTitle && this.db[newTitle]) {
 			throw new Error($L("An entry with title \"#{newTitle}\" already exists.").
 			    interpolate({newTitle: newTitle}));
 		}
@@ -896,7 +900,7 @@ var Ring = Class.create ({
 		var item = this._buildItem(newData);
 		
 		if (oldTitle) {
-			if (newTitle != oldTitle) {
+			if (newTitle !== oldTitle) {
 				// Delete old item from db hash
 				delete this.db[oldTitle];
 			}
@@ -986,10 +990,10 @@ var Ring = Class.create ({
 	      var a = x[sortBy];
 	      var b = y[sortBy];
 	      if (a > b) {
-	    	  return (sortBy == 'TITLE') ? 1 : -1;
+	    	  return (sortBy === 'TITLE') ? 1 : -1;
 	      }
 	      if (a < b) {
-	    	  return (sortBy == 'TITLE') ? -1 : 1;
+	    	  return (sortBy === 'TITLE') ? -1 : 1;
 	      }
 	      return 0;
 	    });
@@ -1013,7 +1017,7 @@ var Ring = Class.create ({
 			cleartext = this.randomCharacters({characters: saltLength, all: true}) + cleartext;
 		}
         var encrypted = Mojo.Model.encrypt(this._key, cleartext);
-        if (this.debug) Mojo.Log.info('Mojo.Model.encrypt done, encrypted=\'%s\'', encrypted);
+        if (this.debug) { Mojo.Log.info('Mojo.Model.encrypt done, encrypted=\'%s\'', encrypted); }
         return encrypted;
 	},
 
@@ -1025,7 +1029,7 @@ var Ring = Class.create ({
     decrypt: function(cryptext, tempKey) {
 		Mojo.Log.info('decrypt');
 		var key = tempKey ? tempKey : this._key;
-		if (this.debug) Mojo.Log.info('Calling Mojo.Model.decrypt. cryptext=\'%s\'', cryptext);
+		if (this.debug) { Mojo.Log.info('Calling Mojo.Model.decrypt. cryptext=\'%s\'', cryptext); }
         var cleartext = Mojo.Model.decrypt(key, cryptext);
         // Remove any leading non-JSON salt characters
         return cleartext.replace(/^[^\{]*\{/, '{');
@@ -1056,7 +1060,7 @@ var Ring = Class.create ({
 	 * Format epoch milliseconds as an ISO date, with optional HH:mm.
 	 */
 	formatDate: function(millis, includeTime) {
-		if (typeof(millis) != 'number') {
+		if (typeof(millis) !== 'number') {
 			return '';
 		}
 		var date = new Date(millis);

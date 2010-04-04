@@ -1,4 +1,17 @@
-2010-03-29  Dirk Bergstrom  <krid@otisbean.com>
+2010-04-03  Dirk Bergstrom  <krid@otisbean.com>
+
+    * app/*/*.js: Many minor changes to fix errors and warnings from JSLint.
+
+	* appinfo.json: Add splashBackground entry.
+	
+	* images/splash-screen.png: Splash screen for webOS 1.4 startup experience.
+	
+	* dev-only: Directory to hold files that won't be included in the .ipk.
+	Currently has the SVG source for the icon.
+
+	* package.sh: Exclude dev-only directory.
+	
+2010-03-31  Dirk Bergstrom  <krid@otisbean.com>
 
 	* app/assistants/actions-assistant.js: Change import/export to restore/
 	backup, since that better reflects usage.  Import and export are really

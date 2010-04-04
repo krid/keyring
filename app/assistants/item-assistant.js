@@ -40,7 +40,7 @@ GeneratePasswordAssistant.prototype.setup = function(widget) {
 
     this.model = Object.clone(this.ring.prefs.generatorPrefs);
     Object.keys(this.model).each(function(attr) {
-    	if (attr == "characters") { return; }
+    	if (attr === "characters") { return; }
     	Mojo.Log.info("attr", attr);
         this.sceneAssistant.controller.setupWidget(attr+"Field",
             {modelProperty: attr}, this.model);
@@ -128,12 +128,12 @@ ItemAssistant.prototype.setup = function() {
 			requiresEnterKey: false
 		};
 	this.fields.each(function(field) {
-		if (field == "category") { return; }
+		if (field === "category") { return; }
 		var fieldAttrs = Object.clone(baseTextFieldAttrs);
 		fieldAttrs.hintText = field;
 		fieldAttrs.inputName = field;
 		fieldAttrs.modelProperty = field;
-		if (field == "notes") {
+		if (field === "notes") {
 			fieldAttrs.multiline = true;
 			fieldAttrs.focusMode = Mojo.Widget.focusInsertMode;
 		}
@@ -208,7 +208,7 @@ ItemAssistant.prototype.setup = function() {
  * of a timeout-initiated scene pop, since that's handled in timeoutOrDeactivate.
  */
 ItemAssistant.prototype.fieldUpdated = function(event) {
-	if (event.value != event.oldValue && ! this.timedOut) {
+	if (event.value !== event.oldValue && ! this.timedOut) {
 		this.ring.updateTimeout();
 		Mojo.Log.info("field '%s' changed", event.property);
 		this.ring.itemsReSorted = true;
@@ -221,7 +221,7 @@ ItemAssistant.prototype.fieldUpdated = function(event) {
 			return false;
 		}
 		this.fieldError = false;
-		if (event.property == 'title' || ! this.titleInDatabase) {
+		if (event.property === 'title' || ! this.titleInDatabase) {
 			// title has been changed, update titleInDatabase
 			this.titleInDatabase = this.item.title;
 		}
@@ -285,14 +285,14 @@ ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 		/* Skip 'category', since 1) it's a list selector, and thus doesn't
 		 * have a simple mojo.getValue() accessor & 2) list selectors
 		 * can't have unsubmitted changes anyways. */
-		if (field === 'category') return;
+		if (field === 'category') { return; }
 		var value = this.controller.get(field+'Field').mojo.getValue();
-		if (this.item[field] != value) {
-			if (field == 'title') {
+		if (this.item[field] !== value) {
+			if (field === 'title') {
 				if (! value) {
 					// We won't wipe out the title; stick with the old one.
 					return;
-				} else if (value != this.titleInDatabase && this.ring.db[value]) {
+				} else if (value !== this.titleInDatabase && this.ring.db[value]) {
 					/* Title has been changed, and now collides with another
 					 * item.  Stick with titleInDatabase. */
 					return;
@@ -307,14 +307,14 @@ ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 		this.ring.updateItem(this.titleInDatabase, this.item);
 	}
 	this.timedOut = true;
-	if (! (event && event.type == "mojo-stage-deactivate")) {
+	if (! (event && event.type === "mojo-stage-deactivate")) {
 		// app-assistant does this on deactivate
 		Keyring.lockout(this.controller.stageController, this.ring);
 	}
 };
 
 ItemAssistant.prototype.handleCommand = function(event) {
-	if(event.type == Mojo.Event.command) {
+	if(event.type === Mojo.Event.command) {
 		switch(event.command)
 		{
 			case 'done':
@@ -389,7 +389,7 @@ ItemAssistant.prototype.deactivate = function(event) {
 /*
  * Dialog to take the title for a newly created item.
  */
-TitleDialogAssistant = Class.create ({
+var TitleDialogAssistant = Class.create ({
 	initialize: function(controller, ring, callback) {
 		this.controller = controller;
 	    this.ring = ring;

@@ -3,7 +3,7 @@
 # Simple script to package up Keyring into a nice .ipk
 #
 # Keyring for webOS - Easy password management on your phone.
-# Copyright (C) 2009, Dirk Bergstrom, keyring@otisbean.com
+# Copyright (C) 2009-2010, Dirk Bergstrom, keyring@otisbean.com
 #     
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,4 +27,5 @@ srcdir=`dirname $0`
 palm-package -o $DESTDIR \
     --no-exclude-eclipse \
     --exclude=framework_config.json \
+    --exclude=dev-only \
     $srcdir

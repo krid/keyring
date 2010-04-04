@@ -79,7 +79,7 @@ StageAssistant.prototype.windowDeactivated = function() {
 StageAssistant.prototype.handleCommand = function(event) {    
 	var currentScene = this.controller.activeScene();
 
-	if(event.type == Mojo.Event.command) {
+	if(event.type === Mojo.Event.command) {
 	    switch(event.command) {
 	        case "do-aboutKeyring":
 	        	this.ring.updateTimeout();
@@ -123,7 +123,7 @@ StageAssistant.prototype.handleCommand = function(event) {
 /*
  * The "Enter your password" dialog, used throughout the application.
  */
-PasswordDialogAssistant = Class.create ({
+var PasswordDialogAssistant = Class.create ({
 	initialize: function(controller, ring, callback, noCancel) {
 		this.controller = controller;
 	    this.ring = ring;
@@ -223,9 +223,9 @@ Keyring.lockout = function(stageController, ring) {
 	var sceneName = stageController.topScene().sceneName;
 	Mojo.Log.info("Timeout or Deactivate in scene", sceneName);
 	ring.clearPassword();
-	if (ring.prefs.lockoutTo == 'close-app') {
+	if (ring.prefs.lockoutTo === 'close-app') {
 		stageController.popScenesTo('locked');
-	} else if (sceneName != ring.prefs.lockoutTo) {
+	} else if (sceneName !== ring.prefs.lockoutTo) {
 		// Don't pop scene if we're already on the lockoutTo page.
 		stageController.popScenesTo(ring.prefs.lockoutTo);
 	}
