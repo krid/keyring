@@ -13,8 +13,13 @@ Closes gh-8: Categories should (optionally?) sort in alpha order
     (ItemListAssistant): Initialize this.category to ring.prefs.category
     to avoid extra work on activate().
 
-    * app/assistants/item-assistant.js (setup): Adjust to new signature of
-    ring.categoriesForMojo();
+Closes gh-27: Using "generate password" more than once when creating...
+    * app/assistants/item-assistant.js (setGeneratedPassword): Call
+    fieldUpdated() instead of ring.updateItem() to ensure that bookkeeping
+    is kept in order.
+    (timeoutOrDeactivate): Wrap call to ring.updateItem() in try/catch so
+    that we'll still get to lockout even if that fails.
+    (setup): Adjust to new signature of ring.categoriesForMojo();
     
     * app/assistants/categories-assistant.js (categoryAdded): Update to handle
     alpha sorted categories list.

@@ -260,10 +260,11 @@ ItemAssistant.prototype.cancel = function() {
 
 /* Callback for handling generated passwords. */
 ItemAssistant.prototype.setGeneratedPassword = function(password) {
-	Mojo.Log.info("setGenerated", password);
+	Mojo.Log.info("setGenerated");
 	this.item.pass = password;
 	this.controller.modelChanged(this.item);
-	this.ring.updateItem(this.titleInDatabase, this.item);
+	// Send a fake event to fieldUpdated()
+	this.fieldUpdated({'property': 'password', 'value': password});
 };
 
 /* Callback to set title for new item creation. */
@@ -303,7 +304,12 @@ ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 	}, this);
 	if (dirty) {
 		Mojo.Log.info("Found dirty field after timeout, saving");
-		this.ring.updateItem(this.titleInDatabase, this.item);
+		try {
+			this.ring.updateItem(this.titleInDatabase, this.item);
+		}
+		catch (err) {
+			Mojo.Log.info("Error saving item on timeout: " + err);
+		}
 	}
 	this.timedOut = true;
 	if (! (event && event.type === "mojo-stage-deactivate")) {
