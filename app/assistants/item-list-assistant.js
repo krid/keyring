@@ -20,7 +20,7 @@
 
 function ItemListAssistant(ring) {
 	this.ring = ring;
-	this.category = -1;
+	this.category = this.ring.prefs.category;
 	this.filterString = undefined;
 	this.listSubsetSize = 0;
 	this.itemList = null;
@@ -162,15 +162,18 @@ ItemListAssistant.prototype.setCategory = function(category) {
 			bind(this.controller.stageController, 'categories', this.ring));
 		return;
 	}
-	if (category === undefined || category === this.category) { return; }
+	/* FIXME category comparison currently needs implicit type coercion,
+	 * because JSON serialization/deserialization converts everything
+	 * to a string. */
+	if (category === undefined || category == this.category) { return; }
 	Mojo.Log.info('Setting category to \'%s\'', category);
 	var subset = [];
 	this.category = category;
-	if (category === -1 && this.filterString === '') {
+	if (category == -1 && this.filterString === '') {
 		subset = this.ring.items;
 	} else {
 		this.ring.items.each(function(item) {
-			if ((category === -1 || item.category === category)
+			if ((category == -1 || item.category == category)
 					&& item.TITLE.include(this.filterString)) {
 				subset.push(item);
 			}
@@ -205,7 +208,7 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	while (i < this.ring.items.length) {
 		var item = this.ring.items[i];
         if (item.TITLE.include(filterUpper) &&
-        		(this.category === -1 || item.category === this.category)) {
+        		(this.category == -1 || item.category == this.category)) {
 			if (subset.length < count && totalSubsetSize >= offset) {
 				subset.push(item);
 			}

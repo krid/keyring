@@ -1,5 +1,24 @@
 2010-04-22  Dirk Bergstrom  <krid@otisbean.com>
 
+Closes gh-8: Categories should (optionally?) sort in alpha order
+    * app/models/ring.js (categoriesForMojo): Return list sorted alphabetically,
+    requires change to method signature.
+    (editCategory): Return index of category.
+    (deleteCategory): Use double-equals to get implicit type coercion when
+    comparing category indices.  JSON serialization/deserialization munges
+    type, and triple-equals comparisons don't work as expected.
+    
+    * app/assistants/item-list-assistant.js (setCategory, filterItems): Use
+    double-equals instead of triple to get type coercion.
+    (ItemListAssistant): Initialize this.category to ring.prefs.category
+    to avoid extra work on activate().
+
+    * app/assistants/item-assistant.js (setup): Adjust to new signature of
+    ring.categoriesForMojo();
+    
+    * app/assistants/categories-assistant.js (categoryAdded): Update to handle
+    alpha sorted categories list.
+
 	* resources: Add German and Mexican Spanish translations, courtesy of
 	Daniel Saat and Alberto Dominguez.
 

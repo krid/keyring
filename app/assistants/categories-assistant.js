@@ -9,7 +9,7 @@ CategoriesAssistant.prototype.setup = function() {
 		key: "title of the 'Categories' scene"}));
 	this.controller.setupWidget(Mojo.Menu.appMenu,
 			Keyring.MenuAttr, Keyring.MenuModel);
-	this.model.items = this.ring.categoriesForMojo(0);
+	this.model.items = this.ring.categoriesForMojo(true, true);
 	
 	var listAttributes = {
 		itemTemplate: 'categories/category',
@@ -58,18 +58,27 @@ CategoriesAssistant.prototype.addCategory = function(event) {
 	});
 };
 
-CategoriesAssistant.prototype.categoryAdded = function() {
+CategoriesAssistant.prototype.categoryAdded = function(newIndex) {
 	/* There's a lot of monkey motion here because I don't understand something...
 	 * If you leave out any of these steps, either the old or the new list items
 	 * aren't properly set up.  I tried using this.list.mojo.noticeAddedItems(),
 	 * but that didn't work.  */
 	this.ring.updateTimeout();
-	this.model.items = this.ring.categoriesForMojo(0);
-	var newItem = this.model.items[this.model.items.length - 1];
+	// Tell the framework that we have a new list of items
+	this.model.items = this.ring.categoriesForMojo(true, true);
 	this.controller.modelChanged(this.model);
-	this.controller.setupWidget('cat-'+newItem.value, this.baseTextFieldAttrs,
+	// Find the item that was just added
+	var newItem;
+	this.model.items.each(function(item) {
+		if (item.value == newIndex) {
+			newItem = item;
+		}
+	});
+	// Set up the list item for it
+	this.controller.setupWidget('cat-'+newIndex, this.baseTextFieldAttrs,
 		newItem);
 	this.controller.modelChanged(this.model);
+	// Hang events on the items in the list
 	this.model.items.each(function(item) {
 		Mojo.Event.listen(this.controller.get('cat-'+item.value),
 				Mojo.Event.propertyChange, this.categoryEdited);
@@ -169,7 +178,8 @@ var CategoryDialogAssistant = Class.create ({
 		var retval = this.ring.editCategory(undefined, this.categoryModel.value);
 		if (retval[0]) {
 			this.widget.mojo.close();
-			this.callbackOnSuccess();
+			// Pass new category index to callback
+			this.callbackOnSuccess(retval[2]);
 		} else {
 			Mojo.Log.info("Bad category");
 			this.controller.get("errmsg").update(retval[1]);

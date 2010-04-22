@@ -147,7 +147,7 @@ ItemAssistant.prototype.setup = function() {
 		  * they may not show up when swiping back.  If so, the choices
 		  * will somehow have to be moved to the model.  See the docs for
 		  * ListSelector. */
-    	 choices: this.ring.categoriesForMojo(-1)},
+    	 choices: this.ring.categoriesForMojo(true)},
         this.item);
 	
 	var somethingHidden = false;
@@ -274,7 +274,7 @@ ItemAssistant.prototype.setTitle = function(newTitle) {
 	this.controller.get('usernameField').mojo.focus.delay(0.5);
 };
 
-/* Don't leave a password visible when we minimize. */
+/* Don't leave an item visible when we minimize. */
 ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 	Mojo.Log.info("Item scene timeoutOrDeactivate");
 	/* If a field's value has been changed, but it it still focused (and thus

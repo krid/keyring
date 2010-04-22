@@ -746,13 +746,13 @@ var Ring = Class.create ({
 		Mojo.Log.info('Deleting category \'%s\' with index %s',
 				this.categories[toDelete], toDelete);
 		Object.values(this.db).each(function(item) {
-			if (item.category === toDelete) {
+			if (item.category == toDelete) {
 				item.category = 0;
 			}
 		}, this);
 		
 		delete(this.categories[toDelete]);
-		if (this.prefs.category === toDelete) {
+		if (this.prefs.category == toDelete) {
 			this.prefs.category = -1;
 		}
 		this.saveData();
@@ -797,7 +797,7 @@ var Ring = Class.create ({
 		Mojo.Log.info('Category \'%s\' has index %s', newLabel, value);
 		this.categories[value] = newLabel;
 		this.saveData();
-		return [true, newLabel];
+		return [true, newLabel, value];
 	},
 	
 	/**
@@ -946,6 +946,7 @@ var Ring = Class.create ({
 					newData[attr] : new Date().getTime();
 		}
 		// Make sure category is a number, not a string
+		// FIXME We still have a mix of string and number data
 		item.category = parseInt(item.category);
 		
 		/* Don't mess with encrypted data if the item isn't decrypted. */
@@ -1051,12 +1052,22 @@ var Ring = Class.create ({
 	 * Return the categories as a list of label/value/command objects, suitable
 	 * for use in various Mojo situations.
 	 */
-	categoriesForMojo: function(excludeFrom) {
+	categoriesForMojo: function(excludeAll, excludeUnfiled) {
 		var cats = [];
-		Object.keys(this.categories).sort(function(a,b) {return a-b;}).each(function(cat) {
-			if (cat <= excludeFrom) return;
+		// Make a list of categories
+		Object.keys(this.categories).each(function(cat) {
+			if (cat < 1) return;
 			cats.push({label: this[cat], value: cat, command: cat});
 		}, this.categories);
+		// Sort the list alphabetically
+		cats = cats.sort(function(a,b) {return a['label'].localeCompare(b['label']);});
+		// If desired, 'all' and 'unfiled' at the top.
+		if (! excludeUnfiled) {
+			cats.unshift({label: this.categories[0], value: 0, command: 0});
+		}
+		if (! excludeAll) {
+			cats.unshift({label: this.categories[-1], value: -1, command: -1});
+		}
 		return cats;
 	},
 	
