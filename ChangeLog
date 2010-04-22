@@ -1,4 +1,21 @@
+2010-04-22  Dirk Bergstrom  <krid@otisbean.com>
+
+	* resources: Add German and Mexican Spanish translations, courtesy of
+	Daniel Saat and Alberto Dominguez.
+
+2010-04-14  Dirk Bergstrom  <krid@otisbean.com>
+
+    * app/models/ring.js (FIELD_NAME_L10N): Localizable display names for
+    item fields.
+    
+    * app/assistants/item-assistant.js (setup): Use ring.FIELD_NAME_L10N.
+    
+    * app/assistants/item-list-assistant.js (handleCommand): L10N for "Edit
+    Categories".
+
 2010-04-03  Dirk Bergstrom  <krid@otisbean.com>
+
+	* README-translations.txt: Expand and clarify instructions.
 
     * app/*/*.js: Many minor changes to fix errors and warnings from JSLint.
 

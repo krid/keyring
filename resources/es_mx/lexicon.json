@@ -1,0 +1,173 @@
+{
+ "app/assistants/actions-assistant.js": {
+  "#{updated} items updated, #{added} items added": "#{updated} elementos actualizados, #{added} elementos agregados", 
+  "An encrypted copy of the Keyring database is in the clipboard.  You may paste it into an email, memo, or web form as needed.": "Una copia cifrada de la base de datos de Keyring est\u00e1 en el portapapeles.  Puede copiarlo a un correo, nota o forma web seg\u00fan necesite.", 
+  "An encrypted copy of the Keyring database was POSTed to #{url}": "Una copia cifrada de la base de datos de Keyring fue POSTeada a #{url}", 
+  "Are you sure you want to permanently delete all items?": "\u00bfSeguro que desea borrar permanentemente todos los elementos?", 
+  "Backup": "Respaldar", 
+  "Backup to URL": "Respaldar a URL", 
+  "Change": "Cambiar", 
+  "Change Password": "Cambiar Contrase\u00f1a", 
+  "Clear": "Borrar", 
+  "Clear Database": "Borrar Base de Datos", 
+  "Clipboard": "Portapapeles", 
+  "Conflicts": "Conflictos", 
+  "Database Backed Up": "Base de Datos Respaldada", 
+  "Destination": "Destino", 
+  "Error backing up to #{url}": "Error al respaldar a #{url}", 
+  "File": "Archivar", 
+  "File path, relative to media partition": "Direcci\u00f3n del archivo, relativo a la partici\u00f3n de medios", 
+  "Keyring database:": "Base de Datos de Keyring:", 
+  "New password": "Nueva contrase\u00f1a", 
+  "No": "No", 
+  "Old password": "Contrase\u00f1a anterior", 
+  "Password for restored data": "Contrase\u00f1a para datos respaldados", 
+  "Paste data here": "Pegue los datos aqu\u00ed", 
+  "Restore": "Restaurar", 
+  "Restore finished": "Restauraci\u00f3n terminada", 
+  "Restore from URL": "Restaurar de un URL", 
+  "Restore from clipboard": "Restaurar de el portapapeles", 
+  "Restore from file": "Restaurar de un archivo", 
+  "Source": "Fuente", 
+  "URL of data": "URL de datos", 
+  "Yes": "Si", 
+  "Yes & clear password + prefs": "Si y limpiar clave + pref", 
+  "error copying to clipboard:": "error al copiar al portapapeles"
+ }, 
+ "app/assistants/actions-assistant.js, app/assistants/stage-assistant.js, app/assistants/categories-assistant.js, app/assistants/item-assistant.js": {
+  "Cancel": "Cancelar"
+ }, 
+ "app/assistants/categories-assistant.js": {
+  "Add new": "Agregar nuevo", 
+  "Enter New Category": "Inserte Nueva Categor\u00eda", 
+  "Name": "Nombre", 
+  "Save": "Salvar", 
+  "title of the 'Categories' scene": "Categor\u00edas"
+ }, 
+ "app/assistants/item-assistant.js": {
+  "Item \\\"#{newTitle}\\\" already exists.": "Elemento \\\"#{newTitle}\\\" ya existe.", 
+  "Title for item": "T\u00edtulo del elemento", 
+  "Title is required.": "T\u00edtulo requerido", 
+  "cancel": "cancelar", 
+  "done": "listo", 
+  "generate password": "generar contrase\u00f1a", 
+  "label for 'Types' of characters in gen. passw. dialog": "Tipos", 
+  "label for number of 'Characters' in gen. passw. dialog": "Caracteres", 
+  "long version of 'generate password' button": "generar contrase\u00f1a", 
+  "long version of 'show empty fields' button": "mostrar campos vacios", 
+  "save": "salvar", 
+  "short version of 'gen. passwd' (generate password) button": "generar clave", 
+  "short version of 'show empty' fields button": "ver vacios", 
+  "title for 'Generate Password' dialog": "Generar Contrase\u00f1a"
+ }, 
+ "app/assistants/item-list-assistant.js": {
+  "Edit Categories": "Editar Categor\u00edas", 
+  "Error decrypting item.": "Error descifrando elemento", 
+  "category": "categor\u00eda", 
+  "new": "nuevo", 
+  "sort by...": "ordenar por..."
+ }, 
+ "app/assistants/locked-assistant.js": {
+  "Error:": "Error", 
+  "Initializing...": "Inicializando...", 
+  "Keyring locked": "Keyring bloqueado", 
+  "Keyring open": "Keyring abierto", 
+  "Master password": "Contrase\u00f1a maestra", 
+  "Ready": "Listo", 
+  "Set initial password": "Fijar contrase\u00f1a inicial"
+ }, 
+ "app/assistants/locked-assistant.js, app/assistants/actions-assistant.js": {
+  "Passwords do not match": "Contrase\u00f1as no corresponden", 
+  "Repeat Password": "Repita su Contrase\u00f1a"
+ }, 
+ "app/assistants/locked-assistant.js, app/assistants/stage-assistant.js, app/assistants/item-assistant.js, app/assistants/actions-assistant.js": {
+  "OK": "OK"
+ }, 
+ "app/assistants/preferences-assistant.js": {
+  "1 minute": "1 minuto", 
+  "15 seconds": "12 segundos", 
+  "2 minutes": "2 minutos", 
+  "30 seconds": "30 segundos", 
+  "5 minutes": "5 minutos", 
+  "5 seconds": "5 segundos", 
+  "Lockout to": "Bloquearse a", 
+  "On Deactivate": "Al Desactivar", 
+  "Sort By": "Ordenar Por", 
+  "Timeout": "Tiempo de espera", 
+  "no": "no", 
+  "yes": "si"
+ }, 
+ "app/assistants/preferences-assistant.js, app/assistants/item-list-assistant.js": {
+  "Created Date": "Fecha Creado", 
+  "Last Changed": "Ultimo Cambio", 
+  "Last Viewed": "Ultima Vez Visto"
+ }, 
+ "app/assistants/stage-assistant.js": {
+  "About Keyring...": "Sobre Keyring...", 
+  "Database Actions...": "Acciones de la BD", 
+  "Edit Categories...": "Editar Categor\u00edas", 
+  "Enter Password to Unlock": "Inserte Contrase\u00f1a para Desbloquear", 
+  "Help...": "Ayuda...", 
+  "Invalid Password": "Contrase\u00f1a Invalida", 
+  "Keyring \u2014 Easy password management": "Keyring \u2014 F\u00e1cil administraci\u00f3n de contrase\u00f1as en su celular", 
+  "Preferences...": "Preferencias...", 
+  "Unlock": "Desbloquear", 
+  "Version #{version} Copyright 2009-2010, Dirk Bergstrom.  Released under the GPLv3.": ""
+ }, 
+ "app/models/ring.js": {
+  "'Close App (!)' option for lockout-to behavior": "Cerrar App (!)", 
+  "'Don't Lock' option for lockout-to behavior": "No bloquear", 
+  "'Don't Lock' option for on-deactivate behavior": "No bloquear", 
+  "'Keep existing' option for restore resolution": "Mantener Existente", 
+  "'Lock in 10 sec' option for on-deactivate behavior": "Bloquear en 10 seg", 
+  "'Lock scene' option for lockout-to behavior": "Pantalla de Bloqueo", 
+  "'Lock' option for on-deactivate behavior": "Bloquear", 
+  "'Update only' option for restore resolution": "Solo actualizar", 
+  "'Use newest (sync)' option for restore resolution": "Usar nuevo (sinc)", 
+  "'Use restored' option for restore resolution": "Usar restaurado", 
+  "An entry with title \\\"#{newTitle}\\\" already exists.": "Una entrada con nombre \\\"#{newTitle}\\\" ya existe.", 
+  "Attempt to edit categories w/o valid password.": "", 
+  "Attempt to edit non-existent category with value \\\"#{value}\\\"": "", 
+  "Can't delete the \\\"All\\\" or \\\"Unfiled\\\" categories.": "Categor\u00edas \\\"Todas\\\" o \\\"Sin Categor\u00eda\\\" no pueden ser borradas.", 
+  "Can't deliver a password of less than one character.": "No se puede dar una contrase\u00f1a de menos de un car\u00e1cter.", 
+  "Can't edit the \\\"All\\\" & \\\"Unfiled\\\" categories.": "Categor\u00edas \\\"Todas\\\" o \\\"Sin Categor\u00eda\\\" no pueden ser editadas.", 
+  "Can't parse decrypted data (bad password?); #{name}: #{message}": "No se pueden analizar datos descifrados (\u00bfclave incorrecta?); #{name}: #{message}", 
+  "Category \\\"#{newLabel}\\\" already exists.": "Categor\u00eda \\\"#{newLabel}\\\" ya existe.", 
+  "Changed": "Cambiado", 
+  "Could not init Depot reader: #{error}": "No pudo iniciar lector de almac\u00e9n: #{error}", 
+  "Created": "Creado", 
+  "Failed to clear depot: #{error}": "No se pudo borrar almac\u00e9n: #{error}", 
+  "Failed to open database: #{error}": "No se pudo abrir la base de datos: #{error}", 
+  "Failed to save data: #{error}": "No se pudo salvar datos: #{error}", 
+  "Failed to save schema version: #{error}": "No se pudo salvar \\\"schema version\\\": #{error}", 
+  "Importing data from later versions of Keyring is not supported.  Please upgrade first.": "Importar datos de una versi\u00f3n mas nueva de Keyring no est\u00e1 soportado.  Actualice primero por favor.", 
+  "Must choose at least one of lowercase, uppercase, numbers or symbols.": "Debe escoger m\u00ednimo uno de min\u00fasculas, may\u00fasculas, n\u00fameros o s\u00edmbolos.", 
+  "No data in Depot": "No hay datos en almac\u00e9n", 
+  "Notes": "Notas", 
+  "Old password invalid.": "Contrase\u00f1a anterior invalida", 
+  "Re-enter Password": "Reinsertar Contrase\u00f1a", 
+  "Title is required": "T\u00edtulo requerido", 
+  "Unable to decrypt item; #{name}: #{message}": "No se pudo descifrar elemento; #{name}: #{message}", 
+  "Unable to parse data; #{name}: #{message}": "No se pudo analizar datos; #{name}: #{message}", 
+  "Username": "Usuario", 
+  "Viewed": "Visto", 
+  "You must enter a password.": "Debe introducir una contrase\u00f1a", 
+  "name for the default 'Unfiled' category": "Sin Categor\u00eda", 
+  "name for the pseudo-category used to show 'All' categories": "Todas"
+ }, 
+ "app/models/ring.js, app/assistants/actions-assistant.js": {
+  "URL": "URL"
+ }, 
+ "app/models/ring.js, app/assistants/item-assistant.js": {
+  "Category": "Categor\u00eda"
+ }, 
+ "app/models/ring.js, app/assistants/preferences-assistant.js, app/assistants/item-assistant.js, app/assistants/item-list-assistant.js": {
+  "Title": "T\u00edtulo"
+ }, 
+ "app/models/ring.js, app/assistants/stage-assistant.js": {
+  "Password": "Contrase\u00f1a"
+ }, 
+ "app/models/upgrader.js, app/models/ring.js": {
+  "Could not fetch data: #{error}": "No se pudo encontrar datos: #{error}"
+ }
+}

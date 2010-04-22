@@ -41,7 +41,6 @@ GeneratePasswordAssistant.prototype.setup = function(widget) {
     this.model = Object.clone(this.ring.prefs.generatorPrefs);
     Object.keys(this.model).each(function(attr) {
     	if (attr === "characters") { return; }
-    	Mojo.Log.info("attr", attr);
         this.sceneAssistant.controller.setupWidget(attr+"Field",
             {modelProperty: attr}, this.model);
     }, this);
@@ -130,7 +129,7 @@ ItemAssistant.prototype.setup = function() {
 	this.fields.each(function(field) {
 		if (field === "category") { return; }
 		var fieldAttrs = Object.clone(baseTextFieldAttrs);
-		fieldAttrs.hintText = field;
+		fieldAttrs.hintText = this.ring.FIELD_NAME_L10N[field];
 		fieldAttrs.inputName = field;
 		fieldAttrs.modelProperty = field;
 		if (field === "notes") {

@@ -168,6 +168,18 @@ var Ring = Class.create ({
 
 	DATE_ATTRS: ['created', 'viewed', 'changed'],
 	
+	FIELD_NAME_L10N: {
+		title: $L('Title'),
+		username: $L('Username'),
+		pass: $L('Password'),
+		url: $L('URL'),
+		category: $L('Category'),
+		notes: $L('Notes'),
+		created: $L('Created'),
+		viewed: $L('Viewed'),
+		changed: $L('Changed')
+	},
+	
 	/**
 	 * Number of salt characters to prepend when encrypting secret data
 	 * inside an individual item.  Small number, because this data is

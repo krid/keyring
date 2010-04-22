@@ -1,0 +1,161 @@
+{
+ "app/assistants/actions-assistant.js": {
+  "#{updated} items updated, #{added} items added": "#{updated} Eintr\u00e4ge aktualisiert, #{added} Eintr\u00e4ge hinzugef\u00fcgt", 
+  "An encrypted copy of the Keyring database is in the clipboard.  You may paste it into an email, memo, or web form as needed.": "Die Keyring Datenbank wurde verschl\u00fcsselt in die Zwischenablage kopiert. Sie k\u00f6nnen diese bei Bedarf in eine E-Mail, Memo oder Webformular einf\u00fcgen.", 
+  "An encrypted copy of the Keyring database was POSTed to #{url}": "Eine verschl\u00fcsselte Kopie der Keyring Datenbank wurde \u00fcbertragen an #{url}", 
+  "Are you sure you want to permanently delete all items?": "Sollen wirklich alle Eintr\u00e4ge dauerhaft gel\u00f6scht werden?", 
+  "Backup": "Backup", 
+  "Backup to URL": "Backup nach URL", 
+  "Change": "\u00c4ndern", 
+  "Change Password": "Passwort \u00e4ndern", 
+  "Clear": "Leeren", 
+  "Clear Database": "Datenbank leeren", 
+  "Clipboard": "Zwischenablage", 
+  "Conflicts": "Konflikte", 
+  "Database Backed Up": "Datenbank gesichert", 
+  "Destination": "Ziel", 
+  "Error backing up to #{url}": "Fehler beim Sichern nach #{url}", 
+  "File": "Datei", 
+  "File path, relative to media partition": "Dateipfad, relativ zum USB-Laufwerk", 
+  "Keyring database:": "Keyring Datenbank:", 
+  "New password": "Neues Passwort", 
+  "No": "Nein", 
+  "Old password": "Altes Passwort", 
+  "Password for restored data": "Passwort für wiederhergestellte Daten", 
+  "Paste data here": "Daten hier einfügen", 
+  "Restore": "Wiederherstellen", 
+  "Restore finished": "Wiederherstellen beendet", 
+  "Restore from URL": "Von URL wiederherstellen", 
+  "Restore from clipboard": "Aus Zwischenablage wiederherstellen", 
+  "Restore from file": "Aus Datei wiederherstellen", 
+  "Source": "Quelle", 
+  "URL": "URL", 
+  "URL of data": "URL der Daten", 
+  "Yes": "Ja", 
+  "Yes & clear password + prefs": "Ja, Passwort und Einstellungen l\u00f6schen", 
+  "error copying to clipboard:": "Fehler beim Kopieren in die Zwischenablage:"
+ }, 
+ "app/assistants/actions-assistant.js, app/assistants/stage-assistant.js, app/assistants/categories-assistant.js, app/assistants/item-assistant.js": {
+  "Cancel": "Abbrechen"
+ }, 
+ "app/assistants/categories-assistant.js": {
+  "Add new": "Neue hinzufügen", 
+  "Enter New Category": "Neue Kategorie anlegen", 
+  "Name": "Name", 
+  "Save": "Speichern", 
+  "title of the 'Categories' scene": "Kategorien"
+ }, 
+ "app/assistants/item-assistant.js": {
+  "Category": "Kategorie", 
+  "Item \\\"#{newTitle}\\\" already exists.": "Eintrag \"#{newTitle}\" bereits vorhanden.", 
+  "Title for item": "Titel f\u00fcr Eintrag", 
+  "Title is required.": "Titel erforderlich", 
+  "cancel": "Abbrechen", 
+  "done": "Fertig", 
+  "generate password": "Passwort generieren", 
+  "label for 'Types' of characters in gen. passw. dialog": "Typen", 
+  "label for number of 'Characters' in gen. passw. dialog": "Anzahl der Zeichen", 
+  "long version of 'generate password' button": "Passwort generieren", 
+  "long version of 'show empty fields' button": "Leere Felder anzeigen", 
+  "save": "Speichern", 
+  "short version of 'gen. passwd' (generate password) button": "Passw. gen.", 
+  "short version of 'show empty' fields button": "Leere anzeigen", 
+  "title for 'Generate Password' dialog": "Passwort generieren"
+ }, 
+ "app/assistants/item-list-assistant.js": {
+  "Error decrypting item.": "Fehler beim Entschl\u00fcsseln des Eintrags.", 
+  "category": "Kategorie", 
+  "new": "Neu", 
+  "sort by...": "Sortieren nach..."
+ }, 
+ "app/assistants/locked-assistant.js": {
+  "Error:": "Fehler", 
+  "Initializing...": "Initialisierung...", 
+  "Keyring locked": "Keyring gesperrt", 
+  "Keyring open": "Keyring entsperrt", 
+  "Master password": "Master-Passwort", 
+  "Ready": "Bereit", 
+  "Set initial password": "Initiales Passwort setzen"
+ }, 
+ "app/assistants/locked-assistant.js, app/assistants/actions-assistant.js": {
+  "Passwords do not match": "Passw\u00f6rter stimmen nicht \u00fcberein", 
+  "Repeat Password": "Passwort wiederholen"
+ }, 
+ "app/assistants/locked-assistant.js, app/assistants/stage-assistant.js, app/assistants/item-assistant.js, app/assistants/actions-assistant.js": {
+  "OK": "OK"
+ }, 
+ "app/assistants/preferences-assistant.js": {
+  "1 minute": "1 Minute", 
+  "15 seconds": "15 Sekunden", 
+  "2 minutes": "2 Minuten", 
+  "30 seconds": "30 Sekunden", 
+  "5 minutes": "5 Minuten", 
+  "5 seconds": "5 Sekunden", 
+  "Lockout to": "Anzeige nach Sperrung", 
+  "On Deactivate": "Beim Deaktivieren", 
+  "Sort By": "Sortieren nach", 
+  "Timeout": "Zeit\u00fcberschreitung", 
+  "no": "Nein", 
+  "yes": "Ja"
+ }, 
+ "app/assistants/preferences-assistant.js, app/assistants/item-assistant.js, app/assistants/item-list-assistant.js": {
+  "Title": "Titel"
+ }, 
+ "app/assistants/preferences-assistant.js, app/assistants/item-list-assistant.js": {
+  "Created Date": "Erstellt am", 
+  "Last Changed": "Letzte \u00c4nderung", 
+  "Last Viewed": "Zuletzt betrachtet"
+ }, 
+ "app/assistants/stage-assistant.js": {
+  "About Keyring...": "\u00dcber Keyring...", 
+  "Database Actions...": "Datenbank-Aktionen...", 
+  "Edit Categories...": "Kategorien bearbeiten...", 
+  "Enter Password to Unlock": "Zum Entsperren Passwort eingeben", 
+  "Help...": "Hilfe...", 
+  "Invalid Password": "Ung\u00fcltiges Passwort", 
+  "Keyring \u2014 Easy password management": "Keyring \u2014 Einfache Passwortverwaltung", 
+  "Password": "Passwort", 
+  "Preferences...": "Einstellungen", 
+  "Unlock": "Entsperren", 
+  "Version #{version} Copyright 2009-2010, Dirk Bergstrom.  Released under the GPLv3.": "Version #{version} Copyright 2009-2010, Dirk Bergstrom.  Lizensiert nach GPLv3."
+ }, 
+ "app/models/ring.js": {
+  "'Close App (!)' option for lockout-to behavior": "Anwendung schlie\u00dfen!", 
+  "'Don't Lock' option for lockout-to behavior": "Nicht sperren", 
+  "'Don't Lock' option for on-deactivate behavior": "Nicht sperren", 
+  "'Keep existing' option for restore resolution": "Bestehende beibeh.", 
+  "'Lock in 10 sec' option for on-deactivate behavior": "In 10 Sek. sperren", 
+  "'Lock scene' option for lockout-to behavior": "Sperren Dialog", 
+  "'Lock' option for on-deactivate behavior": "Sperren", 
+  "'Update only' option for restore resolution": "Vorhandene aktualisieren", 
+  "'Use newest (sync)' option for restore resolution": "Neueste verw. (Sync)", 
+  "'Use restored' option for restore resolution": "Wiederherg. verw.", 
+  "An entry with title \\\"#{newTitle}\\\" already exists.": "Ein Eintrag mit dem Titel \\\"#{newTitle}\\\" besteht bereits.", 
+  "Attempt to edit categories w/o valid password.": "Es wurde versucht, Kategorien ohne valides Passwort zu \u00e4ndern.", 
+  "Attempt to edit non-existent category with value \\\"#{value}\\\"": "Es wurde versucht, eine nicht vorhandene Kategorie mit dem Wert \\\"#{value}\\\" zu \u00e4ndern", 
+  "Can't delete the \\\"All\\\" or \\\"Unfiled\\\" categories.": "Die Kategorien \\\"All\\\" oder \\\"Unfiled\\\" k\u00f6nnen nicht gel\u00f6scht werden.", 
+  "Can't deliver a password of less than one character.": "Ein Passwort mit weniger als einem Zeichen kann nicht erzeugt werden.", 
+  "Can't edit the \\\"All\\\" & \\\"Unfiled\\\" categories.": "Die Kategorien \\\"All\\\" und \\\"Unfiled\\\" k\u00f6nnen nicht bearbeitet werden.", 
+  "Can't parse decrypted data (bad password?); #{name}: #{message}": "Daten konnten nicht gelesen werden (falsches Passwort?); #{name}: #{message}", 
+  "Category \\\"#{newLabel}\\\" already exists.": "Kategorie \\\"#{newLabel}\\\" besteht bereits.", 
+  "Could not init Depot reader: #{error}": "Could not init Depot reader: #{error}", 
+  "Failed to clear depot: #{error}": "Failed to clear depot: #{error}", 
+  "Failed to open database: #{error}": "Datenbank konnte nicht ge\u00f6ffnet werden: #{error}", 
+  "Failed to save data: #{error}": "Daten konnten nicht gespeichert werden: #{error}", 
+  "Failed to save schema version: #{error}": "Failed to save schema version: #{error}", 
+  "Importing data from later versions of Keyring is not supported.  Please upgrade first.": "Daten-Import aus neuerer Version von Keyring nicht unterst\u00fctzt. Zuerst Upgrade installieren.", 
+  "Must choose at least one of lowercase, uppercase, numbers or symbols.": "W\u00e4hlen sie jeweils mindestens ein Zeichen aus Gro\ufffd- und Kleinbuchstaben, Zahlen und Zeichen", 
+  "No data in Depot": "No data in Depot", 
+  "Old password invalid.": "Altes Passwort ung\u00fcltig", 
+  "Re-enter Password": "Passwort wiederholen", 
+  "Title is required": "Titel erforderlich", 
+  "Unable to decrypt item; #{name}: #{message}": "Eintrag konnte nicht entschl\u00fcsselt werden: #{message}", 
+  "Unable to parse data; #{name}: #{message}": "Daten konnten nicht gelesen werden; #{name}: #{message}", 
+  "You must enter a password.": "Sie m\u00fcssen ein Passwort eingeben.", 
+  "name for the default 'Unfiled' category": "Nicht zugeordnet", 
+  "name for the pseudo-category used to show 'All' categories": "Alle"
+ }, 
+ "app/models/upgrader.js, app/models/ring.js": {
+  "Could not fetch data: #{error}": "Konnte Daten nicht laden: #{error}"
+ }
+}

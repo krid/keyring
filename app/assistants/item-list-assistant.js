@@ -85,7 +85,7 @@ ItemListAssistant.prototype.handleCommand = function(event) {
 				break;
 			case 'category':
 				var cats = this.ring.categoriesForMojo();
-				cats.push({label: 'Edit Categories', command: '++edit++'});
+				cats.push({label: $L('Edit Categories'), command: '++edit++'});
 				Keyring.doIfPasswordValid(this.controller, this.ring,
 					this.controller.popupSubmenu.bind(this.controller, {
 						onChoose: this.setCategory,

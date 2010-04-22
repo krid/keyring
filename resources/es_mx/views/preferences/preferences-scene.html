@@ -1,0 +1,87 @@
+<div class="palm-page-header">
+ <div class="palm-page-header-wrapper">
+  <div class="title left" id="main-hdr">
+      Preferencias de Keyring
+  </div>
+ </div>
+</div>
+<div class="palm-group">
+ <div class="palm-group-title">Nivel de Paranoia</div>
+ <div class="palm-list">
+
+  <div class="palm-row">
+   <div class="palm-row-wrapper">
+    <div id="timeout" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+
+  <div class="palm-row">
+   <div class="palm-row-wrapper">
+    <div id="lockoutTo" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+
+  <div class="palm-row last">
+   <div class="palm-row-wrapper">
+    <div id="onDeactivate" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+
+ </div>
+</div>
+
+<div class="palm-group">
+ <div class="palm-group-title">Lista de Llaves</div>
+ <div class="palm-list">
+  <div class="palm-row single">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div id="sortBy" x-mojo-element="ListSelector"></div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="palm-group">
+ <div class="palm-group-title">Vista de Llaves</div>
+ <div class="palm-list">
+  <div class="palm-row single">
+   <div class="palm-row-wrapper" x-mojo-focus-highlight="true">
+    <div id="hideEmpty" x-mojo-element="ToggleButton" class="right"></div>
+    <div class="label left">Esconder campos vacios</div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="palm-group">
+ <div class="palm-group-title">Generador de Claves - Defaults</div>
+  <div class="palm-list">
+  <div class="palm-row first">
+   <div class="label left">Caracteres</div>
+   <div x-mojo-element="RadioButton" id="characters" class="right"></div>
+  </div>
+  <div class="palm-row last multi-checkbox">
+   <div class="label left">Tipos</div>
+  <table><tr>
+  <td>
+   <div id="lowcaseField" x-mojo-element="CheckBox"></div>
+   <div class="label un-capitalize">a-z</div>
+  </td>
+  <td>
+   <div id="capField" x-mojo-element="CheckBox"></div>
+   <div class="label">A-Z</div>
+  </td>
+  <td>
+   <div id="numField" x-mojo-element="CheckBox"></div>
+   <div class="label">0-9</div>
+  </td>
+  <td>
+   <div id="symField" x-mojo-element="CheckBox"></div>
+   <div class="label">!%#</div>
+  </td>
+   </tr></table>
+  </div>
+ </div>
+</div>
+
+<div class="scroll-fade-bottom" x-mojo-scroll-fade="bottom"></div>
