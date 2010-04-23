@@ -35,7 +35,7 @@ function ItemListAssistant(ring) {
 ItemListAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the scene is first created */
 
-	Mojo.Log.info('rendering item-list');
+	Keyring.log('rendering item-list');
 	this.controller.setupWidget(Mojo.Menu.appMenu,
 			Keyring.MenuAttr, Keyring.MenuModel);
 	this.controller.setupWidget(Mojo.Menu.commandMenu, undefined, 
@@ -59,7 +59,7 @@ ItemListAssistant.prototype.setup = function() {
 	this.controller.get('category').update(this.ring.categories[this.category]);
 	
 	/* add event handlers to listen to events from widgets */
-	Mojo.Log.info('binding tap and delete events');
+	Keyring.log('binding tap and delete events');
 	this.tapped = this.tapped.bindAsEventListener(this);
 	this.deleted = this.deleted.bindAsEventListener(this);
 };
@@ -104,7 +104,7 @@ ItemListAssistant.prototype.sortPopupHandler = function(command) {
 	if (! command) {
 		return;
 	}
-	Mojo.Log.info('sortPopupHandler, command=\'%s\'', command);
+	Keyring.log('sortPopupHandler, command=\'%s\'', command);
 	this.ring.prefs.sortBy = command;
 	this.ring.saveData();
 	this.ring.buildItemList();
@@ -126,7 +126,7 @@ ItemListAssistant.prototype.setSortingStatus = function() {
 };
 
 ItemListAssistant.prototype.tapped = function(event) {
-	Mojo.Log.info('Tapped item \'%s\'', event.item.title);
+	Keyring.log('Tapped item \'%s\'', event.item.title);
 	Keyring.doIfPasswordValid(this.controller, this.ring,
 			this.pushItemScene.bind(this, event.item.title));
 };
@@ -142,7 +142,7 @@ ItemListAssistant.prototype.pushItemScene = function(title) {
 		return;
 	}
 	if (! item) {
-		Mojo.Log.info('Error fetching item, retrieved null');
+		Keyring.log('Error fetching item, retrieved null');
 		Mojo.Controller.errorDialog($L("Error decrypting item."), this.controller.window);
 		return;
 	}
@@ -150,7 +150,7 @@ ItemListAssistant.prototype.pushItemScene = function(title) {
 };
 
 ItemListAssistant.prototype.deleted = function(event) {
-	Mojo.Log.info('Deleting item \'%s\'', event.item.title);
+	Keyring.log('Deleting item \'%s\'', event.item.title);
 	Keyring.doIfPasswordValid(this.controller, this.ring,
 			this.ring.deleteItem.bind(this.ring, event.item));
 };
@@ -166,7 +166,7 @@ ItemListAssistant.prototype.setCategory = function(category) {
 	 * because JSON serialization/deserialization converts everything
 	 * to a string. */
 	if (category === undefined || category == this.category) { return; }
-	Mojo.Log.info('Setting category to \'%s\'', category);
+	Keyring.log('Setting category to \'%s\'', category);
 	var subset = [];
 	this.category = category;
 	if (category == -1 && this.filterString === '') {
@@ -200,7 +200,7 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 	 * Note that this method is also called at scene setup time, and while
 	 * scrolling the list as more items are fetched. */
 	var filterUpper = filterString.toUpperCase();
-	Mojo.Log.info('Filtering on \'%s\', offset =%s', filterUpper, offset);
+	Keyring.log('Filtering on \'%s\', offset =%s', filterUpper, offset);
 	var subset = [];
 	var totalSubsetSize = 0;
 	
@@ -216,14 +216,14 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 		}
 		i++;
 	}
-	Mojo.Log.info('Filtered down to %s items.', totalSubsetSize);
+	Keyring.log('Filtered down to %s items.', totalSubsetSize);
 	
 	//update the items in the list with the subset
 	listWidget.mojo.noticeUpdatedItems(offset, subset);
 	
 	// Set the list's length & count if it has changed.
 	if (this.listSubsetSize !== totalSubsetSize) {
-		Mojo.Log.info('Setting length/count to %s.', totalSubsetSize);
+		Keyring.log('Setting length/count to %s.', totalSubsetSize);
 		listWidget.mojo.setLength(totalSubsetSize);
 		listWidget.mojo.setCount(totalSubsetSize);
 	}
@@ -233,7 +233,7 @@ ItemListAssistant.prototype.filterItems = function(filterString, listWidget, off
 };
 
 ItemListAssistant.prototype.activate = function(event) {
-	Mojo.Log.info('activate');
+	Keyring.log('activate');
 	// Reset this to keep the list functioning properly
 	this.listSubsetSize = 0;
 	if (this.ring.itemsReSorted) {

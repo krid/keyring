@@ -23,7 +23,7 @@ function ActionsAssistant(ring) {
 }
 
 ActionsAssistant.prototype.setup = function() {
-	Mojo.Log.info("ActionsAssistant setup");
+	Keyring.log("ActionsAssistant setup");
 	
 	// Export
 	this.controller.setupWidget("destination",
@@ -98,7 +98,7 @@ ActionsAssistant.prototype.setup = function() {
 };
 
 ActionsAssistant.prototype.export_ = function() {
-	Mojo.Log.info("Backup to", this.ring.prefs.export_.destination);
+	Keyring.log("Backup to", this.ring.prefs.export_.destination);
 	this.ring.updateTimeout();
 	if (this.ring.prefs.export_.destination === 'clipboard') {
 		var encrypted = this.ring.exportableData();
@@ -119,7 +119,7 @@ ActionsAssistant.prototype.export_ = function() {
 		    choices:[{label:$L("OK"), value:""}]
 	    });
 	} else if (this.ring.prefs.export_.destination === 'url') {
-		Mojo.Log.info("dest===url");
+		Keyring.log("dest===url");
 		this.controller.showDialog({
 			template: "actions/import-export-dialog",
 			assistant: new ImportExportDialogAssistant(
@@ -134,7 +134,7 @@ ActionsAssistant.prototype.export_ = function() {
 };
 
 ActionsAssistant.prototype.exportToUrl = function(url) {
-    Mojo.Log.info("POSTing backup file to", url);
+    Keyring.log("POSTing backup file to", url);
     // Strip whitespace
     url = url.replace(/^\s*(.+?)\s*$/, '$1');
 	if(url.substring(0,4) !== 'http') {
@@ -173,7 +173,7 @@ ActionsAssistant.prototype.exportToUrl = function(url) {
 };
 
 ActionsAssistant.prototype.import_ = function() {
-	Mojo.Log.info("Restoring from", this.ring.prefs.import_.source);
+	Keyring.log("Restoring from", this.ring.prefs.import_.source);
 	var callback, title, hint, defaultDataValue;
 	if (this.ring.prefs.import_.source === 'clipboard') {
 		callback = function(pastedData, password) {
@@ -227,7 +227,7 @@ ActionsAssistant.prototype.importFileOrUrl = function(path, password) {
 	}
 	// Save the prefs
 	this.ring.saveData();
-    Mojo.Log.info("Reading import data from", fullPath);
+    Keyring.log("Reading import data from", fullPath);
     var tmp = new Ajax.Request(fullPath, {
 	    method: 'get',
 	    parameters: '',
@@ -332,7 +332,7 @@ ActionsAssistant.prototype.cleanup = function(event) {
 var ImportExportDialogAssistant = Class.create ({
 	initialize: function(controller, callback, title, hint, defaultDataValue,
 			showPassword) {
-		Mojo.Log.info("ImportExportDialog.initialize()");
+		Keyring.log("ImportExportDialog.initialize()");
 		this.controller = controller;
 	    this.callbackOnSuccess = callback;
 	    this.title = title;
@@ -342,7 +342,7 @@ var ImportExportDialogAssistant = Class.create ({
 	},
 
 	setup: function(widget) {
-		Mojo.Log.info("ImportExportDialog.setup()");
+		Keyring.log("ImportExportDialog.setup()");
 	    this.widget = widget;
 	    
 	    this.controller.get("dialog-title").update(this.title);
@@ -393,7 +393,7 @@ var ImportExportDialogAssistant = Class.create ({
 	},
 
 	ok: function() {
-		Mojo.Log.info("ok");
+		Keyring.log("ok");
 		this.controller.stopListening("okButton", Mojo.Event.tap,
 		    this.okHandler);
 		this.callbackOnSuccess(this.dataModel.value, this.passwordModel.value);
@@ -478,9 +478,9 @@ ChangePasswordDialogAssistant.prototype.propChangeHandler = function(event) {
 };
 
 ChangePasswordDialogAssistant.prototype.ok = function() {
-	Mojo.Log.info("got new passwords");
+	Keyring.log("got new passwords");
 	if (this.model.newPassword === this.model.newPassword2) {
-		Mojo.Log.info("matching");
+		Keyring.log("matching");
 		try {
 			this.ring.newPassword(this.model.oldPassword, this.model.newPassword);
 			this.widget.mojo.close();
@@ -489,7 +489,7 @@ ChangePasswordDialogAssistant.prototype.ok = function() {
 			this.controller.get("oldPassword").mojo.focus();
 		}
 	} else {
-		Mojo.Log.info("no match");
+		Keyring.log("no match");
 		this.controller.get("errmsg").update($L("Passwords do not match"));
 		this.controller.get("newPassword").mojo.focus();
 	}

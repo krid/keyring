@@ -24,7 +24,7 @@ function PreferencesAssistant(ring) {
 }
 
 PreferencesAssistant.prototype.setup = function() {
-	Mojo.Log.info("setup prefs scene");
+	Keyring.log("setup prefs scene");
 	
 	this.controller.setupWidget("timeout",
 		{modelProperty: "timeout",
@@ -94,7 +94,7 @@ PreferencesAssistant.prototype.setup = function() {
 
 PreferencesAssistant.prototype.fieldUpdated = function(event) {
 	if (event.value !== event.oldValue) {
-		Mojo.Log.info("field '%s' changed", event.property);
+		Keyring.log("field '%s' changed", event.property);
 		this.ring.saveData();
 		if (event.property === "sortBy") {
 			this.ring.buildItemList();
@@ -105,7 +105,7 @@ PreferencesAssistant.prototype.fieldUpdated = function(event) {
 };
 
 PreferencesAssistant.prototype.activate = function(event) {
-	Mojo.Log.info("activate");
+	Keyring.log("activate");
 	this.fieldsToListen.each(function(field) {
 		Mojo.Event.listen(this.controller.get(field),
 				Mojo.Event.propertyChange, this.fieldUpdated.bind(this));

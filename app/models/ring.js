@@ -195,7 +195,7 @@ var Ring = Class.create ({
 	DB_SALT_LEN: 16,
 
 	initialize: function() {
-		Mojo.Log.info('Initializing ring');
+		Keyring.log('Initializing ring');
 		this.depot = new Mojo.Depot(this.DEPOT_OPTIONS,
 			null,
 			function(error) {
@@ -211,9 +211,9 @@ var Ring = Class.create ({
 	 * Create the master password (first run) or change it.
 	 */
 	newPassword: function(oldPassword, newPassword) {
-		Mojo.Log.info('newPassword');
+		Keyring.log('newPassword');
 		if (! newPassword) {
-			Mojo.Log.info('no password');
+			Keyring.log('no password');
 			throw new Error($L("You must enter a password."));
 		}
 		if (! this.firstRun && ! this.validatePassword(oldPassword)) {
@@ -242,7 +242,7 @@ var Ring = Class.create ({
 	 * Check the submitted password for validity; call updateTimeout() if valid.
 	 */
 	validatePassword: function(password) {
-		Mojo.Log.info('Validating password');
+		Keyring.log('Validating password');
 		var tmpKey = b64_sha256(this._salt + password);
 		if (! this.depotDataLoaded) {
 			/* Startup in process.  See if the supplied password will
@@ -254,13 +254,13 @@ var Ring = Class.create ({
 			}
 			
 		} else if (this.decrypt(this._checkData, tmpKey) === '{' + tmpKey + '}') {
-			Mojo.Log.info('Password validated');
+			Keyring.log('Password validated');
 			this._key = tmpKey;
 			this.updateTimeout();
 			return true;
 			
 		} else {
-			Mojo.Log.info('invalid password');
+			Keyring.log('invalid password');
 			this._passwordTime = 0;
 			return false;
 		}
@@ -290,7 +290,7 @@ var Ring = Class.create ({
 	 * Lock Keyring by clearing the key and killing the timeout.
 	 */
 	clearPassword: function() {
-		Mojo.Log.info('clearPassword');
+		Keyring.log('clearPassword');
 		this._key = '';
 		this._passwordTime = 0;
 	},
@@ -339,7 +339,7 @@ var Ring = Class.create ({
 			// Avoid race condition on app startup
 			this.firstRun = false;
 		} else {
-			Mojo.Log.info('This is the first run.  Welcome to Keyring.');
+			Keyring.log('This is the first run.  Welcome to Keyring.');
 			this._salt = this.randomCharacters({characters: 12, all: true});
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 			this.depotDataLoaded = true;
@@ -347,7 +347,7 @@ var Ring = Class.create ({
 			this._dataLoadedCallback();
 			return;
 		}
-		Mojo.Log.info('Current depotVersion', depotVersion);
+		Keyring.log('Current depotVersion', depotVersion);
 		if (depotVersion !== this.SCHEMA_VERSION) {
 			var upgrader = new Upgrader(depotVersion, this);
 			upgrader.upgrade();
@@ -361,7 +361,7 @@ var Ring = Class.create ({
 	 * _loadDataHandler().
 	 */
 	_loadRingData: function() {
-		Mojo.Log.info('_loadRingData()');
+		Keyring.log('_loadRingData()');
 		this.depot.get(this.DEPOT_DATA_KEY,
 			this._loadDataHandler.bind(this),
 			function(error) {
@@ -379,7 +379,7 @@ var Ring = Class.create ({
 	 * password.
 	 */
 	_loadDataHandler: function(obj) {
-		Mojo.Log.info('_loadDataHandler()');
+		Keyring.log('_loadDataHandler()');
 		if (obj) {
 			this._encryptedData = obj.db;
 			this._salt = obj.salt;
@@ -399,7 +399,7 @@ var Ring = Class.create ({
 	 * the key is good, and loading is complete.  If not, it's a bad password.
 	 */
 	_decryptData: function(tmpKey) {
-		Mojo.Log.info('_decryptData()');
+		Keyring.log('_decryptData()');
 		var decryptedJson = this.decrypt(this._encryptedData, tmpKey);
 		var obj;
 		try {
@@ -420,7 +420,7 @@ var Ring = Class.create ({
 		}
 		// Clear temp storage
 		this._encryptedData = null;
-		Mojo.Log.info('Depot data loaded');
+		Keyring.log('Depot data loaded');
 
 		// Stash the key
 		this._key = tmpKey;
@@ -452,7 +452,7 @@ var Ring = Class.create ({
 		// Set the password timeout
 		this.updateTimeout();
 		
-		Mojo.Log.info('Depot data processed');
+		Keyring.log('Depot data processed');
 		return true;
 	},
 	
@@ -461,10 +461,10 @@ var Ring = Class.create ({
 	 * write out the schema version. 
 	 */
 	saveData: function(upgrading) {
-		Mojo.Log.info('Saving data');
+		Keyring.log('Saving data');
 		this.depot.add(this.DEPOT_DATA_KEY, this._dataObject(),
 			function() {
-				Mojo.Log.info('Data saved');
+				Keyring.log('Data saved');
 			},
 			function(error) {
 				var errmsg = $L("Failed to save data: #{error}").
@@ -474,11 +474,11 @@ var Ring = Class.create ({
 			}
 		);
 		if (this.firstRun || upgrading) {
-			Mojo.Log.info('Writing schema version');
+			Keyring.log('Writing schema version');
 			this.depot.add(this.DEPOT_VERSION_KEY,
 				{ 'version': this.SCHEMA_VERSION },
 				function() {
-					Mojo.Log.info('Schema version saved');
+					Keyring.log('Schema version saved');
 				},
 				function(error) {
 					var errmsg = $L("Failed to save schema version: #{error}").
@@ -530,7 +530,7 @@ var Ring = Class.create ({
 	 */
 	importData: function(jsonData, behavior, usePrefs, password, callback) {
 		var data, errmsg, obj, decryptedJson, tmpKey, emptyDb;
-		Mojo.Log.info('Importing behavior=%s, usePrefs=%s', behavior, usePrefs);
+		Keyring.log('Importing behavior=%s, usePrefs=%s', behavior, usePrefs);
 		/* Strip leading and trailing non-JSON junk.  The import-from-clipboard method
 		 * often includes cruft like email signatures, etc.
 		 * 
@@ -660,7 +660,7 @@ var Ring = Class.create ({
 	 * Fills in non-existent attributes with appropriate defaults.
 	 */
 	_upgradeItem: function(item, key, categoryMap) {
-		Mojo.Log.info('_upgradeItem');
+		Keyring.log('_upgradeItem');
 		var tmpItem = $H(item);
 		if (key) {
 			var encryptedObj;
@@ -697,7 +697,7 @@ var Ring = Class.create ({
 	 * a new salt.
 	 */
 	clearDatabase: function(factoryReset) {
-		Mojo.Log.info('clearDatabase, factoryReset="%s"', factoryReset);
+		Keyring.log('clearDatabase, factoryReset="%s"', factoryReset);
 		if (! this.passwordValid()) {
 			Mojo.Log.warn('Attempt to clear db without valid password.');
 			return false;
@@ -714,7 +714,7 @@ var Ring = Class.create ({
 			this.prefs = Object.clone(this.DEFAULT_PREFS);
 			// Clear everything that was ever in the depot.
 			this.depot.removeAll(function() {
-					Mojo.Log.info('Depot cleared');
+					Keyring.log('Depot cleared');
 				},
 				function(error) {
 					var errmsg = $L("Failed to clear depot: #{error}").
@@ -743,7 +743,7 @@ var Ring = Class.create ({
 			Mojo.Log.warn('Attempt to delete category w/o valid password.');
 			return false;
 		}
-		Mojo.Log.info('Deleting category \'%s\' with index %s',
+		Keyring.log('Deleting category \'%s\' with index %s',
 				this.categories[toDelete], toDelete);
 		Object.values(this.db).each(function(item) {
 			if (item.category == toDelete) {
@@ -764,7 +764,7 @@ var Ring = Class.create ({
 	 * TODO strip whitespace from newLabel.
 	 */
 	editCategory: function(value, newLabel) {
-		Mojo.Log.info('editCategory');
+		Keyring.log('editCategory');
 		var errmsg;
 		if (value === 0) {
 			errmsg = $L("Can't edit the \"All\" & \"Unfiled\" categories.");
@@ -794,7 +794,7 @@ var Ring = Class.create ({
 			// New category, find the lowest unused value
 			value = parseInt(Object.keys(this.categories).sort(function(a,b) {return a-b;}).pop()) + 1;
 		}
-		Mojo.Log.info('Category \'%s\' has index %s', newLabel, value);
+		Keyring.log('Category \'%s\' has index %s', newLabel, value);
 		this.categories[value] = newLabel;
 		this.saveData();
 		return [true, newLabel, value];
@@ -808,7 +808,7 @@ var Ring = Class.create ({
 	 * contain a character from every class desired.
 	 */
 	randomCharacters: function(model) {
-		Mojo.Log.info('randomCharacters');
+		Keyring.log('randomCharacters');
 		var errmsg;
 		if (! model.characters || model.characters < 1) {
 			errmsg = $L("Can't deliver a password of less than one character.");
@@ -865,7 +865,7 @@ var Ring = Class.create ({
 	 * TODO This will barf if this.db[title] doesn't exist.
 	 */
 	getItem: function(title) {
-		Mojo.Log.info('getItem');
+		Keyring.log('getItem');
 		var decrypted_obj;
 		// Get a copy of the item, since we'll be adding in unencrypted data
 		var item = Object.clone(this.db[title]);
@@ -895,7 +895,7 @@ var Ring = Class.create ({
 	 * Update or create an item from the given data.
 	 */
 	updateItem: function(oldTitle, newData) {
-		Mojo.Log.info('updateItem');
+		Keyring.log('updateItem');
 		if (! this.passwordValid) {
 			Mojo.Log.warn('Attempt to update item without valid password.');
 			throw this.PasswordError;
@@ -930,7 +930,7 @@ var Ring = Class.create ({
 	 * the appropriate encrypted data.
 	 */
 	_buildItem: function(newData) {
-		Mojo.Log.info('_buildItem');
+		Keyring.log('_buildItem');
 		var item = {};
 		var i, attr;
 		for (i = 0; i < this.PLAINTEXT_ATTRS.length; i++) {
@@ -972,7 +972,7 @@ var Ring = Class.create ({
 	 * whole db.
 	 */
 	noteItemView: function(title) {
-		Mojo.Log.info('noteItemView');
+		Keyring.log('noteItemView');
 		this.db[title].viewed = new Date().getTime();
 		this.saveData();
 		if (this.prefs.sortBy === 'viewed') {
@@ -986,7 +986,7 @@ var Ring = Class.create ({
 	 * Delete the item for the given title.
 	 */
 	deleteItem: function(item) {
-		Mojo.Log.info('deleteItem');
+		Keyring.log('deleteItem');
 		delete this.db[item.title];
 		this.saveData();
 		this.buildItemList();
@@ -998,7 +998,7 @@ var Ring = Class.create ({
 	 */
 	buildItemList: function() {
 		var sortBy = this.prefs.sortBy || 'TITLE';
-		Mojo.Log.info('buildItemList, sortby:', this.prefs.sortBy);
+		Keyring.log('buildItemList, sortby:', this.prefs.sortBy);
 		this.items = Object.values(this.db).sort(function(x, y) {
 	      var a = x[sortBy];
 	      var b = y[sortBy];
@@ -1020,7 +1020,7 @@ var Ring = Class.create ({
 	 * in the implementation of Mojo.Model.encrypt().
 	 */
     encrypt: function(cleartext, saltLength) {
-		Mojo.Log.info('encrypting');
+		Keyring.log('encrypting');
 		if (! this._key) {
 			Mojo.Log.warn('Attempt to encrypt w/o valid key.');
 			throw this.PasswordError;
@@ -1030,7 +1030,7 @@ var Ring = Class.create ({
 			cleartext = this.randomCharacters({characters: saltLength, all: true}) + cleartext;
 		}
         var encrypted = Mojo.Model.encrypt(this._key, cleartext);
-        if (this.debug) { Mojo.Log.info('Mojo.Model.encrypt done, encrypted=\'%s\'', encrypted); }
+        if (this.debug) { Keyring.log('Mojo.Model.encrypt done, encrypted=\'%s\'', encrypted); }
         return encrypted;
 	},
 
@@ -1040,9 +1040,9 @@ var Ring = Class.create ({
 	 * Strips off leading non-JSON salt characters.
 	 */
     decrypt: function(cryptext, tempKey) {
-		Mojo.Log.info('decrypt');
+		Keyring.log('decrypt');
 		var key = tempKey ? tempKey : this._key;
-		if (this.debug) { Mojo.Log.info('Calling Mojo.Model.decrypt. cryptext=\'%s\'', cryptext); }
+		if (this.debug) { Keyring.log('Calling Mojo.Model.decrypt. cryptext=\'%s\'', cryptext); }
         var cleartext = Mojo.Model.decrypt(key, cryptext);
         // Remove any leading non-JSON salt characters
         return cleartext.replace(/^[^\{]*\{/, '{');

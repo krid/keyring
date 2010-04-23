@@ -29,7 +29,7 @@ var V2And3Upgrader = Class.create ({
 	loadedData: null,
 	
 	initialize: function(ring) {
-		Mojo.Log.info("Initializing _V2And3Upgrader");
+		Keyring.log("Initializing _V2And3Upgrader");
 		this.ring = ring;
 	},
 	
@@ -39,7 +39,7 @@ var V2And3Upgrader = Class.create ({
 
 		this.ring.depot.get(this.ring.DEPOT_DATA_KEY,
 			function(obj) {
-				Mojo.Log.info("Upgrader loaded depot data");
+				Keyring.log("Upgrader loaded depot data");
 				// Stash the data 
 				this.loadedData = obj;
 				// Pull the salt out of the data, because ring needs it soon
@@ -66,7 +66,7 @@ var V2And3Upgrader = Class.create ({
 	 * which will add the new category attribute and salt the encrypted bits.
 	 */
 	processData: function(tmpKey) {
-		Mojo.Log.info("upgrader.processData()");
+		Keyring.log("upgrader.processData()");
 		/* See if the supplied password is valid by checking if it decrypts
 		 * the stored checkData. */
 		if (Mojo.Model.decrypt(tmpKey, this.loadedData.crypt.checkData) !== tmpKey) {
@@ -102,7 +102,7 @@ var Upgrader = Class.create ({
 	worker: null,
 	
 	initialize: function(version, ring) {
-		Mojo.Log.info("Initializing upgrader for version", version);
+		Keyring.log("Initializing upgrader for version", version);
 		if (version === 2 || version === 3) {
 			this.worker = new V2And3Upgrader(ring);
 		} 

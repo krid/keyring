@@ -4,7 +4,7 @@ function CategoriesAssistant(ring) {
 }
 
 CategoriesAssistant.prototype.setup = function() {
-	Mojo.Log.info("rendering category list");
+	Keyring.log("rendering category list");
 	this.controller.get("main-hdr").update($L({value: "Categories",
 		key: "title of the 'Categories' scene"}));
 	this.controller.setupWidget(Mojo.Menu.appMenu,
@@ -43,13 +43,13 @@ CategoriesAssistant.prototype.setup = function() {
 };
 
 CategoriesAssistant.prototype.deleted = function(event) {
-	Mojo.Log.info("Deleting item '%s'", event.item.label);
+	Keyring.log("Deleting item '%s'", event.item.label);
 	this.ring.updateTimeout();
 	this.ring.deleteCategory(event.item.value);
 };
 
 CategoriesAssistant.prototype.addCategory = function(event) {
-	Mojo.Log.info("Adding new category");
+	Keyring.log("Adding new category");
 	this.ring.updateTimeout();
 	this.controller.showDialog({
 		template: "textfield-dialog",
@@ -88,7 +88,7 @@ CategoriesAssistant.prototype.categoryAdded = function(newIndex) {
 CategoriesAssistant.prototype.categoryEdited = function(event) {
 	this.ring.updateTimeout();
 	if (event.value !== event.oldValue) {
-		Mojo.Log.info("Category '%s' changed to '%s'", event.oldValue, event.value);
+		Keyring.log("Category '%s' changed to '%s'", event.oldValue, event.value);
 		this.ring.editCategory(event.model.value, event.value);
 	}
 };
@@ -174,14 +174,14 @@ var CategoryDialogAssistant = Class.create ({
 	},
 
 	save: function() {
-		Mojo.Log.info("save");
+		Keyring.log("save");
 		var retval = this.ring.editCategory(undefined, this.categoryModel.value);
 		if (retval[0]) {
 			this.widget.mojo.close();
 			// Pass new category index to callback
 			this.callbackOnSuccess(retval[2]);
 		} else {
-			Mojo.Log.info("Bad category");
+			Keyring.log("Bad category");
 			this.controller.get("errmsg").update(retval[1]);
 			this.controller.get("text").mojo.focus();
 		}

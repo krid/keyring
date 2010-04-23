@@ -50,7 +50,7 @@ StageAssistant.prototype.setup = function() {
 };
 
 StageAssistant.prototype.windowActivated = function() {
-	Mojo.Log.info("windowActivated in scene", this.controller.topScene().sceneName);
+	Keyring.log("windowActivated in scene", this.controller.topScene().sceneName);
 	if (this.cancelIdleLockoutId) {
 		window.clearTimeout(this.cancelIdleLockoutId);
 	}
@@ -59,7 +59,7 @@ StageAssistant.prototype.windowActivated = function() {
 
 StageAssistant.prototype.windowDeactivated = function() {
 	var scene = this.controller.topScene();
-	Mojo.Log.info("windowDeactivated in scene", scene.sceneName);
+	Keyring.log("windowDeactivated in scene", scene.sceneName);
 	switch (this.ring.prefs.onDeactivate) {
 		case 'lock':
 			Keyring.lockout(this.controller, this.ring);
@@ -176,13 +176,13 @@ var PasswordDialogAssistant = Class.create ({
 	},
 
 	unlock: function() {
-		Mojo.Log.info("unlock");
+		Keyring.log("unlock");
 		if (this.ring.validatePassword(this.passwordModel.value)) {
-			Mojo.Log.info("Password accepted");
+			Keyring.log("Password accepted");
 			this.widget.mojo.close();
 			this.callbackOnSuccess();
 		} else {
-			Mojo.Log.info("Bad Password");
+			Keyring.log("Bad Password");
 			// TODO select random insult from the sudo list
 			// FIXME apply some decent styling to the error message
 			this.controller.get("errmsg").update($L("Invalid Password"));
@@ -221,7 +221,7 @@ Keyring.doIfPasswordValid = function(sceneController, ring, callback, preventCan
 /* Called by scenes on timeout or app deactivation/minimization. */
 Keyring.lockout = function(stageController, ring) {
 	var sceneName = stageController.topScene().sceneName;
-	Mojo.Log.info("Timeout or Deactivate in scene", sceneName);
+	Keyring.log("Timeout or Deactivate in scene", sceneName);
 	ring.clearPassword();
 	if (ring.prefs.lockoutTo === 'close-app') {
 		stageController.popScenesTo('locked');
@@ -232,7 +232,7 @@ Keyring.lockout = function(stageController, ring) {
 };
 
 Keyring.activateLockout = function(sceneAssistant) {
-	Mojo.Log.info("activateLockout for scene",
+	Keyring.log("activateLockout for scene",
 		sceneAssistant.controller.stageController.topScene().sceneName);
 	// Clear password after idle timeout
 	sceneAssistant.cancelIdleTimeout = sceneAssistant.controller.setUserIdleTimeout(
@@ -241,9 +241,17 @@ Keyring.activateLockout = function(sceneAssistant) {
 		sceneAssistant.ring.prefs.timeout);
 };
 
-
 Keyring.deactivateLockout = function(sceneAssistant) {
-	Mojo.Log.info("deactivateLockout for scene",
+	Keyring.log("deactivateLockout for scene",
 		sceneAssistant.controller.stageController.topScene().sceneName);
 	sceneAssistant.cancelIdleTimeout();
+};
+
+/* Wrapper around Mojo.Log.info that only logs if debuggingEnabled is set
+ * in framework_config.json.  Used as belt-and-suspenders to ensure that
+ * information is not exposed in the logfile. */
+Keyring.log = function() {
+	if (Mojo.Environment.frameworkConfiguration.debuggingEnabled) {
+		Mojo.Log.info.apply(Mojo.Log, arguments);
+	}
 };

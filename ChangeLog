@@ -1,3 +1,14 @@
+2010-04-23  Dirk Bergstrom  <krid@otisbean.com>
+
+    * app/assistants/stage-assistant.js (Keyring.log): Wrapper around
+    Mojo.Log.info that only logs if debuggingEnabled is set in
+    framework_config.json.  Used as belt-and-suspenders to ensure that
+    information is not exposed in the logfile.
+
+	* app/*/*.js: s/Mojo.Log.info/Keyring.log/g
+	
+	* framework_config.json: Add debuggingEnabled: true.
+
 2010-04-22  Dirk Bergstrom  <krid@otisbean.com>
 
 Closes gh-8: Categories should (optionally?) sort in alpha order

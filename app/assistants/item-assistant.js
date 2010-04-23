@@ -68,7 +68,7 @@ GeneratePasswordAssistant.prototype.setup = function(widget) {
 };
 
 GeneratePasswordAssistant.prototype.ok = function() {
-	Mojo.Log.info("generate password");
+	Keyring.log("generate password");
 	this.ring.prefs.generatorPrefs = this.model;
 	this.callback(this.ring.randomCharacters(this.model));
 	this.widget.mojo.close();
@@ -154,7 +154,7 @@ ItemAssistant.prototype.setup = function() {
 	if (! this.createNew && this.ring.prefs.hideEmpty) {
 		this.hideableFields.each(function(field) {
 			if (! this.item[field]) {
-				Mojo.Log.info("hiding" + field);
+				Keyring.log("hiding" + field);
 				this.controller.get(field+"-row").hide();
 				this.controller.hideWidgetContainer(field+"-row");
 				somethingHidden = true;
@@ -209,7 +209,7 @@ ItemAssistant.prototype.setup = function() {
 ItemAssistant.prototype.fieldUpdated = function(event) {
 	if (event.value !== event.oldValue && ! this.timedOut) {
 		this.ring.updateTimeout();
-		Mojo.Log.info("field '%s' changed", event.property);
+		Keyring.log("field '%s' changed", event.property);
 		this.ring.itemsReSorted = true;
 		try {
 			this.ring.updateItem(this.titleInDatabase, this.item);
@@ -228,11 +228,11 @@ ItemAssistant.prototype.fieldUpdated = function(event) {
 };
 
 ItemAssistant.prototype.done = function() {
-	Mojo.Log.info("done/save");
+	Keyring.log("done/save");
 	this.ring.updateTimeout();
 	if (this.fieldError) {
 		// Don't leave if there is something wrong (probably duplicate or empty title).
-		Mojo.Log.info("Error, not leaving");
+		Keyring.log("Error, not leaving");
 		/* TODO If the field error occurs because the
 		 * user hit the "done/save" button, the errorDialog will already be
 		 * displayed when we get here.  It looks as if the Right Thing happens
@@ -244,12 +244,12 @@ ItemAssistant.prototype.done = function() {
 };
 
 ItemAssistant.prototype.cancel = function() {
-	Mojo.Log.info("Cancelling new item creation.");
+	Keyring.log("Cancelling new item creation.");
 	this.ring.updateTimeout();
 	if (this.titleInDatabase && this.ring.db[this.titleInDatabase]) {
 		/* The current item has been saved to the db, so we need to delete
 		 * it before we leave. */
-		Mojo.Log.info("Deleting cancelled item");
+		Keyring.log("Deleting cancelled item");
 		/* this.item.title may have been changed and not saved (duplicate?).
 		 * Switch it to the saved value so the correct record is deleted. */
 		this.item.title = this.titleInDatabase;
@@ -260,7 +260,7 @@ ItemAssistant.prototype.cancel = function() {
 
 /* Callback for handling generated passwords. */
 ItemAssistant.prototype.setGeneratedPassword = function(password) {
-	Mojo.Log.info("setGenerated");
+	Keyring.log("setGenerated");
 	this.item.pass = password;
 	this.controller.modelChanged(this.item);
 	// Send a fake event to fieldUpdated()
@@ -269,7 +269,7 @@ ItemAssistant.prototype.setGeneratedPassword = function(password) {
 
 /* Callback to set title for new item creation. */
 ItemAssistant.prototype.setTitle = function(newTitle) {
-	Mojo.Log.info("setTitle='%s'", newTitle);
+	Keyring.log("setTitle='%s'", newTitle);
 	this.item.title = newTitle;
 	this.controller.modelChanged(this.item);
 	this.controller.get('usernameField').mojo.focus.delay(0.5);
@@ -277,7 +277,7 @@ ItemAssistant.prototype.setTitle = function(newTitle) {
 
 /* Don't leave an item visible when we minimize. */
 ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
-	Mojo.Log.info("Item scene timeoutOrDeactivate");
+	Keyring.log("Item scene timeoutOrDeactivate");
 	/* If a field's value has been changed, but it it still focused (and thus
 	 * hasn't generated a change event), we need to save the value. */
 	var dirty = false;
@@ -303,12 +303,12 @@ ItemAssistant.prototype.timeoutOrDeactivate = function(event) {
 		}
 	}, this);
 	if (dirty) {
-		Mojo.Log.info("Found dirty field after timeout, saving");
+		Keyring.log("Found dirty field after timeout, saving");
 		try {
 			this.ring.updateItem(this.titleInDatabase, this.item);
 		}
 		catch (err) {
-			Mojo.Log.info("Error saving item on timeout: " + err);
+			Keyring.log("Error saving item on timeout: " + err);
 		}
 	}
 	this.timedOut = true;
@@ -444,16 +444,16 @@ var TitleDialogAssistant = Class.create ({
 	},
 	
 	save: function() {
-		Mojo.Log.info("save");
+		Keyring.log("save");
 		var newTitle = this.model.value.replace(/^\s*(.*?)\s*$/, '$1');
-		Mojo.Log.info("newTitle='%s'", newTitle);
+		Keyring.log("newTitle='%s'", newTitle);
 		if (! newTitle) {
-			Mojo.Log.info("No title");
+			Keyring.log("No title");
 			var errmsg = $L("Title is required.");
 			this.controller.get("errmsg").update(errmsg);
 			this.controller.get("text").mojo.focus.delay(0.25);
 		} else if (this.ring.db[newTitle]) {
-			Mojo.Log.info("Dup title");
+			Keyring.log("Dup title");
 			var errmsg = $L("Item \"#{newTitle}\" already exists.").
 			    interpolate({newTitle: newTitle});
 			this.controller.get("errmsg").update(errmsg);

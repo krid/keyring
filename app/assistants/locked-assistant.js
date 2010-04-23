@@ -24,7 +24,7 @@ function LockedAssistant(ring) {
 }
 
 LockedAssistant.prototype.setup = function() {
-	Mojo.Log.info("LockedAssistant.setup()");
+	Keyring.log("LockedAssistant.setup()");
 	this.loadingMessage = this.controller.get("loading-mesg").update($L("Initializing..."));
 	this.controller.setupWidget("loading-spinner",
          {spinnerSize: Mojo.Widget.spinnerSmall},
@@ -42,7 +42,7 @@ LockedAssistant.prototype.setup = function() {
  * user interaction. 
  */
 LockedAssistant.prototype.loaded = function(errmsg) {
-	Mojo.Log.info("LockedAssistant.loaded(), errmsg=%s", errmsg);
+	Keyring.log("LockedAssistant.loaded(), errmsg=%s", errmsg);
 	this.spinnerModel.spinning = false;
 	this.controller.modelChanged(this.spinnerModel);
 	if (errmsg) {
@@ -101,7 +101,7 @@ LockedAssistant.prototype.activate = function(event) {
 		this.loadingMessage.update($L("Keyring locked"));
 		this.controller.get("img-div").update('<img src="images/lock.png"/>');
 		if (this.ring.prefs.lockoutTo === 'close-app') {
-			Mojo.Log.info("Closing Keyring on lockout.");
+			Keyring.log("Closing Keyring on lockout.");
 			window.close();
 		} else {
 			this.requestPassword();
@@ -164,10 +164,10 @@ NewPasswordDialogAssistant.prototype.propChangeHandler = function(event) {
     }
 };
 NewPasswordDialogAssistant.prototype.ok = function() {
-	Mojo.Log.info("got new passwords");
+	Keyring.log("got new passwords");
 	this.sceneAssistant.controller.get("errmsg").update("");
 	if (this.passwordModel.value === this.password2Model.value) {
-		Mojo.Log.info("matching");
+		Keyring.log("matching");
 		try {
 			this.ring.newPassword(undefined, this.passwordModel.value);
 		}
@@ -178,7 +178,7 @@ NewPasswordDialogAssistant.prototype.ok = function() {
 		this.widget.mojo.close();
 		this.callbackOnSuccess();
 	} else {
-		Mojo.Log.info("no match");
+		Keyring.log("no match");
 		this.sceneAssistant.controller.get("errmsg").update($L("Passwords do not match"));
 	}
 };

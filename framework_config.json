@@ -1,3 +1,4 @@
 {
- "logLevel": 99
+ "logLevel": 99,
+ "debuggingEnabled": true
 }
