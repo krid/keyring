@@ -1,6 +1,6 @@
 {
 	"id": "com.otisbean.keyring",
-	"version": "1.0.0",
+	"version": "0.4.0",
 	"vendor": "Otisbean",
 	"type": "web",
 	"main": "index.html",
@@ -10,5 +10,6 @@
 	"splashicon": "icon256.png",
 	"splashBackground": "images/splash-screen.png",
     "removable": "true",
-    "visible": "true"
+    "visible": "true",
+    "noWindow" : "true"
 }

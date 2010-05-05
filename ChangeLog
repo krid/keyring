@@ -1,3 +1,27 @@
+2010-05-05  Dirk Bergstrom  <krid@otisbean.com>
+
+Change launch method to allow cross-app launch.  Needed for data transfer
+between different versions of Keyring on the same phone (beta, catalog
+and homebrew).  
+	* app/models/keyring.js: Move global Keyring object from stage-assistant
+	to a clearer location.
+
+    * app/assistants/app-assistant.js: The app assistant rises from the grave.
+
+    * app/assistants/stage-assistant.js: Pull application-scope and startup
+    code into app-assistant.  Move Keyring global to its own file.  Pull
+    PasswordDialogAssisant out into its own file.
+    
+    * app/assistants/password-dialog-assistant.js: Given its own file for
+    clarity.
+    
+    * sources.json: Add new assistants & model.
+    
+    * appinfo.json: Add nowindow: true for new startup behavior.  Change
+    version to 0.4.0, since the next release won't be in the catalog.
+    
+	* app/views/help/help-scene.html: Adjust changelog.
+    
 2010-04-23  Dirk Bergstrom  <krid@otisbean.com>
 
     * app/assistants/stage-assistant.js (Keyring.log): Wrapper around
