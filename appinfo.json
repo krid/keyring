@@ -11,5 +11,6 @@
 	"splashBackground": "images/splash-screen.png",
     "removable": "true",
     "visible": "true",
-    "noWindow" : "true"
+    "noWindow" : "true",
+    "uiRevision": 2
 }
